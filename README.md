@@ -109,6 +109,20 @@ Get-FileHash -Algorithm MD5 romfs\Data\StreamingAssets\json\json
 
 ---
 
+## Tài liệu kỹ thuật
+
+Ghi chú kỹ thuật về cách bản patch được thực hiện — vị trí lưu trữ văn bản trong game, cách engine hiển thị chúng, và các lỗi thường gặp: xem thư mục [`docs/`](docs/).
+
+| | |
+| --- | --- |
+| [Bố cục dữ liệu](docs/01-data-layout.md) | File nào chứa văn bản gì, và quy tắc khe JP |
+| [Hiển thị văn bản](docs/02-text-rendering.md) | Xuống dòng, tràn khung, tự động co chữ, quy tắc chỉnh sửa an toàn |
+| [Màn hình hình ảnh](docs/03-baked-art.md) | Văn bản UI được vẽ sẵn vào sprite atlas |
+| [Đóng gói lại với UnityPy](docs/04-repacking.md) | Mã hóa texture, đóng gói bundle, mesh của sprite |
+| [Tên nhân vật chính](docs/05-protagonist-name.md) | Chuỗi IL2CPP và dữ liệu save |
+
+---
+
 ## Tuyên bố pháp lý
 
 Đây là bản dịch phi thương mại, không chính thức do người hâm mộ thực hiện. Bản patch này phân phối các file dữ liệu game đã qua chỉnh sửa và sẽ không hoạt động nếu không có bản game UNLOGICAL hợp pháp. Mọi bản quyền đối với trò chơi gốc, kịch bản và hình ảnh thuộc về các chủ sở hữu tương ứng. Dự án không liên kết hoặc nhận được sự ủy quyền từ nhà phát hành. Nếu bên giữ bản quyền có yêu cầu, repository này sẽ bị gỡ bỏ.
