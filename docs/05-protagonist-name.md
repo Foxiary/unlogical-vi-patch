@@ -13,7 +13,7 @@ and each 6 UTF-8 bytes:
 | literal idx | was | now | offset (v1.0.2) |
 |---|---|---|---|
 | 15053 | `涼乃` (fixed surname) | `Suzuno` | 496921 |
-| 15063 | `環無` (default given name) | `Tamamu` | 497033 |
+| 15063 | `環無` (default given name) | `Kanna` | 497033 |
 
 Because the replacements are also 6 bytes they were overwritten **in place** — the
 string-literal table at offset 256 and every metadata offset stay untouched, so no
