@@ -8,17 +8,20 @@ surname plus the player-entered given name. Dialogue also uses an inline
 ## The two defaults are IL2CPP string literals
 
 Both live in `Managed/Metadata/global-metadata.dat`, each appearing exactly once
-and each 6 UTF-8 bytes:
+and each occupying a 6-byte UTF-8 slot:
 
-| literal idx | was | now | offset (v1.0.2) |
-|---|---|---|---|
-| 15053 | `涼乃` (fixed surname) | `Suzuno` | 496921 |
-| 15063 | `環無` (default given name) | `Kanna` | 497033 |
+| literal idx | was | now | bytes written | offset (v1.0.2) |
+|---|---|---|---|---|
+| 15053 | `涼乃` (fixed surname) | `Suzuno` | `Suzuno` — fills the slot | 496921 |
+| 15063 | `環無` (default given name) | `Kanna` | `Kanna\0` — 5 bytes, NUL-padded | 497033 |
 
-Because the replacements are also 6 bytes they were overwritten **in place** — the
-string-literal table at offset 256 and every metadata offset stay untouched, so no
-rebuild is needed. Header layout (v31): pair 0 = stringLiteral table, pair 1 =
-stringLiteralData, at file offsets 8 and 16.
+Because both replacements fit the original 6-byte slot they were overwritten
+**in place** — the string-literal table at offset 256 and every metadata offset
+stay untouched, so no rebuild is needed. Header layout (v31): pair 0 =
+stringLiteral table, pair 1 = stringLiteralData, at file offsets 8 and 16.
+
+`Kanna` is the reading used throughout the translated script (120 occurrences in
+`ScenarioData`), so the default offered at name entry matches the dialogue.
 
 The metadata differs between 1.0.0 and 1.0.2, so **this patch is
 version-specific**. Confirm the emulator has update `v131072` (= 1.0.2) selected
