@@ -1,0 +1,9 @@
+# Unity asset bundles and game data are binary — never diff or normalise them
+romfs/** binary
+*.assets binary
+*.resS   binary
+*.dat    binary
+
+# Text files in the repo keep LF
+*.md   text eol=lf
+*.json text eol=lf

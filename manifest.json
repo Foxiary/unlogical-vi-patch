@@ -1,0 +1,122 @@
+[
+  {
+    "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
+    "bytes": 9259608,
+    "md5": "f22b7a2ad1931a0aa5c0cb8b5c1f95f1",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/anim/anim01",
+    "bytes": 28256011,
+    "md5": "e43455bf5326f80532d443dd545407a7",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/json/json",
+    "bytes": 116988,
+    "md5": "c2efac067ac00130c8b81784135b7b77",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/movie/movie_jp_02",
+    "bytes": 104598890,
+    "md5": "2df2dedba508ec440a76e382faf1153d",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/scenario/scenario01",
+    "bytes": 8718610,
+    "md5": "ecbc24f9527820b7ac56cd66fab62f68",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/scene/scene_jp",
+    "bytes": 4154964,
+    "md5": "793628236516940f04cbeaaaf276fd49",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/ui/ui_jp",
+    "bytes": 48286578,
+    "md5": "c674ff38f44266c269fbafa12a4f2f60",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/level10",
+    "bytes": 160480,
+    "md5": "7eee9f9257442897983532d5deb56d5c",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/level19",
+    "bytes": 39528,
+    "md5": "25e7b38a440239dbbbd89ebb987c558c",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/level20",
+    "bytes": 39240,
+    "md5": "171182216a5d83090359c42121a570ab",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/level22",
+    "bytes": 76360,
+    "md5": "7d7d861dc6d341cea4aa5f3953347e41",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/resources.assets",
+    "bytes": 13411912,
+    "md5": "74e53026fab8f1ecdb5cfda80fb416ab",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets10.assets",
+    "bytes": 10630160,
+    "md5": "c31a6df2209d3fb0dbb0810564c12da6",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets13.assets",
+    "bytes": 457736,
+    "md5": "6fa7301f21ec3f40e086cb4497cd26c4",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets16.assets",
+    "bytes": 2142712,
+    "md5": "327a37dbd47682a22e89d3aa0e83dac1",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets19.assets",
+    "bytes": 4275440,
+    "md5": "96303606a582cddf398eba4bc9663a6c",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets22.assets",
+    "bytes": 568024,
+    "md5": "64e9484c7b2b813ebf971f39c5960a44",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets7.assets",
+    "bytes": 8317136,
+    "md5": "4f76da0cce520fe6ee02411445256858",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/sharedassets9.assets",
+    "bytes": 4290776,
+    "md5": "8fbabf4a4cf67a339ee51f7124667419",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/font/font_jp",
+    "bytes": 269643817,
+    "md5": "045b926f019e144e7eb853892c9c7bf0",
+    "where": "release"
+  }
+]

@@ -1,0 +1,11 @@
+# The font bundle is 270 MB — published as a release asset, not committed
+romfs/Data/StreamingAssets/font/font_jp
+
+# Byte-identical to the stock game; the base game supplies these
+romfs/Data/**/*.resS
+
+# Working files
+_backup/
+_parked/
+*.tmp
+*.bak
