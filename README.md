@@ -25,7 +25,7 @@ Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng c
 
 ### 1. Tải file phông chữ dung lượng lớn
 
-File `StreamingAssets/font/font_jp` (270 MB) có dung lượng quá lớn đối với một kho lưu trữ Git, nên được phát hành dưới dạng **file đính kèm phiên bản (release asset)**. Hãy tải nó từ trang [Releases](https://www.google.com/search?q=../../releases).
+File `StreamingAssets/font/font_jp` (270 MB) có dung lượng quá lớn đối với một kho lưu trữ Git, nên được phát hành dưới dạng **file đính kèm phiên bản (release asset)**. Hãy tải nó từ trang [Releases](../../releases).
 
 ### 2. Sắp xếp thư mục mod
 
