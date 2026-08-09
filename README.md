@@ -21,7 +21,20 @@ Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng c
 
 ---
 
-## Hướng dẫn cài đặt
+## Cài đặt nhanh (khuyến nghị)
+
+Chỉ cần **một file duy nhất** — không cần tải cả repository.
+
+1. Tải `unlogical-vi-patch-v1.0-romfs.zip` từ trang [Releases](../../releases).
+2. Mở thư mục mod của Ryujinx (chuột phải vào game → **Open Mods Directory**, hoặc dán đường dẫn `%APPDATA%\Ryujinx\mods\contents\010068501ff9a000\` vào Explorer).
+3. Giải nén file zip **trực tiếp vào thư mục đó**, sao cho đường dẫn thành `...\contents\010068501ff9a000\vn-translation\romfs\Data\...`
+4. Khởi động game. LayeredFS tự nhận diện, không cần bật/tắt gì thêm.
+
+File zip chỉ chứa dữ liệu game đã sửa đổi, không kèm README hay tài liệu.
+
+---
+
+## Cài đặt thủ công (dành cho người rành kỹ thuật)
 
 ### 1. Tải file phông chữ dung lượng lớn
 
