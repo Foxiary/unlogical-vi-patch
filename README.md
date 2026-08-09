@@ -60,8 +60,6 @@ Thư mục chứa mod là:
 
 Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn **Open Mods Directory**. Sau đó khởi động game; không cần bật/tắt gì thêm vì LayeredFS sẽ tự động nhận diện các file.
 
-> **Lưu ý:** Các file `sharedassets9.assets.resS` và `sharedassets19.assets.resS` cố tình **không** được đưa vào. Chúng trùng khớp 100% (byte-identical) với game gốc, nên game sẽ sử dụng bản sao có sẵn. Đừng chép chúng từ bất kỳ nguồn nào khác.
-
 ---
 
 ## Các phần đã được dịch
