@@ -1,46 +1,41 @@
-# UNLOGICAL — Vietnamese Translation Patch
+# UNLOGICAL — Bản Patch Việt Hóa
 
-A fan translation patch for the Nintendo Switch visual novel **UNLOGICAL**
-(title ID `010068501ff9a000`).
+Bản patch dịch thuật do fan thực hiện dành cho tựa game visual novel **UNLOGICAL** trên Nintendo Switch (Title ID: `010068501ff9a000`).
 
-- **Story, dialogue and choices** — Vietnamese
-- **UI, menus and system text** — English
+* **Cốt truyện, hội thoại và lựa chọn** — Tiếng Việt
+* **UI, menu và văn bản hệ thống** — Tiếng Anh
 
-This repository contains **only the game files the translation modifies**. It is
-not a copy of the game. You must already own UNLOGICAL and supply your own dump.
+Repository này **chỉ chứa các file game đã được bản dịch sửa đổi**. Đây không phải là bản sao của game. Bạn phải tự sở hữu và tự trích xuất (dump) file game gốc của riêng mình.
 
 ---
 
-## Requirements
+## Yêu cầu
 
-| | |
-|---|---|
-| Game version | **v1.0.2** |
+|  |  |
+| --- | --- |
+| Phiên bản game | **v1.0.2** |
 | Title ID | `010068501ff9a000` |
-| Tested on | Ryujinx (also works on hardware via Atmosphère LayeredFS) |
+| Đã kiểm tra trên | Ryujinx (cũng hoạt động trên máy Switch gốc qua Atmosphère LayeredFS) |
 
-The patch is built against v1.0.2. Applying it to a different game version may
-crash or display corrupted text.
+Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng cho các phiên bản game khác có thể gây văng game (crash) hoặc lỗi hiển thị văn bản.
 
 ---
 
-## Installation
+## Hướng dẫn cài đặt
 
-### 1. Get the large font file
+### 1. Tải file phông chữ dung lượng lớn
 
-`StreamingAssets/font/font_jp` (270 MB) is too large for a Git repository and is
-published as a **release asset** instead. Download it from the
-[Releases](../../releases) page.
+File `StreamingAssets/font/font_jp` (270 MB) có dung lượng quá lớn đối với một kho lưu trữ Git, nên được phát hành dưới dạng **file đính kèm phiên bản (release asset)**. Hãy tải nó từ trang [Releases](https://www.google.com/search?q=../../releases).
 
-### 2. Assemble the mod folder
+### 2. Sắp xếp thư mục mod
 
-Place the files so the layout is exactly:
+Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
 
-```
+```text
 <mods>/contents/010068501ff9a000/vn-translation/romfs/Data/
     Managed/Metadata/global-metadata.dat
     StreamingAssets/anim/anim01
-    StreamingAssets/font/font_jp          <- from Releases
+    StreamingAssets/font/font_jp          <- Lấy từ trang Releases
     StreamingAssets/json/json
     StreamingAssets/movie/movie_jp_02
     StreamingAssets/scenario/scenario01
@@ -51,71 +46,71 @@ Place the files so the layout is exactly:
     sharedassets7.assets   sharedassets9.assets   sharedassets10.assets
     sharedassets13.assets  sharedassets16.assets  sharedassets19.assets
     sharedassets22.assets
-```
-
-### 3. Ryujinx
-
-The mods folder is:
 
 ```
+
+### 3. Cấu hình Ryujinx
+
+Thư mục chứa mod là:
+
+```text
 %APPDATA%\Ryujinx\mods\contents\010068501ff9a000\
+
 ```
 
-Right-click the game → **Open Mods Directory** if you are unsure. Launch the
-game; no toggle is needed — LayeredFS picks the files up automatically.
+Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn **Open Mods Directory**. Sau đó khởi động game; không cần bật/tắt gì thêm vì LayeredFS sẽ tự động nhận diện các file.
 
-> **Note:** `sharedassets9.assets.resS` and `sharedassets19.assets.resS` are
-> deliberately **not** included. They are byte-identical to the stock game, and
-> the base game's copies are used. Do not copy them from anywhere else.
+> **Lưu ý:** Các file `sharedassets9.assets.resS` và `sharedassets19.assets.resS` cố tình **không** được đưa vào. Chúng trùng khớp 100% (byte-identical) với game gốc, nên game sẽ sử dụng bản sao có sẵn. Đừng chép chúng từ bất kỳ nguồn nào khác.
 
 ---
 
-## What is translated
+## Các phần đã được dịch
 
-**Story**
-- 132 of 140 scenario scripts (all dialogue, narration and choices)
-- The 8 untranslated scripts are developer test material that is never played
+**Cốt truyện**
 
-**Terminal**
-- All 21 Rule pages (clear conditions, game content, operator roles)
-- All 86 Home notification alerts
-- Profile name romanisations
+* 132/140 kịch bản scenario (toàn bộ hội thoại, lời dẫn và các lựa chọn)
+* 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
 
-**Dictionary / Archive**
-- All 80 dictionary entries
-- Archive category labels (baked artwork)
+Terminal (Thiết bị)
 
-**Artwork with text painted into it**
-- Name Entry screen
-- Archive page labels and button prompt
-- Key-config button glyphs
-- Backlog button prompts
+* Toàn bộ 21 trang Quy tắc (điều kiện hoàn thành, nội dung trò chơi, vai trò người vận hành)
+* Toàn bộ 86 thông báo cảnh báo ở Trang chủ
+* Phiên âm La-tinh (romanisation) cho tên trong Hồ sơ
 
-## Known gaps
+**Từ điển / Lưu trữ**
 
-These are still Japanese and are tracked as remaining work:
+* Toàn bộ 80 mục từ điển
+* Các nhãn phân loại Lưu trữ (hình ảnh vẽ sẵn)
 
-- 21 character names on the Profile screen (`TerminalProfileData.name`)
-- 17 per-character voice-volume labels in Sound options
-- 5 spirit names in the Amity list
-- 3 story lines containing a stray `っ`
+**Hình ảnh có chèn văn bản**
+
+* Màn hình Nhập tên
+* Các nhãn trang Lưu trữ và nút bấm gợi ý
+* Biểu tượng nút bấm trong cài đặt phím (Key-config)
+* Nút bấm gợi ý trong Xem lại nhật ký hội thoại (Backlog)
+
+## Các phần tồn đọng đã biết
+
+Những phần này hiện vẫn là tiếng Nhật và đang được theo dõi để xử lý tiếp:
+
+* 21 tên nhân vật ở màn hình Hồ sơ (`TerminalProfileData.name`)
+* 17 nhãn chỉnh âm lượng giọng nói từng nhân vật trong phần Cài đặt âm thanh
+* 5 tên linh hồn trong danh sách Amity
+* 3 dòng thoại kịch bản có chứa ký tự `っ` bị dư
 
 ---
 
-## Verifying your files
+## Kiểm tra tính toàn vẹn của file
 
-`manifest.json` lists every shipped file with its size and MD5. To check a copy:
+File `manifest.json` liệt kê mọi file được phát hành kèm theo dung lượng và mã MD5. Để kiểm tra một bản sao:
 
 ```powershell
 Get-FileHash -Algorithm MD5 romfs\Data\StreamingAssets\json\json
+
 ```
 
 ---
 
-## Legal
+## Tuyên bố pháp lý
 
-This is an unofficial, non-commercial fan translation. It ships modified game
-data files and is useless without a legally obtained copy of UNLOGICAL. All
-rights to the original game, its script and its artwork belong to their
-respective owners. No affiliation with or endorsement by the publisher is
-implied. If the rights holder objects, this repository will be taken down.
+Đây là bản dịch phi thương mại, không chính thức do người hâm mộ thực hiện. Bản patch này phân phối các file dữ liệu game đã qua chỉnh sửa và sẽ không hoạt động nếu không có bản game UNLOGICAL hợp pháp. Mọi bản quyền đối với trò chơi gốc, kịch bản và hình ảnh thuộc về các chủ sở hữu tương ứng. Dự án không liên kết hoặc nhận được sự ủy quyền từ nhà phát hành. Nếu bên giữ bản quyền có yêu cầu, repository này sẽ bị gỡ bỏ.
