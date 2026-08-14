@@ -105,9 +105,14 @@ Terminal (Thiết bị)
 Những phần này hiện vẫn là tiếng Nhật và đang được theo dõi để xử lý tiếp:
 
 * 21 tên nhân vật ở màn hình Hồ sơ (`TerminalProfileData.name`)
-* 17 nhãn chỉnh âm lượng giọng nói từng nhân vật trong phần Cài đặt âm thanh
-* 5 tên linh hồn trong danh sách Amity
+* 17 nhãn chỉnh âm lượng giọng nói từng nhân vật trong phần Cài đặt âm thanh (`ConfigVolumeData.label`)
+* 5 tên linh hồn trong danh sách Amity (`TerminalProfileAmityData.name`)
+* Ký hiệu `小` / `大` ở hai đầu 18 thanh trượt âm lượng — đây là hình ảnh vẽ sẵn nằm trong sprite `UL_option_sound_menu_ch_*`, tên nhân vật trong cùng sprite thì đã được dịch
 * 3 dòng thoại kịch bản có chứa ký tự `っ` bị dư
+
+Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
+
+* **Ngắt dòng thủ công bị mất trong quá trình dịch.** Bản gốc có 22.208 đoạn văn bản chứa ngắt dòng cứng. Phần **màn hình chat Genebark đã được khôi phục** — 135 tin nhắn nay xuống dòng đúng chỗ bản gốc ngắt, giống hệt bản Nhật. Phần lời dẫn và hội thoại ADV thì vẫn còn gộp: hiện chỉ 308 đoạn có ngắt dòng cứng. Chữ vẫn tự động xuống dòng nên không mất nội dung, chỉ là nhịp đọc chưa giống bản gốc.
 
 ---
 

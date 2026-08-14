@@ -59,10 +59,28 @@ Two design constraints worth keeping:
 - `辞書`'s box is only 106 px wide, which is why it became WORD/LIST rather than
   DICTIONARY — the latter cannot fit at the shared size.
 
-## Key-config button glyphs
+## The Option screen — 46 sprites, not just the buttons
 
-`sharedassets7.assets`, atlas `Option`. Each sprite is a complete **icon + word**
-image, not an icon beside a text field:
+`sharedassets7.assets`, atlas `Option` (2048×2048). The patch repaints **46 of its
+76 sprites**, so the key-config glyphs below are only a quarter of the work there:
+
+| group | count | examples |
+|---|---|---|
+| `UL_option_keycon_button_*` | 12 | the icon+word glyphs described below |
+| `UL_option_keycon_menu_*` | 8 | `auto`, `backlog`, `choices`, `jenetar`, `menu`, `quickload`, `quicksave`, `skip` |
+| `UL_option_sound_menu_ch_*` | 18 | per-character voice rows — `雅火` → `MIYABI`, `瑪瑙` → `MENOU` |
+| `UL_option_game_menu_*` | 7 | `skipmode` → `SKIP MODE`, `textspeed`, `textwindow`, `abilieff`, … |
+| `UL_option_com_key` | 1 | `Ⓑ戻る Ⓧ初期化` → `Ⓑ Back Ⓧ Reset` |
+
+**Still Japanese on this atlas:** each `UL_option_sound_menu_ch_*` sprite carries
+`小` and `大` at the ends of its volume slider, and those were left alone — the
+character name in the same sprite was repainted around them. The matching text
+labels are a separate thing entirely, in `ConfigVolumeData.label` (17 of 21 still
+Japanese); do not confuse the two.
+
+### Key-config button glyphs
+
+Each sprite is a complete **icon + word** image, not an icon beside a text field:
 
 | sprite | box |
 |---|---|
@@ -87,6 +105,38 @@ centre (−64 to −65).
 
 Became *Ⓐ Play Voice / Ⓨ Rewind / ⓁⓇ Fast Forward / Ⓑ Back*, with the original
 button glyphs copied across and text colour `#CFD7DD` sampled from the source.
+
+## The password screen — a whole screen of baked text
+
+`sharedassets16.assets`, atlas `PassWord` (1024×2048), 10 sprites. This is the
+largest baked-art job in the patch and the only one written in **Vietnamese**
+rather than English — it is diegetic terminal text, part of the story, not UI
+chrome:
+
+| sprite | was | became |
+|---|---|---|
+| `UL_pass_a_frame_moji` (548×38) | パスワード を 入力 してください | XIN HÃY NHẬP MẬT KHẨU |
+| `UL_pass_a_button_ok` (255×86) | ＋決定 | ＋XÁC NHẬN |
+| `UL_pass_b_frame_acce` / `_acce2` | 認証に失敗/成功しました。… | the 2–3 line result messages |
+| `UL_pass_c_frame_acce` / `_acce2` | 深層/表層ステージへのログイン… | ditto |
+| `UL_pass_abc_frame_base` | the PASSWORD grid | untouched apart from edge pixels |
+
+The mascot glyph and the grid itself are original art.
+
+## Key prompts on three more atlases
+
+Three separate screens each keep their button-prompt strip as a single baked
+sprite, and each lives in a different file. All three went to English:
+
+| sprite | file / atlas | size | became |
+|---|---|---|---|
+| `UL_salo_key` | `sharedassets19.assets` / `SaveLoad` 2048×2048 | 360×32 | Ⓧ Lock  Ⓐ Confirm  Ⓑ Back |
+| `UL_dictionary_key` | `sharedassets22.assets` / `DIC` 1024×512 | 284×182 | Move cursor / Change page / Scroll text / Back |
+| `UL_section_abc_com_key` | `ui_jp` / `Section` 4096×4096 | 221×32 | Ⓐ Enter  Ⓑ Back |
+
+On all three the repaint is confined to that one sprite — the rest of the atlas is
+pixel-identical to stock, which is the cheapest way to confirm you did not
+re-encode more than you meant to.
 
 ## Fonts used for replacements
 

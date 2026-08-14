@@ -3,22 +3,46 @@
 The ADV nameplate is driven by the token **`【player】`** in `ScenarioData`
 (29,483 occurrences). The engine substitutes the protagonist's full name: a fixed
 surname plus the player-entered given name. Dialogue also uses an inline
-**`[主人公]`** token (2,488 occurrences) for the given name mid-sentence.
+**`[主人公]`** token (2,490 occurrences) for the given name mid-sentence.
 
 ## The two defaults are IL2CPP string literals
 
-Both live in `Managed/Metadata/global-metadata.dat`, each appearing exactly once
-and each occupying a 6-byte UTF-8 slot:
+Both live in `Managed/Metadata/global-metadata.dat` and each appears exactly once.
+They are two of the **four** literals this patch edits — see
+[the full list](#every-metadata-literal-this-patch-edits) below, because reverting
+the file reverts all four.
 
 | literal idx | was | now | bytes written | offset (v1.0.2) |
 |---|---|---|---|---|
-| 15053 | `涼乃` (fixed surname) | `Suzuno` | `Suzuno` — fills the slot | 496921 |
-| 15063 | `環無` (default given name) | `Kanna` | `Kanna\0` — 5 bytes, NUL-padded | 497033 |
+| 15053 | `涼乃` (fixed surname) | `Suzuno` | `Suzuno` — fills the 6-byte slot | 496921 |
+| 15063 | `環無` (default given name) | `Kanna` | `Kanna` — 5 bytes, length shortened | 497033 |
 
-Because both replacements fit the original 6-byte slot they were overwritten
-**in place** — the string-literal table at offset 256 and every metadata offset
-stay untouched, so no rebuild is needed. Header layout (v31): pair 0 =
-stringLiteral table, pair 1 = stringLiteralData, at file offsets 8 and 16.
+## Every metadata literal this patch edits
+
+Verified by diffing the shipped file against a stock v1.0.2 dump — four literals
+in the data blob, three length fields in the table:
+
+| idx | was | now | slot | table entry | data offset |
+|---|---|---|---|---|---|
+| 14668 | `。` | `' '` (one space) | 3 → **1** B | 117600 | 491803 |
+| 14991 | `共通・` | `Chung - ` | 9 → **8** B | 120184 | 496109 |
+| 15053 | `涼乃` | `Suzuno` | 6 → 6 B | 120680 | 496921 |
+| 15063 | `環無` | `Kanna` | 6 → **5** B | 120760 | 497033 |
+
+Literal 14668 is the sentence period the engine appends to every spoken line —
+see [02 — Text rendering](02-text-rendering.md), "The engine appends 。 to spoken
+lines".
+
+**A replacement does not have to fit the original slot exactly.** Bytes are
+written in place at the literal's existing data offset, and if the new string is
+shorter the **length field** in the string-literal table is decremented — which is
+what happened to 14668, 14991 and 15063. The `dataIndex` half of each entry, and
+therefore every other literal's offset, stays untouched, so no rebuild is needed.
+A *longer* replacement has no room and would need one.
+
+Header layout (v31): pair 0 = stringLiteral table (offset **256**, 15,224 entries
+of 8 bytes: `length` then `dataIndex`), pair 1 = stringLiteralData (offset
+**122,048**), at file offsets 8 and 16.
 
 `Kanna` is the reading used throughout the translated script (120 occurrences in
 `ScenarioData`), so the default offered at name entry matches the dialogue.
@@ -27,6 +51,76 @@ The metadata differs between 1.0.0 and 1.0.2, so **this patch is
 version-specific**. Confirm the emulator has update `v131072` (= 1.0.2) selected
 before shipping a metadata patch. Reverting is just deleting the file from the
 mod romfs.
+
+## The ADV nameplate comes from `talkName[]`
+
+`ScenarioData.talkName[]` is parallel to `text[]` and is what the nameplate draws.
+The patch translated 14,739 of its 39,803 values; the nameplates inside
+`scriptText_Line` stay Japanese and are never displayed. Two forms:
+
+| form | meaning |
+|---|---|
+| `【Yuri】` | drawn as-is |
+| `【神楽 侑莉/Yuri】` | **true identity / what is drawn** — only the half after the slash reaches the screen |
+
+The slash form is how the game hides an identity, so a Japanese-looking value is
+usually not a translation gap. Audited: of 38,074 nameplates in real content,
+**0** have Japanese in the displayed half, while 3,777 carry Japanese in the
+hidden half. Test the half after the slash, never the whole string.
+
+`player` inside a nameplate expands to surname + given name — `Suzuno Kanna`.
+
+### Shared nameplates drop the surname
+
+Eleven lines are spoken by two characters at once, and `Suzuno Kanna＆Ran` is
+473 units wide against a design budget of ~336 (the placeholder in `level10` pids
+890/892 is `汎用汎用汎用汎用`, 8 fullwidth glyphs at font 42), so it wrapped onto two
+lines. They now name the protagonist by given name only:
+
+| was | now | count | width |
+|---|---|---|---|
+| `【player＆Kai】` | `【Kanna＆Kai】` | 7 | 263 |
+| `【Kai＆player】` | `【Kai＆Kanna】` | 2 | 263 |
+| `【player＆Ran】` | `【Kanna＆Ran】` | 2 | 282 |
+
+This matches the Japanese, where the same plates read `涼乃環無＆戒` at roughly the
+same width. `【player/？？？】` (23 lines) is **not** touched — that is the
+protagonist speaking while unidentified, and the drawn half is `？？？`.
+
+The given name is written literally rather than as a token because **the engine
+offers no verified token for it inside a nameplate**. Metadata carries four:
+`[主人公]` (given name), `[主人公愛称]` (nickname), `[主人公氏名]` (full name),
+`[主人公苗字]` (surname) — but only `[主人公]` is ever used by the shipped data, and
+**no nameplate in the game uses a token at all**, so whether the nameplate path
+runs the token pass is untested. These eleven are the only literal `Kanna` left in
+`ScenarioData`. If someone verifies that a nameplate does expand `[主人公]`,
+switching them to `【[主人公]＆Kai】` is the remaining improvement.
+
+## Body text uses the token, even where Japanese does not
+
+A player who renames the protagonist must not keep reading the default name. The
+translation originally hardcoded `Kanna` **618** times in `text[]`; all 618 are now
+`[主人公]`, taking the field from 816 tokens to **1,434**, with **0** literal
+occurrences left outside the eleven nameplates.
+
+Worth knowing before assuming this was a translation bug: **the Japanese original
+hardcodes 環無 too — 606 times**, in the same 60 scenarios where it also uses the
+token, mostly in dialogue that addresses the protagonist directly (`環無ちゃん`,
+`環無さん`, `環無サマ`). Only **12** of the 618 were places where the Japanese had a
+token and the translation flattened it. So this pass fixes 12 real regressions and
+then goes further than the original for the other 606.
+
+The surname is **not** tokenised and does not need to be: it is fixed in metadata
+(literal 15053) and the Name Entry screen cannot change it — the LAST NAME field
+there is baked art, only the given name is player-entered. All 375 literal
+`Suzuno` in `text[]` stay as they are, and `Suzuno Kanna` became
+`Suzuno [主人公]`, which is exactly the Japanese convention `涼乃[主人公]`.
+
+One possibility this does not rule out: the engine may already substitute the
+default-name literal at runtime, in which case the 606 lines were never broken and
+this pass is a harmless no-op. Nothing in the shipped data settles it. The test is
+a new game with a different given name, then any early line where someone says the
+protagonist's name.
 
 ## Do not romanise the lookup keys
 

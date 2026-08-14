@@ -7,8 +7,13 @@
 | asset | role |
 |---|---|
 | Per-chapter scripts (`00_00`, `01_02`, …) | What the engine **executes**. Still Japanese. Every tag *argument* the game draws comes from here. |
-| `ScenarioData` (~17 MB JSON, `{"target":[…]}`, 140 entries) | The translated text. `text[]` messages mapped by `loadLine[]`; `selText[]` choices mapped by `selLine[]`. |
-| `LoadData` (~36 MB, `"version":"ldb/1"`) | Save/load state database. Not script. |
+| `ScenarioData` (17.3 M characters ≈ 23 MB of UTF-8, `{"target":[…]}`, 140 entries) | The translated text. `text[]` messages mapped by `loadLine[]`; `selText[]` choices mapped by `selLine[]`. |
+| `LoadData` (36 M characters ≈ 36 MB, `"version":"ldb/1"`) | Save/load state database. Not script. |
+
+Sizes are worth stating in both units: `ScenarioData` is 17.3 M *characters* but
+23.3 MB on disk, because Vietnamese diacritics cost two UTF-8 bytes each (the
+stock Japanese file is 22.5 MB). A note that just says "17 MB" reads as a byte
+count and is wrong by a third.
 
 Because the chapter scripts are what runs, a notice widget stays Japanese even
 after `ScenarioData` is fully translated. Those live in tag arguments and must be
@@ -21,8 +26,10 @@ patched in the chapter scripts:
 Do **not** translate `[seladd text=…]` there — choices are substituted from
 `selText[]` and already display translated text.
 
-`resources.assets` is largely untouched Japanese original that is never displayed,
-with the exception of `SystemTextData` and one chapter script.
+`resources.assets` is largely untouched Japanese original that is never displayed.
+The patch changes exactly three objects in it: the `SystemTextData` TextAsset, the
+chapter script **`00_01`** (a second copy of it lives here, not just in
+`scenario01`), and the `FOT-iroha21popuraStdN-R` font.
 
 ## The json bundle
 
@@ -75,17 +82,55 @@ which is the underlying reason the JP slot is the only live one.
 ## Line breaks
 
 **Real newlines (U+000A) everywhere text is displayed** — all `ScenarioData`
-prose and every TextAsset in the json bundle. Audited: zero literal
-backslash-n tokens in any of them.
+prose and every TextAsset in the json bundle. Audited: zero literal backslash-n
+tokens in displayed text; the json bundle has none at all, and the handful left
+in `scenario01` all sit inside tags (below).
 
 Earlier in the patch's history some assets stored the two-character token and
 were converted since, so any script that splits on `"\\n"` now returns one giant
 line and silently reports every entry as a single line.
 
-The **only** surviving literal backslash-n tokens are 89 occurrences **inside
-`[command]` tag arguments** (`[select_monitor text="…\n…"]`, `[terinfo text="…"]`,
-and `LoadData`'s `childJsons`). Those must stay literal — a real newline inside
+The **only** surviving literal backslash-n tokens are 89 occurrences: 84 **inside
+`[command]` tag arguments** (`[select_monitor text="…\n…"]`, `[terinfo text="…"]`)
+and 5 in `LoadData`'s `childJsons`. Those must stay literal — a real newline inside
 `[...]` ends the command line and breaks parsing.
+
+**Count them after parsing, not before.** These assets are JSON, so a real newline
+is stored in the raw asset text as the two characters `\n`. Counting `"\\n"` over
+the raw string returns 208,576 for `ScenarioData` — all of them ordinary newlines.
+Parse first, then count; the answer is 55.
+
+### The hard breaks were lost in translation — chat restored, prose not
+
+Separate from the storage format: the Japanese build uses hard breaks heavily and
+the translation dropped nearly all of them. Stock `text[]` has **22,208** entries
+containing a real newline; the patch had **173**, all of them lines that were
+never translated. The halves had been run together on one line, often with
+nothing but a space at the join where the Japanese had a break.
+
+**The Genebark chat is fixed.** All **135** messages that were two or three lines
+in Japanese and one line in Vietnamese now carry the break again, placed where the
+Japanese broke: `text[]` is up to **308** multi-line entries. The split point was
+chosen per message — sentence boundary first, then a capitalised word (a full stop
+the translation dropped), then a clause-opening conjunction (`nên`, `nhưng`,
+`rồi`, `mà`, …), with the Japanese line lengths as the position prior. Twelve were
+overridden by hand where Vietnamese word order diverges from Japanese, mostly the
+`Unknown@73w35vq` announcements, which put the date last where Japanese puts it
+first.
+
+Two traps that showed up doing it, worth knowing before the same pass is run over
+the ADV prose:
+
+- A capital letter mid-sentence usually means a dropped full stop, but not when it
+  is a **proper noun** — `hợp tác với Unlogical`, `gửi cho anh Yuri`. Splitting
+  there cuts a name off its sentence. Keep an exclusion list (the romanisations in
+  [05](05-protagonist-name.md), plus `Unlogical`, `Genebark`, `Stage`, `Operator`,
+  `Player`, and the single-letter pronouns `T` / `C` this translation uses).
+- Splitting purely by proportional position cuts inside compounds — `nơi để lại kỷ`
+  / `niệm sâu sắc`. Rank candidates by grammatical strength first, distance second.
+
+Roughly **21,900** prose entries still read as one merged line. That pass is a
+much larger job and is tracked in the README.
 
 ## Measuring translation coverage
 

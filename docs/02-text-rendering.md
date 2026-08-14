@@ -12,12 +12,23 @@ TextMeshPro's field is `m_TextWrappingMode` in this Unity version — **not**
 
 | mode | components |
 |---|---|
-| **NoWrap** — hard `\n` required, long lines clip | Dictionary body / title / ruby (`level22`), ChapterSelect synopsis, Terminal rule item |
+| **NoWrap** — hard `\n` required, long lines clip | Dictionary title / ruby (`level22`), ChapterSelect synopsis, Terminal rule item |
 | **Normal** — auto-wraps | ADV message boxes (`level10` pids 886/887), backlog, Genebark chat, news/note widgets, Terminal info/caption, profile comment |
 
 On a NoWrap component the `\n` tokens are load-bearing: nothing re-flows at
 runtime, so after editing wording you must re-wrap by hand or the line clips
 mid-word.
+
+**Two components were switched out of NoWrap by this patch**, so the table above
+describes stock, not what ships:
+
+| component | file | change |
+|---|---|---|
+| `MainText (TMP)` — dictionary body | `level22` pid 331 | `m_TextWrappingMode` 0 → 1 |
+| `MainText (TMP)` — in-ADV dictionary popup | `level10` pid 895 | `m_TextWrappingMode` 0 → 1 |
+
+Both now re-flow at runtime, which is why their hard wrapping is no longer
+load-bearing. Check the shipped value before hand-wrapping anything.
 
 ## Known box budgets
 
@@ -47,12 +58,31 @@ When re-wrapping is not enough, enable TMP auto-sizing — but **always pin
 largest size in `[min, max]` that fits, and the stock `m_fontSizeMax` is 72,
 which would blow short strings up.
 
+Every component the shipped patch touches, verified by diffing against stock —
+`m_enableAutoSizing` goes 0 → 1 and the stock `[18, 72]` range is replaced by
+`[floor, original m_fontSize]`:
+
 | component | file | box | size | floor |
 |---|---|---|---|---|
 | `Message(Normal)/Text`, `Message(Highest)/Text` | `level10` (pids 886/887) | 1400×186 | 42 | 28 |
+| `ChapterTitle (TMP)` — save/load slot | `level19` (pid 187) | — | 27 | 16 |
+| `ChapterTitle (TMP)` — save/load slot | `level20` (pid 195) | — | 27 | 16 |
 | `NewsText01` (Genebark news headline) | `ui_jp` | stretched | 32 | 16 |
 | `NewsText02` (news body) | `ui_jp` | stretched | 25 | 14 |
 | `NoteText01` (note widget) | `ui_jp` | stretched | 32 | 16 |
+
+`level22` pid 331 also had `m_fontSizeMax` pulled 72 → 32, but its
+`m_enableAutoSizing` is still **0**, so that value is inert — the change that
+actually does something there is the wrap-mode flip above. Setting a size range
+without the flag is a silent no-op; assert on `m_enableAutoSizing` after writing.
+
+`level10` pid 895 is `MainText (TMP)`, the in-ADV dictionary popup — wrap-mode
+only, no size change.
+
+`level19` and `level20` are the **save/load slot screens** (`Date_yyyy`,
+`PlayTime`, `dataNo`, `Chapter (TMP)`, and in `level19` also `ADVLoadBG`), not
+chapter select. The chapter-title budget in the table above belongs to a
+different screen; do not apply it here.
 
 ADV overflow was measured against real geometry (box 1400×186, charSpacing 5.3,
 lineSpacing −42, pointSize 58, lineHeight 116, advances from the TTF embedded in
