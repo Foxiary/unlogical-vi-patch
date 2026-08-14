@@ -51,6 +51,29 @@ which used 18–19 **fullwidth** characters. Latin glyphs are about half as wide
 so each line used ~50% of the column and the text needed twice the lines: 36 of
 43 entries overflowed, one reaching 31 lines in a 9-line box.
 
+### On an auto-wrapping component, do not hand-wrap at all
+
+The Genebark news widget had the opposite failure. `GenebarkNewsData` kept the
+Japanese line breaks — 3 lines of 8–14 fullwidth glyphs — but the Vietnamese
+lines under them run 29–35 characters against a box built for 8 fullwidth
+glyphs, so **every hard line wrapped a second time** and left orphan words on
+their own line:
+
+```
+"Công nghệ tương lai" do AI      <- hard line 1, wrapped
+kiến                             <- its orphan
+tạo: Niềm hy vọng mang đến       <- hard line 2, wrapped
+cho                              <- its orphan
+nhân loại                        <- hard line 3
+```
+
+Rendered that way the 61 headlines took 6–10 lines each in a three-line box.
+`NewsText01`/`NewsText02` are `m_TextWrappingMode` 1 with auto-sizing on and
+`overflowMode` Overflow, so they wrap and shrink perfectly well on their own:
+removing all 299 breaks brings the headlines to 4–5 lines at a chosen size of
+19–24. The rule is per component — hand-wrap only where the wrap mode is NoWrap,
+and never on top of a component that already wraps.
+
 ## Auto-sizing as the fix
 
 When re-wrapping is not enough, enable TMP auto-sizing — but **always pin
