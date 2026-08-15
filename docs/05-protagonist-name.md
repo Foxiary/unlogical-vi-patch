@@ -92,16 +92,71 @@ offers no verified token for it inside a nameplate**. Metadata carries four:
 `[主人公]` (given name), `[主人公愛称]` (nickname), `[主人公氏名]` (full name),
 `[主人公苗字]` (surname) — but only `[主人公]` is ever used by the shipped data, and
 **no nameplate in the game uses a token at all**, so whether the nameplate path
-runs the token pass is untested. These eleven are the only literal `Kanna` left in
-`ScenarioData`. If someone verifies that a nameplate does expand `[主人公]`,
-switching them to `【[主人公]＆Kai】` is the remaining improvement.
+runs the token pass is untested. If someone verifies that a nameplate does expand
+`[主人公]`, switching them to `【[主人公]＆Kai】` is the remaining improvement.
 
-## Body text uses the token, even where Japanese does not
+## Every named line exists twice — do not tokenise the default variant
 
-A player who renames the protagonist must not keep reading the default name. The
-translation originally hardcoded `Kanna` **618** times in `text[]`; all 618 are now
-`[主人公]`, taking the field from 816 tokens to **1,434**, with **0** literal
-occurrences left outside the eleven nameplates.
+`ScenarioData` carries two boolean arrays parallel to `text[]`:
+
+| flag | what the line holds | when it is shown |
+|---|---|---|
+| `isDefaultNameAdjust` | the **literal** default name, `環無` / `Kanna` | the player kept the default name |
+| `isCustomNameAdjust` | the **`[主人公]` token** | the player entered their own |
+| neither | the token | always |
+
+The split is exact — in the Japanese, 601 lines are default+literal, 592 are
+custom+token, 243 are unflagged+token, and **not one line breaks the pattern**.
+The same sentence therefore appears twice, once in each form:
+
+```
+「あとでＵＲＬ送るよ。\n　環無はダメな匂いってある？」        <- isDefaultNameAdjust
+「あとでＵＲＬ送るよ。\n　[主人公]はダメな匂いってある？」    <- isCustomNameAdjust
+```
+
+**A default-name line is drawn verbatim.** Writing `[主人公]` into one does not
+substitute — it prints the token on screen, and it does so for exactly the players
+who kept the default name, i.e. most of them. This patch made that mistake once,
+converting all 618 literal `Kanna` in `text[]`; 601 of them were default-name
+lines and the token showed raw in the short stories. Reverted.
+
+What ships now: the 601 default-name lines keep the literal name, and **12** lines
+are tokenised — the ones where the Japanese has `[主人公]` and the translation had
+flattened it to a literal. `text[]` holds 828 tokens and 605 literal `Kanna`.
+
+So the surname/given-name rule is not "always use the token". It is:
+
+- **Never** touch a line flagged `isDefaultNameAdjust` — it is meant to be literal.
+- A literal on a line flagged `isCustomNameAdjust`, or on an unflagged line whose
+  Japanese uses the token, **is** a bug; those are the 12.
+- The **surname** is never tokenised anywhere: it is fixed in metadata and Name
+  Entry cannot change it. 375 literal `Suzuno` in `text[]` are all correct.
+
+One more precedent worth keeping: `涼乃さん` (surname + honorific) is rendered as a
+bare **`Suzuno`** — 195 of its 213 occurrences, and 82 of 89 when Yasaka Soichi is
+the speaker. The one line that had rendered it as `Kanna` (scenarioID 117,
+`text[616]`, 「……涼乃さん」) was brought into line.
+
+Japanese honorifics are dropped throughout. Two lines had kept a `san` because the
+Japanese breaks the honorific apart mid-word as the speaker falters — they now
+carry the halt without it:
+
+| | Japanese | now |
+|---|---|---|
+| 105 / 843 | 「……っ、ぐ……涼乃、さ……」 | 「...Hự... Suzu... no...」 |
+| 109 / 356 | 「弥坂、さん……　ここから、離れて……ください」 | 「Anh Yasaka... Làm ơn... hãy rời khỏi đây đi.」 |
+
+`弥坂さん` is `anh Yasaka` in 464 of 764 lines against 258 bare `Yasaka`, and she
+calls him `anh` two lines later in that same scene, so the address form is the
+convention rather than a fresh choice.
+
+Two `-kun` remain on purpose: `Kai-kun` (105/246) and the coded `K-kun` signature
+(106/314). `Kyapi-kun` is a mascot's name, not an honorific.
+
+**When auditing for honorifics, do not grep `\bsan\b`.** Vietnamese is written
+syllable-by-syllable, so that pattern hits ordinary words — `san sát`, `san sẻ`,
+`tập san`, `tuần san`, `màu san hô`. Seven of nine hits in this script were
+Vietnamese, not residue.
 
 Worth knowing before assuming this was a translation bug: **the Japanese original
 hardcodes 環無 too — 606 times**, in the same 60 scenarios where it also uses the
