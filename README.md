@@ -25,7 +25,7 @@ Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng c
 
 Chỉ cần **một file duy nhất** — không cần tải cả repository.
 
-1. Tải `unlogical-vi-patch-v1.1-romfs.zip` từ trang [Releases](../../releases).
+1. Tải `unlogical-vi-patch-v1.2-romfs.zip` từ trang [Releases](../../releases).
 2. Mở thư mục mod của Ryujinx (chuột phải vào game → **Open Mods Directory**, hoặc dán đường dẫn `%APPDATA%\Ryujinx\mods\contents\010068501ff9a000\` vào Explorer).
 3. Giải nén file zip **trực tiếp vào thư mục đó**, sao cho có đủ **cả hai** thư mục:
    * `...\contents\010068501ff9a000\vn-translation\romfs\Data\...`
@@ -72,7 +72,9 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
 
 ### 3. Bản vá code (19 byte, bắt buộc)
 
-File `.ips` ở trên là bản vá IPS32 tác động lên chính executable của game, không phải dữ liệu. Nó đổi `Chapter.get_DefaultMaxCharsPerLine` từ `18` thành `0`, tức **tắt luật ngắt dòng cứng** ở phần tóm tắt màn chọn chương, nhường việc xuống dòng cho TextMeshPro. Nhờ vậy tóm tắt mới đọc được thành đoạn văn liền mạch thay vì bị cắt vụn giữa từ.
+File `.ips` ở trên là bản vá IPS32 tác động lên chính executable của game, không phải dữ liệu. Nó đổi `Chapter.get_DefaultMaxCharsPerLine` từ `18` thành `40`, tức **nới luật ngắt dòng cứng** ở phần tóm tắt màn chọn chương, để engine thôi cắt lại những dòng mà dữ liệu đã ngắt sẵn theo từ.
+
+Cố ý **không** đặt về `0`: cùng hàm đó đếm số dòng nó ngắt ra để phân trang thanh cuộn, nên tắt hẳn thì game chỉ thấy một dòng, một trang, và thanh cuộn chết.
 
 Tên file **chính là build ID** của bản game, nên nó chỉ áp dụng đúng cho **v1.0.2**. Cài lên bản update khác thì Ryujinx sẽ bỏ qua (không khớp build ID) và bạn quay lại tình trạng ngắt mỗi 18 ký tự.
 
@@ -124,9 +126,11 @@ Chỉ còn đúng hai cái tên chưa có cách viết La-tinh:
 
 * `小住祥太` và `芳谷尚紀` — hai người chơi phụ, xuất hiện ở hai thông báo Trang chủ. Cả game lẫn bản dịch đều không ở đâu ghi cách đọc của họ, nên chưa chốt được.
 
-Các mục từng nằm trong danh sách này đã xong: tên ở màn Hồ sơ, 5 tên linh hồn trong danh sách Amity, ký hiệu `小`/`大` ở hai đầu thanh trượt âm lượng (nay là `−`/`+`), và 3 dòng thoại dư ký tự `っ`.
+Các mục từng nằm trong danh sách này đã xong: tên ở màn Hồ sơ, 5 tên linh hồn trong danh sách Amity, ký hiệu `小`/`大` ở hai đầu thanh trượt âm lượng (nay là `−`/`+`), 17 nhãn âm lượng giọng nhân vật, và 3 dòng thoại dư ký tự `っ`.
 
-> Trường `ConfigVolumeData.label` vẫn là tiếng Nhật nhưng **không hiển thị**: tên nhân vật ở tab SOUND được vẽ sẵn vào chính dải sprite `UL_option_sound_menu_ch_*`, và phần đó đã là chữ La-tinh. Đừng nhầm nó là mục tồn đọng.
+Còn bốn tên vẫn hiện tiếng Nhật ở **dòng INFO đáy tab SOUND** (`蛍`, `栞`, `恭介`, `光希`). Chúng là string literal trong `global-metadata.dat` chứ không phải dữ liệu, mà dạng La-tinh lại dài hơn số byte gốc nên chưa ghi đè tại chỗ được.
+
+> **Tab SOUND hiển thị tên nhân vật ở hai nơi**, và rất dễ chỉ sửa một. Chữ trên từng dải thanh trượt là **hình vẽ sẵn** trong sprite `UL_option_sound_menu_ch_*`; còn dòng INFO đáy màn ghép `ConfigVolumeData.label` với `SystemTextData` id 71 (`"'s volume settings"`). Sửa xong tranh mà quên `label` thì màn hình hiện `MIYABI` ở dải nhưng `雅火's volume settings` ở dưới.
 
 Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
 
