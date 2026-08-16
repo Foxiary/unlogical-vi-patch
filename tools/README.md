@@ -1,5 +1,96 @@
 # tools — bố cục hộp thoại ADV
 
+## Tách ExeFS (`extract_exefs.py`)
+
+```powershell
+python tools\extract_exefs.py "D:\Downloads\UNLOGICAL\UNLOGICAL [010068501FF9A800][v131072][Update].nsp" <thư mục ra>
+```
+
+Máy không có hactool/LibHac và Ryujinx đóng gói single-file nên không gọi được
+DLL nào — script tự làm bằng `pycryptodome` + `lz4`: đọc `prod.keys` của
+Ryujinx, giải ticket lấy titlekey, giải header NCA bằng AES-XTS (tweak kiểu
+Nintendo: số sector **big-endian**), giải section bằng AES-CTR, đọc PFS0, rồi
+giải nén NSO thành ảnh phẳng.
+
+> **Bẫy:** 8 byte thấp của bộ đếm CTR tính theo offset **trong NCA**, không phải
+> trong file NSP. Lẫn hai gốc thì ra rác trông rất hợp lý mà không có magic
+> `PFS0`.
+
+Kết quả (bản 1.0.2, đã kiểm 16/08/2026):
+
+```
+main 40.861.620 B · main.npdm · rtld · sdk · subsdk0
+ảnh phẳng main.flat 82.207.152 B
+NSO build id  669EA2FE0282C2C0EFEA4DA183419FB7
+```
+
+Bản vá code là `<build id>.ips` đặt ở
+`%APPDATA%\Ryujinx\mods\contents\010068501ff9a000\vn-translation\exefs\` — ngang
+hàng junction `romfs` sẵn có. Vá exefs gắn chặt với đúng build này.
+
+## Vá code: tắt ngắt dòng 18 ký tự
+
+```powershell
+python tools\make_ips.py [--apply]        # tạo + cài IPS
+python tools\fix_synopsis_box.py [--apply]   # giao việc wrap lại cho TMP
+```
+
+`Chapter.get_DefaultMaxCharsPerLine` là getter hằng số:
+
+```
+RVA 0x1998AC0   52800240  MOVZ W0, #18   ->   E0031F2A  MOV W0, WZR
+```
+
+Lớp cha `MyUICompornentBase` khai báo thuộc tính này kèm tooltip
+「非EN言語での1行あたり最大文字数。0以下で折り返し無効。」 — **0 là tắt ngắt
+dòng**, và hai màn khác trong game đã trả về 0 sẵn (`0x1A16930`, `0x1AB6B60`).
+
+Ba điểm dễ sai:
+
+- **Phải dùng IPS32**, không phải IPS. Offset của IPS thường chỉ 3 byte = 16 MB,
+  không với tới `0x1998AC0`. IPS32: magic `IPS32`, offset 4 byte big-endian, kết
+  thúc `EEOF`.
+- **Offset trong file vá = RVA + 0x100**, vì bản vá áp lên NSO đã giải nén tính
+  cả header 0x100 và `.text` có `mem_off = 0`. **Đừng** lấy cột `Offset:` trong
+  `dump.cs` — cột đó là `RVA + 0x10D`, suy ra từ `.text file_off = 0x10D` của
+  file **nén**, sai cho IPS.
+- `make_ips.py` đối chiếu byte cũ với `main.flat` trước khi ghi — chính bước này
+  bắt được sai build hoặc sai quy ước offset.
+
+**Vá code chỉ là một phần ba.** Lần thử đầu báo "y hệt như cũ", và log Ryujinx
+chứng minh bản vá không có lỗi:
+
+```
+ModLoader ApplyProgramPatches: Matching IPS patch '669E….ips' bid=669E…
+ModLoader Patch: Patching address offset 1998ac0 <= E0 03 1F 2A len=4
+```
+
+Để ý dòng log: **Ryujinx tự trừ 0x100**, nên offset `0x1998BC0` trong file rơi
+đúng vào RVA `0x1998AC0`. Thư mục `Logs\` của Ryujinx là cách nhanh nhất để phân
+biệt "vá không ăn" với "vá ăn rồi mà không đổi gì" — xem đó trước khi sửa bản vá.
+
+Không đổi gì là vì **cả 43 tóm tắt trong `ChapterData` đã được ngắt dòng tay ở
+≤18 ký tự** để tuân đúng cái luật vừa bị tắt. Cần thêm hai bước:
+
+```powershell
+python tools\fix_synopsis_box.py [--apply]   # trả việc wrap cho TMP
+python tools\unwrap_synopsis.py  [--apply]   # gỡ \n cứng trong dữ liệu
+```
+
+`MainText` vốn để `m_TextWrappingMode = 0` **đúng** vì code game ôm việc ngắt
+dòng; tắt code mà không bật wrap thì cả đoạn thành một dòng dài rồi bị mask cắt.
+Đó là trường **duy nhất** khác bản gốc — **không auto-size**: ô này có thanh cuộn
+riêng (`StorySlider` trong `ui_jp`) nên phần dôi ra cuộn xuống, mọi mục giữ
+nguyên cỡ 31.25. Backup `_backup\ui_jp.presynwrap2`.
+
+`unwrap_synopsis.py` nối các dòng lại thành đoạn liền: 43/43 mục, không mục nào
+có `\n\n` nên không mất ngắt đoạn thật. Mục dài nhất (`*MIYA-04-01`) cần cỡ
+**19.25** — khớp đúng con số suy ra từ metric trước đây, và trên sàn 18. Backup
+`_backup\json.presynunwrap`.
+
+Gỡ bản vá code: xoá đúng file `.ips`.
+
+
 ## Lỗi nhảy chữ của chú thích (ruby)
 
 `Ruby_Text` (IL2CPP, `Assets/Scripts/Util/Text/Ruby_Text.cs` — `textArray`,
@@ -45,6 +136,43 @@ render thành "Fallin" với "Gals" lơ lửng bên trên. Đổi sang dấu nh�
 U+2019 mà phần còn lại của bản dịch vẫn dùng thì giữ nguyên tên và mất ruby ma.
 
 Sửa thẻ làm đổi bề rộng, nên script **ngắt dòng lại từ đầu** cho những câu đó.
+
+## Ký tự `っ` sót trong dòng thoại đã dịch
+
+`python tools\fix_sokuon_lines.py [--apply]` — `っ` cuối câu là dấu nghẹn của
+tiếng Nhật (tiếng hụt hơi), không phải chữ có nghĩa; ba dòng bị giữ nguyên khi
+dịch. Backup `_backup\scenario01.presokuon`.
+
+| id sheet | entry | trước | sau |
+|---|---|---|---|
+| `89/txt/0047` | 30 | `「Kogasaki? ―...っ!?」` | `「Kogasaki...!?」` |
+| `95/txt/0579` | 36 | `「......っ」` / `「...っ」` | `「......」` |
+| `125/txt/0133` | 66 | `「...っ, Ờ.」` | `「...Ờ.」` |
+
+Sheet đã sửa cả ba từ trước (`UNLOGICAL_v2 (5).xlsx`: **0 ô tiếng Việt nào còn
+`っ`/`ッ`**), nên đây là merge xuôi chiều, không tự chế bản sửa. Sheet đổi nhiều
+hơn là chỉ bỏ `っ`: dòng 30 bỏ luôn `? ―`, dòng 66 bỏ dấu phẩy.
+
+> ### Merge chỉ chạm `text[]`, không chạm `scriptText`
+>
+> Đợt merge trước đã cập nhật `text[]` của cả ba slot nhưng **bỏ sót bản sao
+> trong `scriptText`**, để lại hai bản lệch nhau. `check_scripts.py` không bắt
+> được (nó soát 143 script chương, không soát `ScenarioData`), và đọc bản dịch
+> cũng không thấy vì `text[]` đã đúng. Entry 36 còn lệch sẵn từ trước đó nữa:
+> `text[579]` 6 chấm còn `scriptText` 3 chấm — thay theo kiểu tìm nguyên câu sẽ
+> trượt một trong hai.
+>
+> Sau mỗi đợt merge, soát chéo `text[j]` với dòng tương ứng trong `scriptText`.
+
+Script chặn trước khi ghi nếu `text[]` chưa khớp giá trị đích, và sau khi ghi thì
+khẳng định hai bản trùng nhau từng ký tự.
+
+> **Ba dòng `「っ！？」` ở entry 3/4/5 giữ nguyên** — đó là khối tiếng Nhật chưa
+> dịch (96,8% số dòng vẫn là kana/kanji), không phải chữ sót. Tiêu chí lọc phải là
+> "ký tự Nhật **duy nhất** của dòng là `っ`/`ッ`"; lỏng hơn thế thì 96 dòng
+> `にっこり` (từ khoá biểu cảm sprite trong tham số lệnh) sẽ báo nhầm.
+
+Đã chạy 16/08/2026, `check_scripts.py` và `check_chapterdata.py` đều PASS sau đó.
 
 ## Còn tồn (KHÔNG tự sửa)
 
@@ -296,6 +424,119 @@ mẫu lấy từ `UL_music_bg_base_02` (pid 61) cùng file. Kiểm tra sau khi v
 > không đụng tới bị ghi lại **rỗng** — file vẫn đủ 108 object, header vẫn đúng,
 > chỉ `byte_size` bằng 0. Serialize ra `bytes` xong mới mở file mà ghi. Lần đầu
 > chạy script này đã dính đúng lỗi đó và phải khôi phục từ backup.
+
+## Hai đầu thanh trượt màn OPTION (`小` / `大` → `−` / `+`)
+
+`python tools\fix_volume_ends.py [--apply]` — mỗi dòng của tab SOUND là **một
+sprite dải ngang** (~1094×35) trong `sharedassets7.assets`, gộp cả nhãn ở mép
+trái, 10 vạch nghiêng ở giữa, và hai chữ `小` / `大` ở hai đầu thang. Không có
+chuỗi ký tự nào. Ô chữ đo bằng phân đoạn màu tím, **chỉ xét `x > 600`** vì nhãn
+`SOICHI` / `HOTARU` cũng vẽ màu tím ở mép trái.
+
+```
+小  x 627..653 (27 px)      大  x 1065..1091 (26 px)
+```
+
+Nét `−` / `+` dày 3 px (khớp nét ngang của `大`), dài 22 px, siêu lấy mẫu 4× rồi
+thu nhỏ; màu lấy từ **chính từng dải** chứ không viết cứng, vì nén ASTC làm mỗi
+dải lệch vài đơn vị.
+
+> ### KHÔNG `full_rect_mesh()` cho những sprite này — đã hỏng một lần
+>
+> Atlas xếp **sát nét**: `textureRect` của một dải rộng 1094 px nhưng nét thật
+> chỉ chiếm vài mảng rời, và Unity **nhét sprite khác vào chỗ trống bên trong
+> chính hình chữ nhật đó**. Mesh tight là thứ duy nhất giữ cho mỗi dải chỉ vẽ
+> phần của mình. Phủ full-rect thì `X BUTTON`, `SKIP CHOICES`, `QUICK LOAD`,
+> `B STICK` … hiện thẳng vào giữa hàng âm lượng — nhìn ảnh render mới thấy, mọi
+> kiểm tra đếm object/kích thước đều báo bình thường.
+>
+> Nhưng mesh tight lại **không phủ hết ô chữ** (nó bám sát nét `小`/`大`), nên nét
+> mới vẽ ra sẽ bị xén thành từng mảnh. Cách đúng: **nối thêm đúng hai quad** phủ
+> hai ô chữ, giữ nguyên toàn bộ mesh cũ. Đây là ca ngược với `fix_music_key.py`
+> — ở đó sprite chiếm trọn ô nên full-rect an toàn.
+
+Mesh gốc vốn đã là một tập quad thẳng trục (`indexCount = 6 × số quad`, thứ tự
+`0,1,2, 0,2,3`) và **UV trong dữ liệu gốc toàn số 0** — Unity tự suy UV từ
+`textureRect`, không đọc UV của mesh. Quad nối thêm cũng để UV 0 cho khớp.
+
+```
+local_x = (textureRectOffset.x - m_Rect.width  * pivot.x + px)       / m_PixelsToUnits
+local_y = (textureRectOffset.y - m_Rect.height * pivot.y + (H - py)) / m_PixelsToUnits
+```
+
+Hai luồng vertex nằm liền nhau trong `m_DataSize`: luồng 0 là float3 vị trí
+(12 B/đỉnh), **đệm cho tròn 16 B**, rồi luồng 1 là float2 UV (8 B/đỉnh).
+
+Đã chạy 16/08/2026 (backup `_backup\sharedassets7.assets.prevolends`, đã gồm bản
+vá key prompt trước đó). Kiểm tra sau khi vá, đọc lại từ disk: 76 sprite, 0
+object rỗng, **33 188 điểm đổi — toàn bộ nằm trong hai ô chữ, 0 điểm nào ở ngoài**;
+biên độ tối đa ngoài ô chữ là 8 (nhiễu nén lại ASTC, cùng mức với 50 sprite không
+đụng tới). Mỗi dải 24–141 đỉnh → +8.
+
+> **Tab GAME không đụng tới.** Cặp nhãn ở đó là `遅/速`, `薄/濃`, `中/大`,
+> `既読/強制`, `ON/OFF` — chữ có nghĩa, `−/+` không diễn đạt được "chậm/nhanh" hay
+> "nhạt/đậm". Phải vẽ chữ, tách thành đợt riêng.
+>
+> **Nhãn tên nhân vật ở mép trái đã là chữ Latin từ trước** (MIYABI, KAI, RAN,
+> SOICHI, YURI, KOHAKU, SHINJU, HOTARU, MENOU, RURI, HIDAKA, CHIHIRO, ITSUKI,
+> KYOSUKE, SHIORI, MITSUKI, ANGELICA, ???, OTHERS). `ConfigVolumeData.label` vẫn
+> còn tiếng Nhật nhưng **không hiển thị** — nhãn thấy trên màn hình là sprite.
+
+## Tên trong popup Profile — bỏ chữ Nhật, chỉ để romaji
+
+Màn Profile vẽ tên bằng **hai ô chữ lồng nhau** (`ui_jp`, prefab `Terminal_Profile`):
+
+```
+BG/Pop/Common/Name            Image `UL_term_c_popup_prof_moji_name` 540x36
+  Text (TMP)   pid 6645790041897977147   ô  66x40, cỡ 31   <- name
+    Eizi(TMP)  pid 1526125385128713001   ô 226x40, cỡ 20   <- ruby
+```
+
+`Eizi` = 英字 ("chữ Latin"). **Bản gốc 1.0.2 vốn đã mang romaji của nhà phát hành
+trong `TerminalProfileData.ruby`**, nên màn hình xưa nay hiện `琥珀 Kohaku`. Đó
+chính là lý do 14 dòng `prof_name` trên sheet chưa bao giờ được merge — đổ thẳng
+bản dịch vào `name` sẽ ra "Kohaku Kohaku" và tràn ô 66 px. Xem
+[[unlogical-official-romanisation]].
+
+`python tools\fix_profile_name.py [--apply]` làm đúng một phép biến đổi,
+**không đổi một ký tự nào đang hiện trên màn hình**, chỉ đổi chỗ và cỡ:
+
+```
+name = ruby        ruby = ""
+```
+
+Ô 66 px vừa khít 2 chữ kanji và **`m_TextWrappingMode = 1`**, nghĩa là chữ Latin
+sẽ bị **wrap xuống dòng hai** chứ không tràn — nên bắt buộc phải nới. Đo từ chính
+tranh nền: caption "Name" (đã là tiếng Anh) nằm bên trái, gạch chân chạy hết
+540 px, mép trái ô Text cách mép trái khung 131 px → còn **409 px** dùng được.
+
+```
+m_SizeDelta.x        66 -> 400     (chừa 9 px)
+m_TextWrappingMode    1 -> 0       NoWrap
+m_enableAutoSizing    0 -> 1       20..31, max ghim đúng cỡ gốc
+```
+
+> **Đừng tin số đo bề rộng ở màn này.** `FOT-iroha21popuraStdN-R SDF-Dynamic` là
+> font **Dynamic**: bảng glyph nhúng chỉ có 84 mục và **thiếu 21 chữ cái Latin**
+> (game nạp thêm lúc chạy từ TTF nguồn). Mọi phép tính đều phải thay thế advance
+> nên chỉ là ước lượng (~279 px cho `Himejima Kyosuke`, dư ~130 px). NoWrap +
+> auto-size biến sai số đó thành vô hại — cùng cách đã dùng ở
+> `fix_recollection_list.py`.
+
+Đã chạy 16/08/2026 (backup `_backup\json.preprofname`, `_backup\ui_jp.preprofname`).
+Đọc lại từ disk: bundle `json` **chỉ `TerminalProfileData` đổi nội dung** (36/36
+TextAsset), 14/21 dòng chuyển xong; `ui_jp` 7937 object, 0 object rỗng,
+dataflags 194, và các bản vá cũ còn nguyên (11 ô nút Q&A vẫn `characterSpacing = 2`,
+5 sprite tên Q&A vẫn đủ).
+
+Bảy dòng còn chữ Nhật ở `name` là chỗ giữ chỗ, không hiển thị tên thật:
+`主人公`, `モブ1`–`モブ5`, `モブ？`.
+
+Cả 14 tên khớp đúng bản xuất `UNLOGICAL_v2 (5).xlsx` (16/08 20:39) — kể cả `id 4`
+`新庄 稜央` = **`Shinjo Rio`**, chỗ mà bản xuất trước đó còn ghi `Shinjo Ryo`.
+
+> Nếu sau này phải sửa tên này lần nữa thì thay **trọn cụm**: `Ryo` trần còn
+> trúng `Hinode Ryoku`, nhân vật khác, 80 chỗ.
 
 ## Danh sách SHORT STORY tràn khung
 

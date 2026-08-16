@@ -4,6 +4,11 @@ romfs/** binary
 *.resS   binary
 *.dat    binary
 
+# The code patch is 19 bytes of machine code; an EOL conversion would corrupt it silently
+exefs/** binary
+*.ips    binary
+*.png    binary
+
 # Text files in the repo keep LF
 *.md   text eol=lf
 *.json text eol=lf

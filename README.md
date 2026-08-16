@@ -25,10 +25,14 @@ Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng c
 
 Chỉ cần **một file duy nhất** — không cần tải cả repository.
 
-1. Tải `unlogical-vi-patch-v1.0-romfs.zip` từ trang [Releases](../../releases).
+1. Tải `unlogical-vi-patch-v1.1-romfs.zip` từ trang [Releases](../../releases).
 2. Mở thư mục mod của Ryujinx (chuột phải vào game → **Open Mods Directory**, hoặc dán đường dẫn `%APPDATA%\Ryujinx\mods\contents\010068501ff9a000\` vào Explorer).
-3. Giải nén file zip **trực tiếp vào thư mục đó**, sao cho đường dẫn thành `...\contents\010068501ff9a000\vn-translation\romfs\Data\...`
+3. Giải nén file zip **trực tiếp vào thư mục đó**, sao cho có đủ **cả hai** thư mục:
+   * `...\contents\010068501ff9a000\vn-translation\romfs\Data\...`
+   * `...\contents\010068501ff9a000\vn-translation\exefs\669EA2FE0282C2C0EFEA4DA183419FB7.ips`
 4. Khởi động game. LayeredFS tự nhận diện, không cần bật/tắt gì thêm.
+
+> **Phải có đủ cả `romfs` lẫn `exefs`.** File `.ips` chỉ nặng 19 byte nhưng nó tắt luật ngắt dòng cứng ở màn chọn chương. Nếu chỉ chép `romfs`, phần tóm tắt chương sẽ bị cắt dòng giữa từ, mỗi 18 ký tự một lần. Đây cũng là lý do bản v1.1 phát hành lần đầu bị thiếu và đã được thay thế.
 
 File zip chỉ chứa dữ liệu game đã sửa đổi, không kèm README hay tài liệu.
 
@@ -61,9 +65,22 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     sharedassets13.assets  sharedassets16.assets  sharedassets17.assets
     sharedassets19.assets  sharedassets21.assets  sharedassets22.assets
 
+<mods>/contents/010068501ff9a000/vn-translation/exefs/
+    669EA2FE0282C2C0EFEA4DA183419FB7.ips
+
 ```
 
-### 3. Cấu hình Ryujinx
+### 3. Bản vá code (19 byte, bắt buộc)
+
+File `.ips` ở trên là bản vá IPS32 tác động lên chính executable của game, không phải dữ liệu. Nó đổi `Chapter.get_DefaultMaxCharsPerLine` từ `18` thành `0`, tức **tắt luật ngắt dòng cứng** ở phần tóm tắt màn chọn chương, nhường việc xuống dòng cho TextMeshPro. Nhờ vậy tóm tắt mới đọc được thành đoạn văn liền mạch thay vì bị cắt vụn giữa từ.
+
+Tên file **chính là build ID** của bản game, nên nó chỉ áp dụng đúng cho **v1.0.2**. Cài lên bản update khác thì Ryujinx sẽ bỏ qua (không khớp build ID) và bạn quay lại tình trạng ngắt mỗi 18 ký tự.
+
+Gỡ bản vá = xóa đúng một file này. Nhưng nếu gỡ thì nên dùng lại `romfs` của v1.0, vì dữ liệu tóm tắt từ v1.1 trở đi đã bỏ hết ngắt dòng thủ công.
+
+Trên máy Switch chạy Atmosphère, file này đặt ở `atmosphere/exefs_patches/<tên bất kỳ>/`.
+
+### 4. Cấu hình Ryujinx
 
 Thư mục chứa mod là:
 

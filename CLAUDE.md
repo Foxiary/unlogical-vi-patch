@@ -6,10 +6,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A fan Vietnamese translation patch for the Nintendo Switch visual novel **UNLOGICAL** (Title ID `010068501ff9a000`, game version **v1.0.2**), shipped as LayeredFS mod romfs.
 
-There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains four things:
+There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains five things:
 
-- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **26 files ship; 25 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
-- `manifest.json` — path / size / MD5 for all 26, each tagged `"where": "repo"` or `"release"`.
+- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **27 files ship; 26 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
+- `exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips` — a 19-byte IPS32 code patch, and **the one file that is easy to forget**: it sits beside `romfs/`, not inside it, so a release built by zipping `romfs` alone silently omits it. v1.1 shipped that way once and had to be replaced. It turns off the chapter-select hard wrap (`Chapter.get_DefaultMaxCharsPerLine` 18 → 0); without it the un-wrapped synopses break mid-word every 18 characters, which is *worse* than not patching at all. The filename is the NSO build id, so it is bound to v1.0.2.
+- `manifest.json` — path / size / MD5 for all 27, each tagged `"where": "repo"` or `"release"`.
 - `docs/` — reverse-engineering notes, in English (the vocabulary is Unity/UnityPy). `README.md` is in Vietnamese, aimed at players.
 - `tools/` and `e2e/` — the patch scripts and the test harness; see [Tooling](#tooling) below.
 
