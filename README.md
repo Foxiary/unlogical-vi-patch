@@ -120,13 +120,13 @@ Terminal (Thiết bị)
 
 ## Các phần tồn đọng đã biết
 
-Những phần này hiện vẫn là tiếng Nhật và đang được theo dõi để xử lý tiếp:
+Chỉ còn đúng hai cái tên chưa có cách viết La-tinh:
 
-* 21 tên nhân vật ở màn hình Hồ sơ (`TerminalProfileData.name`)
-* 17 nhãn chỉnh âm lượng giọng nói từng nhân vật trong phần Cài đặt âm thanh (`ConfigVolumeData.label`)
-* 5 tên linh hồn trong danh sách Amity (`TerminalProfileAmityData.name`)
-* Ký hiệu `小` / `大` ở hai đầu 18 thanh trượt âm lượng — đây là hình ảnh vẽ sẵn nằm trong sprite `UL_option_sound_menu_ch_*`, tên nhân vật trong cùng sprite thì đã được dịch
-* 3 dòng thoại kịch bản có chứa ký tự `っ` bị dư
+* `小住祥太` và `芳谷尚紀` — hai người chơi phụ, xuất hiện ở hai thông báo Trang chủ. Cả game lẫn bản dịch đều không ở đâu ghi cách đọc của họ, nên chưa chốt được.
+
+Các mục từng nằm trong danh sách này đã xong: tên ở màn Hồ sơ, 5 tên linh hồn trong danh sách Amity, ký hiệu `小`/`大` ở hai đầu thanh trượt âm lượng (nay là `−`/`+`), và 3 dòng thoại dư ký tự `っ`.
+
+> Trường `ConfigVolumeData.label` vẫn là tiếng Nhật nhưng **không hiển thị**: tên nhân vật ở tab SOUND được vẽ sẵn vào chính dải sprite `UL_option_sound_menu_ch_*`, và phần đó đã là chữ La-tinh. Đừng nhầm nó là mục tồn đọng.
 
 Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
 
