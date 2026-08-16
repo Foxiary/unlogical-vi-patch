@@ -13,11 +13,37 @@ Repository này **chỉ chứa các file game đã được bản dịch sửa �
 
 |  |  |
 | --- | --- |
-| Phiên bản game | **v1.0.2** |
+| Phiên bản game | **v1.0.2** — bắt buộc, xem bên dưới |
+| Mã bản cập nhật | `v131072` |
 | Title ID | `010068501ff9a000` |
 | Đã kiểm tra trên | Ryujinx (cũng hoạt động trên máy Switch gốc qua Atmosphère LayeredFS) |
 
-Bản patch được dựng trên nền phiên bản v1.0.2. Việc áp dụng cho các phiên bản game khác có thể gây văng game (crash) hoặc lỗi hiển thị văn bản.
+> ### ⚠ Phải đúng v1.0.2, không phải "nên"
+>
+> Cài lên **1.0.0 hoặc 1.0.1 thì game văng ngay khi khởi động**, kèm thông báo
+> *"The software was closed because an error occurred."* Đây không phải lỗi cài đặt sai — bản patch
+> gắn chặt với phiên bản:
+>
+> * `global-metadata.dat` được vá **tại chỗ theo offset**. Offset của bản 1.0.1 khác 1.0.2, nên
+>   ghi vào là hỏng bảng chuỗi của game.
+> * 11 file `.assets` vẫn trỏ vào `.resS` của game gốc bằng **địa chỉ tuyệt đối**. Bản patch cố ý
+>   không kèm `.resS` (LayeredFS lấy từ máy bạn) — điều đó chỉ đúng khi game gốc **cùng phiên bản**.
+>
+> Đo trên hai bản dump 1.0.0 và 1.0.2: **24 trong 27 file** bản patch thay thế đều khác nhau giữa
+> hai phiên bản. Chỉ 3 file giống nhau, nên **không có cách cài một phần cho an toàn**.
+
+### Kiểm tra máy đang ở phiên bản nào
+
+**Trên Switch** — mở DBI, chọn game, xem hai dòng:
+
+```
+Version : 1.0.2
+Update  : Version 2 [v131072]
+```
+
+Nếu thấy `1.0.1` / `[v65536]` thì cài file update `[v131072]` đè lên. Không cần gỡ gì, không mất save.
+
+**Trên Ryujinx** — chuột phải vào game → **Manage Title Updates**, chọn bản `v131072`.
 
 ---
 
