@@ -37,10 +37,18 @@ APPLY = "--apply" in sys.argv
 
 # (nhãn, RVA, byte cũ, byte mới)
 PATCHES = [
-    ("Chapter.get_DefaultMaxCharsPerLine  18 -> 0 (tắt ngắt dòng)",
+    # KHÔNG dùng 0: trả 0 thì `SetNoteTextFromString` bỏ luôn bước ngắt dòng, mà
+    # chính nó cũng là chỗ đếm số dòng để chia trang — thanh cuộn thấy 1 dòng =
+    # 1 trang và chết cứng.
+    #
+    # Cũng không dùng 24: engine cắt CỨNG đúng N ký tự, không nhìn khoảng trắng,
+    # nên ra `…một nh / à sáng tạo…`. Nhưng nó tôn trọng `\n` có sẵn, nên việc
+    # ngắt theo từ giao cho `wrap_synopsis.py` làm ở phía dữ liệu (dòng dài nhất
+    # 30 ký tự), còn hằng số này chỉ cần cao hơn con số đó để engine đừng cắt nữa.
+    ("Chapter.get_DefaultMaxCharsPerLine  18 -> 40 (cao hơn dòng dài nhất 30)",
      0x1998AC0,
      bytes.fromhex("40028052"),      # MOVZ W0, #18
-     bytes.fromhex("E0031F2A")),     # MOV  W0, WZR
+     bytes.fromhex("00058052")),     # MOVZ W0, #40
 ]
 
 

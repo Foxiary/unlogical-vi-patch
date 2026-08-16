@@ -1,5 +1,53 @@
 [
   {
+    "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
+    "bytes": 9259608,
+    "md5": "f22b7a2ad1931a0aa5c0cb8b5c1f95f1",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/anim/anim01",
+    "bytes": 28256011,
+    "md5": "e43455bf5326f80532d443dd545407a7",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/font/font_jp",
+    "bytes": 269643817,
+    "md5": "045b926f019e144e7eb853892c9c7bf0",
+    "where": "release"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/json/json",
+    "bytes": 115129,
+    "md5": "527e4ff7b17a132d91ff8e437434737c",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/movie/movie_jp_02",
+    "bytes": 104598890,
+    "md5": "2df2dedba508ec440a76e382faf1153d",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/scenario/scenario01",
+    "bytes": 8730093,
+    "md5": "5ce03fd6232772fd5c9c95675f6910b2",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/scene/scene_jp",
+    "bytes": 4150380,
+    "md5": "a638ae051e301a3c275941c9f7fb6d5f",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/ui/ui_jp",
+    "bytes": 51928613,
+    "md5": "2a223879814ee243f59338b13f8174b7",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/level10",
     "bytes": 160480,
     "md5": "377728d92457448ac345b2490d9a0fa3",
@@ -111,54 +159,6 @@
     "path": "romfs/Data/sharedassets9.assets",
     "bytes": 4290776,
     "md5": "08fc9c03281bc6bb09df55e9f67123f1",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
-    "bytes": 9259608,
-    "md5": "f22b7a2ad1931a0aa5c0cb8b5c1f95f1",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/anim/anim01",
-    "bytes": 28256011,
-    "md5": "e43455bf5326f80532d443dd545407a7",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/font/font_jp",
-    "bytes": 269643817,
-    "md5": "045b926f019e144e7eb853892c9c7bf0",
-    "where": "release"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/json/json",
-    "bytes": 115129,
-    "md5": "527e4ff7b17a132d91ff8e437434737c",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/movie/movie_jp_02",
-    "bytes": 104598890,
-    "md5": "2df2dedba508ec440a76e382faf1153d",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8730093,
-    "md5": "5ce03fd6232772fd5c9c95675f6910b2",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/scene/scene_jp",
-    "bytes": 4150380,
-    "md5": "a638ae051e301a3c275941c9f7fb6d5f",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/ui/ui_jp",
-    "bytes": 51928613,
-    "md5": "2a223879814ee243f59338b13f8174b7",
     "where": "repo"
   },
   {
