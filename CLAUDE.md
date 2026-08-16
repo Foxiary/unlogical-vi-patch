@@ -8,9 +8,9 @@ A fan Vietnamese translation patch for the Nintendo Switch visual novel **UNLOGI
 
 There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains five things:
 
-- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **27 files ship; 26 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
-- `exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips` — a 19-byte IPS32 code patch, and **the one file that is easy to forget**: it sits beside `romfs/`, not inside it, so a release built by zipping `romfs` alone silently omits it. v1.1 shipped that way once and had to be replaced. It turns off the chapter-select hard wrap (`Chapter.get_DefaultMaxCharsPerLine` 18 → 0); without it the un-wrapped synopses break mid-word every 18 characters, which is *worse* than not patching at all. The filename is the NSO build id, so it is bound to v1.0.2.
-- `manifest.json` — path / size / MD5 for all 27, each tagged `"where": "repo"` or `"release"`.
+- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **28 files ship; 27 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
+- `exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips` — a 19-byte IPS32 code patch, and **the one file that is easy to forget**: it sits beside `romfs/`, not inside it, so a release built by zipping `romfs` alone silently omits it. v1.1 shipped that way once and had to be replaced. It raises the chapter-select hard wrap, `Chapter.get_DefaultMaxCharsPerLine` **18 → 40**, so the engine stops re-chopping lines the data already wrapped by word. Without it those 24–30 character lines get cut every 18 characters into a 18/7/18/7 zig-zag — 421 lines split mid-word, *worse* than not patching at all. Do **not** set it to 0: the same routine counts the lines it breaks to page the `StorySlider`, so zero wrapping means one page and a dead scrollbar. The filename is the NSO build id, so it is bound to v1.0.2.
+- `manifest.json` — path / size / MD5 for all 28, each tagged `"where": "repo"` or `"release"`.
 - `docs/` — reverse-engineering notes, in English (the vocabulary is Unity/UnityPy). `README.md` is in Vietnamese, aimed at players.
 - `tools/` and `e2e/` — the patch scripts and the test harness; see [Tooling](#tooling) below.
 
@@ -97,7 +97,8 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `level10` | 0.2 | 4 TMP components (ADV message ×2, novel-mode box, dictionary popup) |
 | `level17` | 0.03 | the SS LIST `Buttons` `VerticalLayoutGroup` — `m_Padding.m_Left` 95 → 143, pinning the widened row's left edge |
 | `level19` / `level20` | 0.04 | the save/load slot screens — `ChapterTitle (TMP)` auto-sizing, one component each |
-| `level22` | 0.1 | dictionary `MainText (TMP)` wrap mode · ruby size |
+| `level22` | 0.1 | dictionary `MainText (TMP)` wrap mode · ruby `characterSpacing` 15 → 0 · `Mask_Ryby` widened 180 → 500 |
+| `level13` | 0.06 | MUSIC room — `TrackTitle (TMP)` `characterSpacing` 6 → 0 (2 bytes; 16 of 21 track titles still overflow) |
 
 **Six font assets carry the added glyphs, and four of them are duplicated across files.** `FOT-NewRodinProN-DB` lives in `sharedassets7`, `scene_jp` *and* `ui_jp`; `FOT-DNPShueiMGoStd-B`/`-L` in `sharedassets10` and `ui_jp`; `FOT-DotGothic12Std-M` in `sharedassets13` and `ui_jp`; `FOT-iroha21popuraStdN-R` in `resources.assets` and `ui_jp`; `FOT-NewRodinProN-M` only in `anim01`. Patching one copy and not its twin leaves tofu on whichever screens load the other file — that is why `anim01` and `sharedassets10` ship at all (`sharedassets13` would anyway, for the `Music` atlas).
 
