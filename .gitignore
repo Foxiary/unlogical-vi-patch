@@ -18,3 +18,7 @@ _keyprompt/
 e2e/out/
 __pycache__/
 *.pyc
+
+# Third-party tooling and the game's own executable, extracted locally for the code patch.
+# main.flat is the decompressed NSO — game code, never redistribute it.
+tools/_ext/
