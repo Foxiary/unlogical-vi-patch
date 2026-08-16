@@ -33,7 +33,11 @@ APPLY = "--apply" in sys.argv
 
 MAIN_TEXT = -1764327492018131728          # Mask/MainText
 CHANGES = {
-    "m_TextWrappingMode": 1,              # 0 = NoWrap -> 1 = Normal
+    # TMP KHÔNG được wrap: code game vẫn tự chèn ngắt dòng (mỗi 24 ký tự) và
+    # đếm số dòng đó để chia trang cho thanh cuộn. TMP ngắt thêm một lần nữa thì
+    # số dòng thật > số dòng code tưởng, và phần dôi ra rơi vào khoảng giữa hai
+    # trang, không cuộn tới được.
+    "m_TextWrappingMode": 0,
     # KHÔNG auto-size: ô này có thanh cuộn riêng (`StorySlider` trong ui_jp), nên
     # phần dôi ra cuộn xuống chứ không cần thu nhỏ chữ. Giữ nguyên cỡ 31.25 cho
     # mọi mục, đọc thoải mái hơn là 43 mục mỗi mục một cỡ.
@@ -41,6 +45,12 @@ CHANGES = {
     "m_fontSizeMin": 18.0,                # = gốc
     "m_fontSizeMax": 72.0,                # = gốc (không dùng tới khi auto-size tắt)
 }
+# Dấu phụ chồng của tiếng Việt (ắ = trăng + sắc) vươn cao hơn đường ascender của
+# font, nên dòng ĐẦU bị mask xén mất dấu sắc: đo trên ảnh chụp thì dòng 1 chỉ cao
+# 27 px trên baseline trong khi dấu sắc cần 32. Lề trên gốc lại là -1, tức còn
+# kéo chữ lên thêm 1 px nữa. Đẩy xuống 6 px là vừa đủ (thiếu 5) mà vẫn giữ được
+# 7 dòng một trang: 6*72.8 + 31.25 = 468.05 <= 474 - 5.
+MARGIN_TOP = 5.0
 
 
 def main():
@@ -54,12 +64,15 @@ def main():
         raise SystemExit("không thấy MainText pid %d" % MAIN_TEXT)
 
     tree = target.read_typetree()
-    print("MainText  fontSize=%s wrap=%s autosize=%s min=%s max=%s"
+    print("MainText  fontSize=%s wrap=%s autosize=%s min=%s max=%s margin=%s"
           % (tree["m_fontSize"], tree["m_TextWrappingMode"], tree["m_enableAutoSizing"],
-             tree["m_fontSizeMin"], tree["m_fontSizeMax"]))
+             tree["m_fontSizeMin"], tree["m_fontSizeMax"], tree["m_margin"]))
     assert abs(tree["m_fontSize"] - 31.25) < 1e-6, "fontSize gốc đã khác"
 
     changed = []
+    if tree["m_margin"]["y"] != MARGIN_TOP:
+        changed.append("m_margin.y %s -> %s" % (tree["m_margin"]["y"], MARGIN_TOP))
+        tree["m_margin"]["y"] = MARGIN_TOP
     for k, v in CHANGES.items():
         if tree[k] != v:
             changed.append("%s %s -> %s" % (k, tree[k], v))

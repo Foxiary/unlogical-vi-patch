@@ -16,6 +16,7 @@ _keyprompt/
 
 # e2e captures real screenshots of the game; the harness is committed, the frames are not
 e2e/out/
+tools/_preview/
 __pycache__/
 *.pyc
 

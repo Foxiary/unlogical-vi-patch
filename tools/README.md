@@ -79,9 +79,19 @@ python tools\unwrap_synopsis.py  [--apply]   # gỡ \n cứng trong dữ liệu
 
 `MainText` vốn để `m_TextWrappingMode = 0` **đúng** vì code game ôm việc ngắt
 dòng; tắt code mà không bật wrap thì cả đoạn thành một dòng dài rồi bị mask cắt.
-Đó là trường **duy nhất** khác bản gốc — **không auto-size**: ô này có thanh cuộn
-riêng (`StorySlider` trong `ui_jp`) nên phần dôi ra cuộn xuống, mọi mục giữ
-nguyên cỡ 31.25. Backup `_backup\ui_jp.presynwrap2`.
+**Không auto-size**: ô này có thanh cuộn riêng (`StorySlider` trong `ui_jp`) nên
+phần dôi ra cuộn xuống, mọi mục giữ nguyên cỡ 31.25. Backup
+`_backup\ui_jp.presynwrap2`.
+
+Trường thứ hai phải sửa là **`m_margin.y` −1 → 6**. Dấu phụ chồng của tiếng Việt
+(`ắ` = trăng + sắc) vươn cao hơn đường ascender của font, nên **dòng đầu tiên** bị
+mask xén mất dấu sắc — báo lỗi là "chữ mắt bị ghi thành măt", nhưng dữ liệu vô
+tội: `mắt` và `bắt` cùng là `U+1EAF`, chỉ khác chỗ `mắt` nằm ở dòng 1. Đo trên
+ảnh 1920×1080: dòng 1 chỉ cao **27 px** trên baseline còn dấu sắc cần **32**; lề
+trên gốc lại là −1, kéo chữ lên thêm 1 px nữa.
+
+> Thiếu dấu là triệu chứng **bố cục** trước khi là lỗi chữ — so mã ký tự trước
+> khi sửa chuỗi. Và hộp nào có dòng đầu sát mask thì tiếng Việt cần vài px lề trên.
 
 `unwrap_synopsis.py` nối các dòng lại thành đoạn liền: 43/43 mục, không mục nào
 có `\n\n` nên không mất ngắt đoạn thật. Mục dài nhất (`*MIYA-04-01`) cần cỡ
@@ -477,10 +487,136 @@ biên độ tối đa ngoài ô chữ là 8 (nhiễu nén lại ASTC, cùng mứ
 > `既読/強制`, `ON/OFF` — chữ có nghĩa, `−/+` không diễn đạt được "chậm/nhanh" hay
 > "nhạt/đậm". Phải vẽ chữ, tách thành đợt riêng.
 >
-> **Nhãn tên nhân vật ở mép trái đã là chữ Latin từ trước** (MIYABI, KAI, RAN,
-> SOICHI, YURI, KOHAKU, SHINJU, HOTARU, MENOU, RURI, HIDAKA, CHIHIRO, ITSUKI,
-> KYOSUKE, SHIORI, MITSUKI, ANGELICA, ???, OTHERS). `ConfigVolumeData.label` vẫn
-> còn tiếng Nhật nhưng **không hiển thị** — nhãn thấy trên màn hình là sprite.
+> **Nhãn tên nhân vật ở mép trái là tranh mod vẽ lại.** Bản gốc để chữ Nhật
+> (`雅火`, `戒`, `琥珀`, `伊槻` …); chỉ `BGM`, `MOVIE`, `SE`, `VOICE` là Latin sẵn.
+> Một đợt trước đã vẽ đè thành MIYABI, KAI, RAN, SOICHI, YURI, KOHAKU, SHINJU,
+> HOTARU, MENOU, RURI, HIDAKA, CHIHIRO, ITSUKI, KYOSUKE, SHIORI, MITSUKI,
+> ANGELICA, ???, OTHERS. `ConfigVolumeData.label` vẫn còn tiếng Nhật nhưng
+> **không hiển thị** — nhãn thấy trên màn hình là sprite.
+>
+> (Ghi chú cũ ở đây từng viết là "đã Latin từ trước" — sai, và chính nó làm lạc
+> hướng khi truy lỗi nét mảnh. Xem mục **Viền chữ mất màu** ngay dưới.)
+
+## Viền chữ mất màu — tranh mod mảnh hơn tranh gốc một cấp weight
+
+`python tools\fix_alpha_bleed.py [--apply]`
+
+Nhãn mod vẽ (`MIYABI`, `KAI`, `RAN` …) trông mảnh hơn nhãn gốc (`SE`, `VOICE`)
+dù **cùng typeface, cùng chiều cao chữ hoa 25 px**. Đo thân chữ `I` — chữ có
+trong cả `VOICE`, `MIYABI`, `KAI` nên so được một-đối-một, tính cả phủ khử răng
+cưa:
+
+```
+                    trong atlas   trên màn
+VOICE  (gốc)             3.75        3.77     <- đi qua nguyên vẹn
+MIYABI (mod)      4.02 / 3.82   3.04 / 2.79   <- rụng ~1 px
+KAI    (mod)             3.82        2.96
+```
+
+Tranh mod vẽ **đủ dày**; nó rụng nét trên đường từ atlas ra màn hình.
+
+**Nguyên nhân: thiếu loang màu ở vùng trong suốt.** Nhà phát hành trải màu mực
+ra khắp nền trong suốt — dải `雅火` gốc giữ RGB `255,148,190` ở *mọi* điểm, kể cả
+`alpha = 0`. Tranh mod để RGB `0,0,0` sát ngay cạnh nét:
+
+```
+ch_01_miya   x=  38        39          40..42        43
+   RGB      0,0,0     80,46,60    255,148,191   245,142,184
+   A            0           25            255           235
+```
+
+Hai chỗ nền đen lọt vào nét: **ASTC 4×4** để RGB và alpha chung một khối (thấy
+ngay trong atlas: `A=25` mà RGB chỉ còn `80,46,60`), và **GPU lấy mẫu song
+tuyến** — texel trong suốt mang RGB `0,0,0` vẫn được tính vào phép nội suy vì
+alpha không premultiply. Chỗ thứ hai ăn hết phần nét: trên màn, kênh blue của
+điểm viền tụt còn **117**, thấp hơn cả nền (169) lẫn mực (191), nên mắt không
+tính viền vào thân chữ nữa.
+
+> **Mô phỏng lại được, nên kiểm tra không cần chạy game.** Trung bình 2×2 texel
+> rồi ghép lên nền ô nhãn tái tạo đúng số đo trên ảnh chụp tới hai chữ số thập
+> phân (`VOICE` 3.75 vs 3.77, `miya` 3.03 vs 3.04, `kai` 2.96 vs 2.96). Cột
+> "song tuyến" của `report()` chính là cái mắt nhìn thấy — cột "texel" thì không.
+
+**Cách sửa:** giãn màu từ điểm đục gần nhất ra mọi điểm chưa đục, **giữ nguyên
+alpha**. Đúng quy ước tranh gốc. Không vẽ lại chữ, không đụng mesh.
+
+> **Bán kính 4, đừng để rộng hơn.** Song tuyến chỉ chạm texel kề (1 px), khối
+> ASTC rộng 4 px (3 px). Atlas xếp sát nét nên bán kính lớn sẽ hút màu của
+> sprite **hàng xóm** — thử bán kính 12 thì nét mảnh của `UL_option_keycon_button_X`
+> (xếp chèn ngay trong ô của `VOICE`) bị kéo mất màu.
+
+Vá cả texture atlas chứ không riêng 23 dải SOUND: mọi sprite mod vẽ lại trong
+cùng file đều dính. `UL_option_keycon_button_X` là ví dụ — chữ tím `134,81,170`
+đặc, viền cũng bị kéo tối; sau khi vá, dựng thử trên nền trắng thì hết viền xám.
+
+Đã chạy 17/08/2026 (backup `_backup\sharedassets7.assets.prebleed`). Đọc lại từ
+disk: 85 object, 76 sprite, **0 object rỗng**, format vẫn ASTC 4×4.
+
+```
+                trước          sau
+MIYABI     3.03 px       4.01 px
+KAI        2.96 px       3.79 px
+ITSUKI     2.49 px       3.28 px
+VOICE      3.75 px       3.75 px   (không đổi — vốn đã đúng)
+viền hỏng  50% tb        3% tb ; số dải >20%: 18 -> 2
+```
+
+Điểm đục gần như không xê dịch: trong 628 352 điểm `alpha ≥ 250`, RGB lệch trung
+bình **0.02**, chỉ **3 điểm** lệch quá 8. Alpha toàn ảnh lệch trung bình 0.007
+(nhiễu nén lại ASTC). 702 543 điểm đổi RGB — toàn bộ nằm ở vùng chưa đục.
+
+> Hai dải `ch_06_koha` và `ch_13_itsu` vẫn báo 32% / 27% "viền hỏng" sau khi vá.
+> **Dương tính giả**: thước đo quét cả nửa trái ô sprite nên vớ phải sprite lạ
+> xếp chèn, không phải nhãn. Dựng thử thì cả hai đều đầy đặn hơn hẳn.
+
+> **Lỗi này nhiều khả năng dính mọi asset mod vẽ lại** (`ui_jp`, `scene_jp`,
+> `sharedassets*` khác, dải phím, nhãn Q&A, ô GET/TOTAL, tên Profile…). Mới quét
+> và vá `sharedassets7.assets`. Chỗ khác chưa đụng.
+
+## Nhãn tab SOUND dày hơn nét gốc — bào lại cho khớp
+
+`python tools\fix_label_weight.py [--apply]`
+
+Chạy **sau** `fix_alpha_bleed.py`. Trả lại phần viền bị ăn mất xong thì lộ ra
+chuyện thứ hai: nhãn mod **vốn được vẽ đậm hơn** nét gốc, trước đó lỗi viền che
+mất. Đo bề dày thân đứng trong atlas, cô lập từng nhãn bằng mesh tight:
+
+```
+gốc   BGM 3.59   MOVIE 3.74   VOICE 3.72        -> mốc 3.72
+mod   18 dải, 3.83 .. 4.16                      -> trung vị 4.00
+```
+
+Trên màn cũng đúng chừng đó: `MOVIE` chữ `M` 3.66 px, `MIYABI` chữ `M` 4.04 px,
+`MIYABI` chữ `I` 4.21 px. Chênh ~0.28 px, mắt đọc thành "đậm hơn một cấp weight".
+
+Bào mòn **1/8 px mỗi bên**: siêu lấy mẫu ×8, lọc min 3×3 một vòng, thu nhỏ lại
+bằng trung bình khối — giữ được khử răng cưa, khác hẳn cách hạ ngưỡng alpha
+(cách đó làm mép răng cưa trở lại). Chỉ đụng kênh alpha; RGB đã loang đúng từ
+đợt trước nên giữ nguyên. Thử 2/8 px thì xuống 3.49 — mỏng quá.
+
+> ### Cô lập bằng mesh, đừng cô lập bằng `textureRect`
+>
+> Rect của các dải **chồng lên nhau**: `ch_03_ai` và `ch_11_hida` trùm nhau gần
+> trọn, `ch_05_yuri` nằm lọt trong `com_frame_01_base`. Đó chính là lý do atlas
+> phải dùng mesh tight. Cắt theo rect thì bào nhầm sang tranh sprite khác.
+>
+> Mesh của mỗi sprite là **đúng** những điểm nó vẽ: `ch_02_kai` có 792/792 điểm
+> mực ở nửa trái nằm trong mesh; `ch_01_miya` mesh ôm gọn ô chữ và bỏ ngoài 3522
+> điểm của hai sprite tab xếp chèn. Script kiểm tra 18 mặt nạ có rời nhau không,
+> chồng một điểm là dừng.
+
+Mesh đọc từ luồng vertex 0 (float3, 12 B/đỉnh), nhóm 4 đỉnh một quad thẳng trục,
+đổi sang toạ độ ô cắt bằng nghịch đảo công thức trong `fix_volume_ends.py`.
+
+Đã chạy 17/08/2026 (backup `_backup\sharedassets7.assets.prelabelweight`). Đọc
+lại từ disk: mod trung vị **3.74** so với mốc gốc **3.72** (min 3.56, max 3.91).
+25 389 điểm alpha đổi; RGB chỉ 3 điểm lệch quá 8. Năm dải gốc không bị đụng —
+lệch alpha tối đa 0–6, đúng mức nhiễu nén lại. 85 object, 76 sprite, 0 object
+rỗng, vẫn ASTC 4×4.
+
+> `SE` 6.02 và `ch_17_unkn` 5.64 là **ngoại lệ của thước đo**, không phải nét
+> đậm: `SE` chỉ có hai chữ mà `S` toàn nét cong, `???` không có thân đứng nào.
+> Cả hai bị loại khỏi mốc, và vì là nhãn gốc nên cũng không bị bào.
 
 ## Tên trong popup Profile — bỏ chữ Nhật, chỉ để romaji
 

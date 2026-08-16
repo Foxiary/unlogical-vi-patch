@@ -13,8 +13,15 @@ import UnityPy
 
 PATCHED = r'D:\Downloads\010068501ff9a000\romfs\Data\StreamingAssets\json\json'
 STOCK = r'D:\Downloads\UNLOGICAL_v2\Data\StreamingAssets\json\json'
-WRAP = 18        # the engine re-breaks the synopsis every 18 characters
-BOX_LINES = 7    # the 620x474 mask shows 7 lines at fontSize 31.25
+# Game code used to hard-break the synopsis every 18 characters
+# (Chapter.get_DefaultMaxCharsPerLine, RVA 0x1998AC0). The exefs IPS32 raises it 18 -> 24 --
+# NOT to 0: the same routine (SetNoteTextFromString) counts those lines to page the StorySlider,
+# so disabling the wrap left it seeing one line, one page, and the scrollbar dead. MainText
+# stays at m_TextWrappingMode = 0 for the same reason: a second wrap by TMP would desync the
+# page count from what is drawn. Long entries page
+# rather than clip. Both halves must ship together — see the note printed at the end.
+WRAP = 40        # what the patched binary enforces (IPS: 18 -> 40)
+BOX_LINES = 7    # the 620x474 mask shows 7 lines at fontSize 31.25 before scrolling
 
 fails = []
 notes = []
@@ -59,10 +66,21 @@ check(not suffix, 'no route suffix leaked into a chapter label', ', '.join(suffi
 tags = [p['label'] for _, p in P if '<size' in p['synopsis']['jp'] or '<size' in p['title']['jp']]
 check(not tags, 'no leftover rich-text size tags', ', '.join(tags[:4]))
 
-longl = [(p['label'], max(len(l) for l in p['synopsis']['jp'].split('\n'))) for _, p in P
-         if any(len(l) > WRAP for l in p['synopsis']['jp'].split('\n'))]
-check(not longl, 'every synopsis line <= %d chars (engine wrap width)' % WRAP,
-      ', '.join('%s:%d' % x for x in longl[:4]))
+# The engine chops at exactly WRAP characters and ignores spaces, so leaving the synopsis as one
+# flowing paragraph splits words mid-syllable. It does respect stored newlines, so tools\
+# wrap_synopsis.py wraps by word to the real box width and the constant is set above the longest
+# line. Assert both halves of that: every synopsis is wrapped, and no line reaches the constant.
+nowrap = [p['label'] for _, p in P if p['synopsis']['jp'] and '\n' not in p['synopsis']['jp']]
+check(not nowrap, 'synopsis is hard-wrapped by word (engine chops mid-word otherwise)',
+      ', '.join(nowrap[:4]))
+
+longest = max(((len(ln), p['label'], ln)
+               for _, p in P for ln in p['synopsis']['jp'].split('\n')), default=(0, '', ''))
+check(longest[0] < WRAP, 'no synopsis line reaches the %d-char engine chop' % WRAP,
+      '%s has %d chars: %r' % (longest[1], longest[0], longest[2]))
+
+tbrk = [p['label'] for _, p in P if '\n' in p['title']['jp']]
+check(not tbrk, 'no hard line breaks in title', ', '.join(tbrk[:4]))
 
 # 永守 藍 is romanised "Ran" everywhere (TerminalProfileData ruby "Nagamori Ran", route tab RAN)
 ai = [p['label'] for _, p in P
@@ -79,16 +97,21 @@ for g, i in P:
     seen.setdefault(t, (g, i['label']))
 check(not dupes, 'no title reused across route groups', '; '.join(dupes[:3]))
 
-# informational: how much of each blurb the box can actually show
-lines = [(len(i['synopsis']['jp'].split('\n')), i['label']) for _, i in P]
-clipped = [x for x in lines if x[0] > BOX_LINES]
+# informational: this data is only half the fix, and the other half ships outside romfs
+CAP = BOX_LINES * WRAP
+sizes = [(len(i['synopsis']['jp']), i['label']) for _, i in P]
+over = [x for x in sizes if x[0] > CAP]
 print()
-print('NOTE synopsis lines per entry: min %d, max %d; the box shows %d.' % (
-    min(l for l, _ in lines), max(l for l, _ in lines), BOX_LINES))
-print('     %d of %d entries are longer than the box (%d x %d = %d chars of capacity).' % (
-    len(clipped), len(lines), BOX_LINES, WRAP, BOX_LINES * WRAP))
-print('     Pre-existing: the box is driven by game code, not by this data. Worst: %s' %
-      ', '.join('%s=%d lines' % (lab, n) for n, lab in sorted(lines, reverse=True)[:3]))
+print('NOTE synopsis length: min %d, max %d chars. Worst: %s' % (
+    min(n for n, _ in sizes), max(n for n, _ in sizes),
+    ', '.join('%s=%d' % (lab, n) for n, lab in sorted(sizes, reverse=True)[:3])))
+print('     %d of %d exceed the %d x %d = %d one page shows; they page'
+      % (len(over), len(sizes), BOX_LINES, WRAP, CAP))
+print('     on StorySlider instead of clipping.')
+print('     REMINDER this flowing text only renders correctly with BOTH halves installed:')
+print('       exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips  (DefaultMaxCharsPerLine 18 -> 40)')
+print('       ui_jp  SynopsisTitle/Mask/MainText  m_margin.y = 5  (dau chong tieng Viet)')
+print('     The .ips lives beside romfs, not inside it, so it is easy to leave out of a release.')
 
 print()
 print('%d check(s) failed' % len(fails) if fails else 'all checks passed')

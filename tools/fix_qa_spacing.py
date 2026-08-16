@@ -47,6 +47,7 @@ dòng, **đúng cả sáu**:
 gốc (7/59.1 = 11.8%), và đủ để "Người hợp cạ trong Unlogical" (28 chữ) về lại
 một dòng.
 """
+import json
 import os
 import shutil
 import sys
@@ -62,22 +63,42 @@ BACKUP = os.path.join(ROOT, "_backup", "ui_jp.preqaspacing")
 
 FONT_ASSET_PID = -8228475448987565529      # FOT-DotGothic12Std-M SDF-Dynamic
 STOCK_SPACING = 7.0                         # giá trị của bản gốc
-NEW_SPACING = 2.0
+NEW_SPACING = 0.0
 FONT_SIZE = 33.0
 POINT_SIZE = 58.0
 GLYPH_ADVANCE = 29.0                        # m_FaceInfo.m_TabWidth = nửa rộng
 BOX_W = 532.0
-MARGIN_L, MARGIN_R = 24.0, 21.0
-AVAIL = BOX_W - MARGIN_L - MARGIN_R         # 487
+MARGIN_L, MARGIN_R = 24.0, 21.0            # gốc
+NEW_MARGIN_L, NEW_MARGIN_R = 16.0, 13.0    # bớt 8 mỗi bên, tâm không đổi
+AVAIL_STOCK = BOX_W - MARGIN_L - MARGIN_R    # 487 — điều kiện của bảng hiệu chuẩn
+AVAIL = BOX_W - NEW_MARGIN_L - NEW_MARGIN_R  # 503 — khung sau khi thu lề
 GLYPH_PX = GLYPH_ADVANCE * FONT_SIZE / POINT_SIZE       # 16.50
 
-TITLES = [
-    "Thông tin cá nhân", "Chuyện gia đình", "Thích gì, ghét gì",
-    "Gu bạn gái lý tưởng", "Người hợp cạ trong Unlogical", "Bí mật bật mí",
-    "Thích làm nũng hay thích được người yêu nuông chiều?",
-    "Ấn tượng đầu tiên về cô ấy", "Điểm thích nhất ở cô ấy",
-    "Đôi lời gửi đến cô ấy",
-]
+JSON_BUNDLE = os.path.join(ROOT, "romfs", "Data", "StreamingAssets", "json", "json")
+
+
+def load_titles():
+    """Đọc tiêu đề nút thẳng từ Q&AData — danh sách hardcode từng bị lạc hậu và
+    khiến báo cáo sai: nó vẫn giữ bản 51 ký tự trong khi dữ liệu đã rút còn 30."""
+    for o in UnityPy.load(JSON_BUNDLE).objects:
+        if o.type.name != "TextAsset":
+            continue
+        d = o.read()
+        if d.m_Name != "Q&AData":
+            continue
+        s = d.m_Script if isinstance(d.m_Script, str) else bytes(d.m_Script).decode("utf-8")
+        js = json.loads(s.lstrip("\ufeff"))
+        out, seen = [], set()
+        for ent in js["list"]:
+            for x in ent["title"]:
+                if x and x not in seen:
+                    seen.add(x)
+                    out.append(x)
+        return out
+    raise SystemExit("không thấy Q&AData")
+
+
+TITLES = load_titles()
 
 
 def pitch(cs):
@@ -156,18 +177,18 @@ def check_model():
     bad = 0
     for cs, n, fits in CALIBRATION:
         w = width(n, cs)
-        ok = (w <= AVAIL) == fits
+        ok = (w <= AVAIL_STOCK) == fits
         bad += not ok
         print("   %s cs=%g n=%2d  W=%6.1f  %s (thật: %s)"
               % ("OK " if ok else "SAI", cs, n, w,
-                 "vừa" if w <= AVAIL else "ngắt", "vừa" if fits else "ngắt"))
+                 "vừa" if w <= AVAIL_STOCK else "ngắt", "vừa" if fits else "ngắt"))
     if bad:
         raise SystemExit("mô hình sai %d/%d mốc — đừng vá cho tới khi khớp" % (bad, len(CALIBRATION)))
 
 
 def main():
     apply_ = "--apply" in sys.argv
-    print("Đối chiếu mô hình với ảnh chụp (khung %g px):" % AVAIL)
+    print("Đối chiếu mô hình với ảnh chụp (khung gốc %g px):" % AVAIL_STOCK)
     check_model()
     print()
     env = UnityPy.load(UI_JP)
@@ -176,7 +197,7 @@ def main():
     if len(hits) != 11:
         raise SystemExit("mong đợi 11 ô — dừng lại, có gì đó đã đổi")
 
-    KNOWN = {STOCK_SPACING, 3.0, NEW_SPACING}   # gốc, đợt 1, đích
+    KNOWN = {STOCK_SPACING, 3.0, 2.0, NEW_SPACING}   # gốc, các đợt trước, đích
     changed = 0
     current = None
     for o, t in hits:
@@ -184,16 +205,27 @@ def main():
         current = cur if current is None else current
         if cur not in KNOWN:
             raise SystemExit("pid %d: characterSpacing %s lạ, dừng" % (o.path_id, cur))
-        if cur == NEW_SPACING:
-            continue
-        t["m_characterSpacing"] = NEW_SPACING
-        changed += 1
-        if apply_:
-            o.save_typetree(t)
+        dirty = False
+        if cur != NEW_SPACING:
+            t["m_characterSpacing"] = NEW_SPACING
+            dirty = True
+        # Thu lề để đủ chỗ cho tiêu đề 30 ký tự (cần 495, khung gốc chỉ 487).
+        # Chữ căn giữa (hAlign = 2) nên bớt đều hai bên là vô hình, chỉ nới chỗ
+        # ngắt dòng chứ không xê dịch chữ.
+        m = t["m_margin"]
+        if (m["x"], m["z"]) not in ((MARGIN_L, MARGIN_R), (NEW_MARGIN_L, NEW_MARGIN_R)):
+            raise SystemExit("pid %d: lề (%s, %s) lạ, dừng" % (o.path_id, m["x"], m["z"]))
+        if (m["x"], m["z"]) != (NEW_MARGIN_L, NEW_MARGIN_R):
+            m["x"], m["z"] = NEW_MARGIN_L, NEW_MARGIN_R
+            dirty = True
+        if dirty:
+            changed += 1
+            if apply_:
+                o.save_typetree(t)
 
-    print("\nHiện tại (cs=%g):" % current)
+    print("\nHiện tại (cs=%g, khung %g px):" % (current, AVAIL_STOCK))
     report(current)
-    print("Đích (cs=%g):" % NEW_SPACING)
+    print("Đích (cs=%g, khung %g px sau khi thu lề):" % (NEW_SPACING, AVAIL))
     report(NEW_SPACING)
     print("\n%d/%d ô cần đổi" % (changed, len(hits)))
 
