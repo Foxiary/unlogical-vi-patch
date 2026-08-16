@@ -4,8 +4,17 @@ romfs/Data/StreamingAssets/font/font_jp
 # Byte-identical to the stock game; the base game supplies these
 romfs/Data/**/*.resS
 
+# UnityPy writes the bundle's decompressed inner asset file beside it — debris, not a game file
+romfs/**/CAB-*
+
 # Working files
 _backup/
 _parked/
+_keyprompt/
 *.tmp
 *.bak
+
+# e2e captures real screenshots of the game; the harness is committed, the frames are not
+e2e/out/
+__pycache__/
+*.pyc

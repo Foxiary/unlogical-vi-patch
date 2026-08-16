@@ -7,3 +7,7 @@ romfs/** binary
 # Text files in the repo keep LF
 *.md   text eol=lf
 *.json text eol=lf
+*.py   text eol=lf
+
+# The e2e harness is Windows-only (Ryujinx + Win32 input); keep CRLF on checkout
+*.ps1  text eol=crlf

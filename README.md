@@ -54,11 +54,12 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     StreamingAssets/scenario/scenario01
     StreamingAssets/scene/scene_jp
     StreamingAssets/ui/ui_jp
-    level10  level19  level20  level22
+    level10  level17  level19  level20  level22
     resources.assets
-    sharedassets7.assets   sharedassets9.assets   sharedassets10.assets
-    sharedassets13.assets  sharedassets16.assets  sharedassets19.assets
-    sharedassets22.assets
+    sharedassets5.assets   sharedassets6.assets   sharedassets7.assets
+    sharedassets9.assets   sharedassets10.assets  sharedassets11.assets
+    sharedassets13.assets  sharedassets16.assets  sharedassets17.assets
+    sharedassets19.assets  sharedassets21.assets  sharedassets22.assets
 
 ```
 
@@ -112,7 +113,7 @@ Những phần này hiện vẫn là tiếng Nhật và đang được theo dõi
 
 Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
 
-* **Ngắt dòng thủ công bị mất trong quá trình dịch.** Bản gốc có 22.208 đoạn văn bản chứa ngắt dòng cứng. Phần **màn hình chat Genebark đã được khôi phục** — 135 tin nhắn nay xuống dòng đúng chỗ bản gốc ngắt, giống hệt bản Nhật. Phần lời dẫn và hội thoại ADV thì vẫn còn gộp: hiện chỉ 308 đoạn có ngắt dòng cứng. Chữ vẫn tự động xuống dòng nên không mất nội dung, chỉ là nhịp đọc chưa giống bản gốc.
+* **Ngắt dòng thủ công bị mất trong quá trình dịch.** Bản gốc có 22.208 đoạn văn bản chứa ngắt dòng cứng. Phần **màn hình chat Genebark đã được khôi phục** — 135 tin nhắn nay xuống dòng đúng chỗ bản gốc ngắt, giống hệt bản Nhật. Phần lời dẫn và hội thoại ADV thì vẫn còn gộp: hiện có 552 đoạn giữ ngắt dòng cứng trên tổng 39.572 đoạn có nội dung. Chữ vẫn tự động xuống dòng nên không mất nội dung, chỉ là nhịp đọc chưa giống bản gốc.
 
 ---
 
@@ -138,6 +139,19 @@ Ghi chú kỹ thuật về cách bản patch được thực hiện — vị tr�
 | [Màn hình hình ảnh](docs/03-baked-art.md) | Văn bản UI được vẽ sẵn vào sprite atlas |
 | [Đóng gói lại với UnityPy](docs/04-repacking.md) | Mã hóa texture, đóng gói bundle, mesh của sprite |
 | [Tên nhân vật chính](docs/05-protagonist-name.md) | Chuỗi IL2CPP và dữ liệu save |
+
+## Công cụ dựng bản patch
+
+Các script đã dùng để tạo ra những file trong `romfs/`, cùng bộ kiểm thử chạy game thật:
+
+| | |
+| --- | --- |
+| [`tools/`](tools/) | Script vá theo từng việc — bố cục hộp thoại ADV, ngắt dòng và cú pháp ruby, nhãn section, nút bấm gợi ý, tên người chơi trong file save |
+| [`e2e/`](e2e/) | Chạy game trong Ryujinx bằng scancode, nhận diện màn hình qua pixel; kèm hai phép kiểm tra tĩnh đối chiếu với bản gốc |
+
+`e2e\checks\check_scripts.py` so chuỗi lệnh và nhãn scene của cả 143 kịch bản với bản gốc — nó đã bắt được một lệnh `[env カメラ移動]` bị mất khi dịch. `check_chapterdata.py` kiểm tra dữ liệu màn chọn chương. **Chạy cả hai sau mỗi lần ghi vào `scenario01`.**
+
+Các script trong `tools/` là công cụ dùng một lần trong quá trình dựng patch, không phải phần mềm hoàn chỉnh: đường dẫn được ghi thẳng trong file và trỏ tới máy của người dựng, nên phải sửa lại trước khi chạy.
 
 ---
 
