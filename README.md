@@ -18,7 +18,7 @@ Repository này **chỉ chứa các file game đã được bản dịch sửa �
 | Title ID | `010068501ff9a000` |
 | Đã kiểm tra trên | Ryujinx (cũng hoạt động trên máy Switch gốc qua Atmosphère LayeredFS) |
 
-> ### ⚠ Phải đúng v1.0.2, không phải "nên"
+> ### ⚠ Phải đúng v1.0.2
 >
 > Cài lên **1.0.0 hoặc 1.0.1 thì game văng ngay khi khởi động**, kèm thông báo
 > *"The software was closed because an error occurred."* Đây không phải lỗi cài đặt sai — bản patch
