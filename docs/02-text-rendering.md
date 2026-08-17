@@ -40,9 +40,30 @@ it is proven to fit by construction.
 |---|---|---|
 | Terminal rule pages | 72 units | longest JP line was 36 fullwidth chars |
 | Terminal home alerts | 61 units | derived from the already-translated alerts |
-| Dictionary body | ~37 chars | box 500×476 at font 32; holds 15 lines |
+| Dictionary body — ARCHIVE | 497 px a line, **8 lines a page** | `level22` pid 331, box 500×476 at font 32, charSpacing 3.5 |
+| Dictionary body — ADV popup | **586 px a line, 11 lines a page** | `level10` pid 895, box 586×758 at font 40, charSpacing 5 — the tighter of the two, wrap for this one |
+| ADV message | **1280 px a line, 3 lines** | `level10` pid 886/887, rect narrowed from 1400 (below), font 42 auto-sizing down to 28 |
+| Novel mode | 1400 px a line, ~11 lines | `level10` pid 894, box 1400×720 at font 42, charSpacing 6 |
 | Chapter synopsis | ~41 chars / ~9 lines | box 620×474 at font 31.25 |
 | Chapter title | ~28–30 chars | mask 527×58, right-aligned, NoWrap |
+
+### The width formula, and the two things it must not count
+
+`characterSpacing` does **not** share the glyph advance's scale factor. TMP scales
+the advance by `fontSize / pointSize` (58 here) and characterSpacing by
+`fontSize / 100`, and the wrap test measures to the last glyph's right edge, so the
+spacing after the final character never counts:
+
+```
+W = Σ advance × fontSize/58  +  (n−1) × characterSpacing × fontSize/100
+```
+
+At font 42 the older `(advance + spacing) × fontSize/pointSize` form — still used by
+`tools/adv_layout.py` — runs 1.4 px per character wide, 7% on a full line. Two more
+corrections that only a real capture could give: the ADV box **does not draw `「」`**
+(measured against a 1280×720 screenshot: line 1 of a quoted message is 1362 px, which
+the model reproduces only with the brackets excluded), and accumulating word widths
+one at a time silently drops the space's own characterSpacing (~4.5 px per word).
 
 ### Wrap to the *pixel* budget, not a character count
 
@@ -73,6 +94,46 @@ Rendered that way the 61 headlines took 6–10 lines each in a three-line box.
 removing all 299 breaks brings the headlines to 4–5 lines at a chosen size of
 19–24. The rule is per component — hand-wrap only where the wrap mode is NoWrap,
 and never on top of a component that already wraps.
+
+### …unless the engine counts the data's newlines, or the art is narrower than the rect
+
+Two boxes break that rule, both discovered from photographs of the running game.
+
+**The dictionary/note boxes paginate on the data's `\n`, not on what TMP drew.**
+`MyUICompornentBase.BuildNoteLines` (RVA 0x19B3490) is `raw.Replace(…).Split('\n')`,
+`CalcStartIndex_PageUnit` returns `notePageNo × NOTE_TEXT_LINE`, and the constant is
+11 for the ADV dictionary popup (RVA 0x1A17880), 8 for the terminal ARCHIVE page and
+7 for the chapter synopsis. `DictionaryBase.DefaultMaxCharsPerLine` is 0, so the code
+inserts no breaks of its own — the data's `\n` are the *only* source of lines. Proof
+from two photos of entry 112 when its data held 16 lines: page 1 ended exactly at data
+line 11 and page 2 started exactly at data line 6 = 16 − 11, while the tail that TMP
+had wrapped fell outside the window and never appeared. So on these boxes each `\n`
+must equal one rendered line: hard-wrap to the pixel budget, and re-run the wrap after
+any wording change (`tools/fix_dictionary_wrap.py`, `--only=NN` for a single entry).
+
+**Novel mode indents every data line by one em, and lines TMP wrapped by nothing.**
+Measured 41 canvas px ≈ 0.98 em between two adjacent lines of the same paragraph. That
+is why the Japanese hard-wraps every numbered rule *and* prefixes the continuations
+with two fullwidth spaces — 1 em from the engine plus 2 em from the data puts the body
+of every line on one column. Dropping those indents leaves an over-long data line's
+tail jutting one em to the left of everything else (`tools/fix_novel_list_wrap.py`).
+
+**The ADV message box's rect is wider than the art.** The box is cut diagonally at the
+bottom right, so measured from the text's left edge the art only allows 1430 px on line
+1, 1364 on line 2, **1301 on line 3** — while the rect gave TMP 1400. Any line that
+filled the rect ran onto the dark diagonal and its tail stopped being readable: 3 992
+of 37 951 messages (10.5%) were in that state, 356 of them by more than 80 px. Fixed by
+narrowing the rect itself to 1280 (`m_Pivot.x = 0`, so `m_SizeDelta.x` alone pins the
+left edge and pulls the right edge in — one float per component). Hard-wrapping the data
+instead would have cost 936 shrunken messages against this fix's 665, plus a re-run
+after every sheet merge. `tools/fix_adv_wrap.py --check` is the gate; it reads the rect
+width live from `level10` rather than hardcoding it.
+
+### One typographic rule lives in the data: `... ...` breaks the line
+
+A sentence that trails off and is answered by one that opens the same way reads as two
+utterances, so the space between the two ellipses becomes a newline (33 places).
+`tools/fix_ellipsis_break.py`, re-runnable, `--check` in the gate list.
 
 ## Auto-sizing as the fix
 

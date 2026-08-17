@@ -196,6 +196,130 @@ Danh sách in bằng script kiểm kê trong log phiên làm việc; nhóm chín
 `[珠玉'チェリッシュ]`, `[仮想世界'thế giới bên kia]`, `[見習い天使'Spirit]`,
 `[ＦＢ'Feedback]`, `[ＫｉＥＬ'Kiel]`.
 
+## Kéo một nhóm ô từ sheet xuống (merge có lọc)
+
+`python tools\apply_sheet_cells.py [--new=X.xlsx] [--base=Y.xlsx] --match=<regex> [--apply]`
+— dùng cho vòng phổ biến nhất: "đã sửa một thuật ngữ trên sheet, đây là bản
+export". Không phải merge toàn bộ; `--match` giới hạn đúng những ô muốn lấy nên một
+đợt sửa thuật ngữ không kéo theo mọi thay đổi khác. Không truyền `--new/--base` thì
+tự lấy hai snapshot mới nhất trong `D:\Downloads\UNLOGICAL_v2*.xlsx` theo mtime.
+
+Ba chiều như memory merge đã ghi (`new == build` → bỏ qua, `base == build` → áp,
+cả hai đổi → **báo rồi bỏ qua**), và trước khi ghi từng ô có bốn chốt: multiset tag
+`[...]` phải khớp, `[主人公]` phải cùng có hoặc cùng không, dấu ngoặc phải cân, và
+**ngắt dòng cứng lấy từ build chứ không lấy từ sheet** (cột sd_* là một dòng phẳng;
+ghi nguyên văn là làm phẳng bố cục — đã từng mất 1.530 ngắt dòng vì việc này).
+Khoá lấy đúng cột ID của sheet: `76/txt/0011` → `ScenarioData` scenarioID 76
+`text[11]`; `TerminalHomeAlertData/alert/id71` → asset/field/id trong bundle `json`.
+
+**Vòng "mainframe" 17/08/2026** (snapshot `(23)` so với `(22)`, backup
+`_backup\scenario01.UNLOGICAL_v2(23)`, `_backup\json.UNLOGICAL_v2(23)`):
+
+- Đếm trước khi sửa: `Mainframe` 13 chỗ hiển thị / `máy chủ chính` 7 chỗ, mà **cả
+  14 chỗ trong thoại đều dịch từ cùng một chữ `メインフレーム`**.
+- Sheet đổi 6 ô thoại + 1 alert; áp hết. `113/0055` và `127/0283` giữ nguyên là
+  đúng — bản Nhật ở đó là 主要システム / メインシステム, không phải メインフレーム.
+- Hai chỗ không có tab trên sheet nên sửa ở build: mục từ điển `no=402` đảo
+  title/ruby thành `Mainframe` + `MÁY CHỦ CHÍNH` (ngược quy ước "title tiếng Việt,
+  ruby tiếng Anh" của 5 mục kia, nhưng khớp với chữ người chơi bấm vào:
+  `[dic no=402 text=Mainframe]`), và `ChapterData` vốn đã dùng đúng thuật ngữ.
+- `TerminalHomeAlertData` id71 "Hệ thống chính (Mainframe) đã bị xóa" →
+  "Mainframe đã bị xóa", khớp luôn với `[terinfo]` của cùng sự kiện trong
+  `03_05_01` — trước đó hai chỗ cùng một thông báo mà viết khác nhau.
+- Sau cùng: `máy chủ chính` còn **0** chỗ trong cả build (kể cả bản sao
+  `scriptText`, dọn thêm 2 chỗ ở sID 76/90 vì mirror không khớp verbatim).
+- Còn lại **8 `Mainframe` / 6 `mainframe`** trong thoại — hoa khi là danh xưng
+  ("Mainframe Angelica", "từ Mainframe"), thường khi là danh từ chung ("hệ thống
+  mainframe"). Đó là cách sheet đang viết; muốn nhất quán một kiểu thì sửa trên
+  sheet rồi chạy lại tool này.
+
+### Tab `TerminalRuleData` map theo (id, trang), và đừng lấy khoảng trắng của sheet
+
+`rule_body/idN` **lặp một hàng cho mỗi trang** của id đó (39 hàng / 21 id), nên hàng
+thứ k là `content[k].text` của item id N — nhét vào dict theo id là gộp mất, đúng cái
+bẫy memory đã ghi. `read_rule_rows()` giữ thứ tự hàng, `merge_rule_text()` lấy **câu
+chữ** của sheet nhưng **giữ khoảng trắng đầu dòng của build**: sheet đã rã hết `　`
+thành một space ASCII và biến dòng trắng thành một dấu cách, áp nguyên văn là ép thụt
+lề còn 1/3 và phá bậc bullet. Số dòng hai bên lệch thì bỏ qua, và có chốt riêng: số
+`　` không được giảm.
+
+Vòng `(31)` 17/08/2026 (backup `_backup\json.UNLOGICAL_v2(31)`): 7 trang, đổi
+`<…>` → `(…)` cho phần gloss tiếng Anh (`<Player>` → `(Player)`, `<Selector>`,
+`<Recollection>`, `<Cherish>`, `<Recollector>`, `<Báo Đen>`, `<Thỏ Con>`) cộng vài
+dòng bị xoá space cuối dòng. Ngoặc đơn hẹp hơn ngoặc nhọn (20,9 so với 35,3 đơn vị
+font) nên **không dòng nào rộng thêm**; id47 còn hẹp đi 33 px.
+
+Ba dòng của trang RULE đang rộng hơn mốc đã xác nhận trong game (1207 px theo công
+thức đúng): `id51` trang 2 = 1284, `id46` trang 1 = 1277, `id60` trang 0 = 1232. Cả
+ba có từ trước, không phải do vòng này; nếu muốn chắc thì chụp ba trang đó xem có bị
+cắt không.
+
+> Merge vòng này cũng **làm phẳng lại một chỗ `... ...`** (ô `70/txt/1164`) — đúng lý
+> do phải chạy `fix_ellipsis_break.py --apply` sau mỗi merge. Chốt `--check` bắt được
+> ngay.
+
+### Vòng "Selector" 17/08/2026 — và hai chốt sinh ra từ nó
+
+Snapshot `(24)` đảo `[Người lựa chọn'Selector]` → `[Selector'Người lựa chọn]` ở 72 ô,
+`(27)` sửa thêm 3 ô chữ. Backup `_backup\scenario01.UNLOGICAL_v2(24)`,
+`scenario01.UNLOGICAL_v2(27)`, `scenario01.selectorscript`.
+
+Hai chốt phải nới/thêm vì vòng này:
+
+- **Chốt tag phải phân biệt khoá tra cứu với chữ hiển thị.** Bản đầu chặn cả 72 ô vì
+  nội dung tag đổi. Nhưng `[gốc'ruby]` thì **cả hai nửa đều là chữ hiển thị**, đảo
+  chúng là hợp lệ; còn `[dic no=N text=X]` chỉ `no` là khoá. `tag_key()` so ruby
+  theo *tập hợp* (đảo thì qua, sửa nội dung một nửa vẫn bị chặn).
+- **Chốt "bản dịch rơi vào sai ô".** Snapshot `(24)` có ô `71/txt/0379` bị dán đè
+  bằng bản dịch của `0377` (bản Nhật hai ô khác nhau hoàn toàn). `duplicate_paste()`
+  bắt bằng cách nhóm các ô đổi theo bản dịch mới: nhóm nào có ≥2 ô mà bản Nhật khác
+  nhau thì ô nào *khác xa bản cũ của chính nó* là ô bị dán đè — chặn nó, giữ ô lành.
+  Người dùng sửa lại trên sheet, snapshot `(27)` đã đúng và còn thêm dấu ngoặc.
+- Nền để so cũng phải chọn đúng: ô `0379` phải merge với nền `(23)` chứ không phải
+  `(24)`, vì `(24)` chính là snapshot chứa bản dán đè.
+- So ba chiều phải so trên **bản đã làm phẳng** (`\n` → space): build giữ ngắt dòng
+  mà sheet thì không, so nguyên văn sẽ báo "cả hai bên đổi" cho cả ô vốn đã đúng.
+
+**Vòng `(28)`: bỏ hẳn tag ruby**, giữ loanword làm chữ thường — 126 ô
+(`[Selector'Người lựa chọn]` → `Selector` 72 ô, `[Thiên thần tập sự'Spirit]` →
+`Spirit` 54 ô), cộng 38 tag còn sót trong `scriptText`. Backup
+`_backup\scenario01.UNLOGICAL_v2(28)`, `scenario01.rubydropscript`.
+
+Chốt tag lại phải nới lần nữa, nhưng theo kiểu **có điều kiện kiểm được**: tag ruby
+được phép giữ nguyên, **đảo**, hoặc **biến mất miễn là một nửa của nó còn lại trong
+câu**; mất tag mà cả hai nửa cũng mất thì vẫn bị chặn (đó là xoá hụt). Song song đó
+tách hai loại chốt cứng ra: lệnh diễn xuất / `[主人公]` / `[se file=…]` phải khớp
+từng cái, và **`no=` của mọi link `[dic …]` không được đổi hay mất** — chữ hiển thị
+trong link thì tuỳ.
+
+Sau vòng này thoại còn lẫn: `Spirit` 281 chỗ / "Thiên thần tập sự" **19 chỗ** (sID 69
+`text[300]`, và 18 chỗ trong sID 81), `Selector` 146 chỗ / "Người lựa chọn" **1 chỗ**
+(`85/txt/1136`). Toàn bộ nằm trong dữ liệu sheet nên sửa ở sheet rồi kéo xuống.
+
+### Tiêu đề từ điển: loanword hay tiếng Việt? — đếm chữ CHÍNH trong thoại
+
+Quy ước cũ là "title tiếng Việt, ruby tiếng Anh", nhưng 3 mục (`354` Bug, `505` Log,
+`402` Mainframe) vốn đã ngược lại vì thoại viết thẳng loanword. Cách phân định không
+phải cảm tính mà đếm được: **đếm thuật ngữ trong chữ chính của thoại** (bỏ phần ruby
+ra, vì ruby chỉ là chú thích nhỏ phía trên).
+
+Đo 17/08/2026 trên 25 mục có ruby Latin (backup `_backup\json.dicloanwordfirst`):
+
+| mục | title cũ | title× | loan× | xử lý |
+|---|---|---|---|---|
+| 212 | Thiên thần tập sự | 78 | **227** | đảo → `Spirit` / ruby `THIÊN THẦN TẬP SỰ` |
+| 362 | Tiện ích bổ sung | 0 | 5 | đảo → `Plugin` |
+| 400 | Sự tương thích | 2 | 4 | đảo → `Matching` |
+| 211 | Học sâu | 2 | 4 | đảo → `Deep Learning` |
+| **112** | **Ban điều hành** | **271** | 141 | **giữ tiếng Việt** |
+
+Con số 112 bác đúng cái tôi đã đề xuất trước đó (đảo cho khớp mục 402): thoại vẫn
+viết "ban điều hành" nhiều gấp đôi "Operator", nên đảo tiêu đề là làm nó lệch khỏi
+thoại. 20 mục còn lại thoại dùng tiếng Việt hoặc gần như không nhắc tới → giữ.
+
+Đếm phải bỏ ruby ra mới đúng: tính cả ruby thì `212` ra 281 và `112` ra 175, đủ để
+kết luận sai ở những mục mà loanword chỉ xuất hiện *bên trong* tag ruby.
+
 ## Thuật ngữ trong bundle `json`
 
 `python tools\json_term.py <TênAsset> "<cũ>" "<mới>" [--apply]` — thay một chuỗi
@@ -300,6 +424,316 @@ Tám mục còn tràn — `357` (780 px), `351`, `213`, `209`, `350`, `214`, `10
 > 9 mục còn ngoặc khác (`110 111 159 204 252 354 356 357 502`) đều là chú thích
 > tiếng Anh do người dịch thêm. Kiểm tra nguồn gốc ngoặc trước khi chuyển lên
 > `ruby`.
+
+## Nội dung từ điển bị ngắt dòng hai lần
+
+`python tools\fix_dictionary_wrap.py [--all] [--apply]` — `DictionaryData.text`
+được ngắt dòng cứng sẵn trong dữ liệu (một `\n` cho mỗi dòng hiển thị, giống bản
+Nhật), nhưng ô chữ **vẫn bật wrap** (`m_TextWrappingMode = 1`). Dòng cứng nào
+rộng hơn khung một chút là bị TMP ngắt **lần thứ hai**, phần đuôi rơi xuống một
+dòng trống trơ:
+
+```
+phối viên nhưng phạm vi  ->  phối viên nhưng phạm / vi
+quyền hạn sẽ khác nhau,  ->  quyền hạn sẽ khác     / nhau,
+```
+
+Ô chật hơn trong hai màn từ điển là **popup ADV** (cái người chơi mở lúc đọc
+thoại), không phải trang ARCHIVE:
+
+```
+level10 pid 895  DictionaryLayer/ViewRoot/uch_dictionary_note_field/MainText (TMP)
+                 rect 586×758  cỡ 40  charSpacing 5    lineSpacing -23
+level22 pid 331  Note/NoteTextArea/Mask/MainText (TMP)
+                 rect 497×476  cỡ 32  charSpacing 3.5  lineSpacing -3
+```
+
+Tính theo em thì popup được 586/40 = **14,65** em một dòng còn ARCHIVE được
+497/32 = 15,5 em, nên ngắt vừa popup là vừa cả hai màn.
+
+**Công thức bề rộng phải đúng dạng, không thì lệch 7%.** TMP nhân advance với
+`fontSize/pointSize` nhưng nhân `characterSpacing` với `fontSize/100`, và phép
+thử ngắt dòng đo tới **mép phải chữ cuối** nên khoảng cách sau chữ cuối không
+tính:
+
+```
+W = Σ advance × fontSize/pointSize  +  (n−1) × charSpacing × fontSize/100
+```
+
+Ở cỡ 40 thì hai cách khác nhau 1,4 px mỗi chữ — cả dòng lệch 7%. `adv_layout.wrap`
+vẫn dùng dạng cũ `(advance + spacing) × fontSize/pointSize`; chỉ mượn bảng advance
+của nó, đừng mượn hàm đo. Xem thêm memory `unlogical-text-overflow`.
+
+Với dạng đúng thì giới hạn **đúng bằng bề rộng rect, 586 px**, không cần hệ số bù.
+Mốc đọc từ ảnh chụp popup thật (mục `112` trước khi sửa) kẹp lại rất chặt:
+
+```
+việc can thiệp hệ thống   577,6 px  ->  game vẽ LIỀN một dòng
+phối viên nhưng phạm vi   590,1 px  ->  bị TMP ngắt
+```
+
+`OBSERVED_FITS` / `OBSERVED_BREAKS` trong script giữ 10 mốc đó và **tool tự dừng
+nếu mô hình xếp sai một mốc** — bắt chước `fix_qa_spacing.py`, vì một mô hình
+spacing sai từng làm mất một vòng vá.
+
+> **Ảnh chụp bằng điện thoại vẫn đo được** nếu lấy một rect biết sẵn kích thước
+> làm thước: khung `BG` của popup là 824×1080 và vùng hồng khớp đúng rect đó, cho
+> 1152 px ảnh / 824 px canvas. Đo hai dòng dài khác nhau ra cùng tỉ lệ 0,8969 và
+> 0,8970 → biết mô hình đúng *tỉ lệ* trước khi biết nó đúng *tuyệt đối*. Đừng lấy
+> chiều cao khung làm thước nếu chưa chắc art lấp kín rect.
+
+Đã chạy 17/08/2026 (backup `_backup\json.predicwrap`, `json.predicrevert`): đúng
+**một** mục tràn — `no=112` với 4 dòng vượt (rộng nhất 618,7). Ngắt lại: 16 → 18
+dòng, rộng nhất 576,1 px, hai trang popup (dòng 1–11 và 8–18) đọc được hết. Trước
+đó nó vẽ ra 20 dòng vì TMP ngắt thêm, nên số dòng thật **giảm**.
+
+> Vòng đầu dùng dạng công thức cũ nên báo oan 4 mục và đã ngắt lại cả `205`,
+> `300`, `361`; ba mục đó vốn 590–594 px theo dạng cũ nhưng chỉ 560–570 px thật,
+> tức vẫn vừa khung. Đã trả về nguyên trạng. **Sửa mô hình trước, rồi mới chọn
+> mục cần sửa** — dạng sai không chỉ lệch mức, nó còn đổi cả *thứ tự* giữa các
+> dòng có số chữ khác nhau.
+
+### `\n` trong dữ liệu là thứ chịu lực — đừng bỏ đi
+
+Bỏ hết `\n` rồi phó thác cho autowrap **là mất chữ**, vì engine phân trang ô note
+bằng cách **đếm `\n` trong dữ liệu**, không biết gì về wrap của TMP:
+
+```
+MyUICompornentBase.BuildNoteLines   RVA 0x19B3490   raw.Replace(…).Split('\n')
+MyUICompornentBase.CalcStartIndex_PageUnit  0x19B3450   notePageNo × NOTE_TEXT_LINE
+MyUICompornentBase.CalcStartIndex_LineUnit  0x19B3440   notePageNo
+Dictionary_ADV.NOTE_TEXT_LINE      RVA 0x1A17880   MOVZ W0,#11   -> 11 dòng/trang
+Dictionary (terminal) — không override, lấy mặc định của
+MyUICompornentBase.NOTE_TEXT_LINE  RVA 0x19AB110   MOVZ W0,#8    ->  8 dòng/trang
+DictionaryBase.DefaultMaxCharsPerLine 0x1A16930    MOV W0,WZR    -> code KHÔNG tự
+                                                     ngắt, `\n` là toàn bộ nguồn dòng
+```
+
+Con số 11 và 8 khớp đúng chiều cao hai ô (758/70,8 = 10,7 và 476/63,0 = 7,55), và
+khớp đúng hai ảnh chụp mục `112` khi nó còn 16 dòng dữ liệu:
+
+- trang 1 dừng đúng ở **dòng dữ liệu 11** (hiển thị 12 dòng, vì dòng 1 bị wrap)
+- trang 2 bắt đầu đúng ở **dòng dữ liệu 6** = 16 − 11 (trang cuối dồn về cuối)
+- đuôi trang 2 — dòng dữ liệu 16, bị TMP wrap thành 2 dòng — **rơi ra ngoài
+  khung và không cuộn tới được**: chữ `phép.` chưa bao giờ hiện lên
+
+Nếu phân trang theo số dòng TMP vẽ thật (20) thì mốc phải là 11 và 10, không phải
+11 và 6. Nên **luật của dữ liệu là: mỗi `\n` = một dòng hiển thị**. Ngắt lại cho
+vừa khung không chỉ đẹp hơn, nó **trả lại phần chữ đã mất**.
+
+> Sinh lại `dump.cs` khi cần tra code (không giữ trong cây này, 22 MB + 61 MB):
+> ```powershell
+> python tools\extract_exefs.py "<update .nsp>" <thư mục ra>
+> tools\_ext\Il2CppDumper\Il2CppDumper.exe <thư mục ra>\main `
+>     D:\Downloads\UNLOGICAL_v2\Data\Managed\Metadata\global-metadata.dat <dump>
+> ```
+> RVA = offset trong `main.flat`, nên đọc hằng số của getter chỉ là đọc 4 byte.
+
+## Ô thoại ADV: chữ chạy xuống dưới hoạ tiết góc
+
+`python tools\fix_adv_box_width.py [--apply]` — khung chữ rộng 1400 nhưng **art
+của ô bị vát chéo ở góc dưới bên phải**, nên dòng càng thấp càng ít chỗ thật. Đo
+trên ảnh chụp gốc 1280×720 (`IMG_7139`, mép vùng tối của chỗ vát, px canvas tính
+từ lề chữ ở canvas 308):
+
+```
+dòng 1  art ở 1430      dòng 2  art ở 1364      dòng 3  art ở 1301      dòng 4  ~1240
+```
+
+TMP ngắt dòng theo khung, không biết gì về art, nên dòng nào lấp đầy khung là đuôi
+nó nằm trên nền tối và mất đọc — đúng trạng thái trong `SPOILER_IMG_3011.jpg`.
+Quét cả build: **3.992/37.951 câu thoại ADV (10,5%)** có một dòng như vậy, 356 câu
+vượt hơn 80 px.
+
+Bảng so ba hướng (mô hình đã hiệu chỉnh khớp cả hai ảnh chụp):
+
+| khung | ở cỡ 42 | nhỏ hơn 42 | chạm hoạ tiết |
+|---|---|---|---|
+| 1400 (gốc) | 37.285 | 666 | **3.992** |
+| 1300 | 36.760 | 1.191 | 448 |
+| **1280** | 36.620 | 1.331 | **2** |
+
+Ngắt cứng dữ liệu theo giới hạn từng dòng thì lại **936** câu bị auto-size thu nhỏ
+— nhiều hơn 665 câu mà cách thu khung phải trả — cộng thêm 3.941 câu bị sửa dữ
+liệu và phải chạy lại sau mỗi merge. Nên chọn thu khung: **một float cho mỗi
+component, xong là xong mãi.**
+
+`m_Pivot.x = 0` ở cả hai rect nên thu `m_SizeDelta.x` là mép trái đứng yên, chỉ mép
+phải co vào, không phải bù vị trí gì cả. Đã chạy 17/08/2026 (backup
+`_backup\level10.advboxw`): `level10` pid 564 `Message(Normal)/Text` và pid 581
+`Message(Highest)/Text` 1400 → **1280**, vá byte tại chỗ (2 float), kích thước file
+không đổi. Hai câu trong hai ảnh sau khi vá:
+
+```
+TỐT  (IMG_7139)  vẫn cỡ 42, 3 dòng, rộng nhất 1272/1280
+TRÀN (IMG_3011)  cỡ 41 -> 37,5, 3 dòng, rộng nhất 1274 — hết nằm dưới hoạ tiết
+```
+
+`python tools\fix_adv_wrap.py --check` là **chốt**: dựng lại cách game xếp chữ
+(tôn trọng `\n` sẵn có, ngắt theo khung đọc trực tiếp từ `level10`, rồi auto-size)
+rồi báo lỗi nếu còn dòng nào chạm art. Hiện **0/37.951**.
+
+> **`「」` không được vẽ.** Ảnh chụp chứng minh: dòng 1 của câu TỐT đo được 1362 px
+> mà mô hình cho 1371 nếu bỏ hai dấu đó, còn tính cả thì 1459 — vượt cả khung.
+> Nên khi đo bề rộng thoại phải trừ `「」` ra.
+
+> **Ba cái bẫy đã sập trong lần làm này**, ghi lại để đừng lặp: (1) cộng dồn bề
+> rộng theo từng từ thì thiếu charSpacing của dấu cách, hụt ~4,5 px mỗi từ — phải
+> cộng theo (tổng advance, số ký tự) rồi mới quy ra px; (2) tách từ bằng `split(" ")`
+> cắt đứt cả `[Cherish'Châu ngọc]` làm hai, hai nửa không còn khớp regex tag nên bị
+> đo cả phần ruby và dấu ngoặc; (3) ngắt theo giới hạn ở cỡ 42 cho câu vốn render ở
+> cỡ 28 thì vụn ra 6 dòng và **tràn chiều cao** — chọn cỡ trước, rồi ngắt theo giới
+> hạn ở cỡ đó.
+
+## Dấu lửng nối dấu lửng thì ngắt dòng
+
+`python tools\fix_ellipsis_break.py [--apply] [--check]` — câu bỏ lửng mà câu sau
+mở đầu cũng bằng dấu lửng thì đọc như hai lượt nói, nên tách hai dòng (yêu cầu
+17/08/2026):
+
+```
+Terminal đang gặp trục trặc... ...Kohaku, cậu có đó không?
+->  Terminal đang gặp trục trặc...
+    ......Kohaku, cậu có đó không?
+```
+
+Luật: một chuỗi ≥2 dấu chấm (hoặc `…`), **một** space, rồi một chuỗi như thế →
+thay đúng space đó bằng `\n`. Không đụng gì khác nên chạy lại vô hại — và **phải**
+chạy lại sau mỗi merge, vì sheet lưu mỗi ô một dòng phẳng.
+
+Đã chạy 17/08/2026 (backup `_backup\scenario01.ellipsisbreak`): **33 chỗ**, toàn bộ
+trong thoại, bundle `json` không có chỗ nào. Giá layout đo bằng mô hình ADV: 11 câu
+thêm một dòng, 2 câu tụt một bậc cỡ chữ (`sID 74 text[561]` 42 → 37,75, `sID 91
+text[135]` 42 → 40,75), và **0** câu có dòng chạy dưới hoạ tiết.
+
+## Danh sách có số trong chế độ novel — thụt treo
+
+`python tools\fix_novel_list_wrap.py [--apply]` — cùng họ lỗi với ô từ điển, nhưng
+ở ô novel `level10` pid 894 `Message(Novel)/NovelText` (rect **1400×720**, cỡ 42,
+charSpacing 6, lineSpacing −11,5, wrap BẬT, auto-size TẮT).
+
+**Engine thụt 1 em ở đầu mỗi dòng CÓ TRONG DỮ LIỆU; dòng do TMP tự ngắt thì
+không.** Đo trên ảnh chụp thật, so hai dòng liền nhau nên méo phối cảnh triệt
+tiêu: đuôi dòng bị wrap nằm lệch **41 px canvas = 0,98 em** sang trái. Bản JP
+không bao giờ gặp vì mỗi mục luật đều ngắt cứng **và** dòng tiếp mở đầu bằng hai
+khoảng trắng toàn rộng, nên thân chữ mọi dòng rơi đúng một cột:
+
+```
+４．[運営'オペレーター]はゲームの進行を見守り、     42 + 89 = 131 px
+　　ルールの不備や、問題が発生した際には           42 + 89 = 131 px
+```
+
+Bản dịch bỏ cả hai: chỉ còn **38/40.537** dòng bắt đầu bằng `　` (JP:
+17.299/66.772). Số nửa rộng `5. ` rộng 64,6 px chứ không phải 89, nên tiền tố
+dòng tiếp dùng `　` + một khoảng trắng thường = 61,5 px — lệch 3 px, không thấy
+được; hai `　` sẽ vượt 24 px.
+
+Giới hạn ngắt: `W(dòng) ≤ (1400 − 42) × 0,99`. Trừ 42 vì engine chèn thụt lề vào
+chính chuỗi nên nó **ăn bề rộng wrap**; nhân 0,99 vì kẹp đo được ở ô từ điển rộng
+12,5 px trên 586 (≈2%), mà dư 7 px trên 1400 thì mỏng hơn thế.
+
+**Tự dò khối, nên chạy lại được sau mỗi lần merge.** Không ghim theo chỉ số tin
+nhắn — dò bằng phía Nhật, phía không bao giờ đổi:
+
+```
+tin nhắn j là một mục liệt kê  <=>  scriptText_Line[loadLine[j]] mở đầu bằng
+                                    １．…９． hoặc ・ ※ ＊ *
+                               và   dòng đó nằm giữa [ノベルモード…開始…] và …終了…
+```
+
+Tiền tố thụt treo chọn theo bề rộng dấu đầu mục mà **bản dịch** đang dùng: `5. `
+67,1 px → `　 ` (61,5), `・` 44,5 → `　` (44,5, khít), `* ` 39,0 → `　`. Chỉ dùng
+tiền tố mở đầu bằng `　`: bản JP có 17.299 dòng như vậy và chúng hiển thị đúng,
+tức U+3000 chắc chắn không bị engine cắt; space ASCII đầu dòng thì chưa có bằng
+chứng nào trong game này.
+
+Đã chạy 17/08/2026 (backup `_backup\scenario01.novellist`): dò ra **29 khối** trên
+7 scene, **19 khối** phải sửa (18 tràn khung + 1 chỉ dư 5 px), rộng nhất sau khi
+sửa 1386/1400. `--check` xác nhận 29/29 vừa khung và có thụt treo. Mirror vào
+`scriptText` được 6/19 — 13 khối còn lại nằm trong số 11% mà hai bản đã lệch nhau
+nên không khớp verbatim; vô hại vì `scriptText` không được vẽ.
+
+### Chốt sau mỗi lần merge sheet
+
+```powershell
+python tools\fix_novel_list_wrap.py --apply     # dựng lại ngắt dòng + thụt treo
+python tools\fix_novel_list_wrap.py --check     # exit 1 nếu còn khối sai
+python tools\fix_dictionary_wrap.py  --apply    # ô từ điển, cùng lý do
+python tools\check_layout_breaks.py  [<backup>] # exit 1 nếu MẤT ngắt dòng/thụt lề
+python tools\check_layout_breaks.py  --json     # cùng chốt cho bundle json
+```
+
+`check_layout_breaks.py` so bundle hiện tại với backup trước merge, **từng chuỗi
+một**, trên hai thứ mà một ô sheet phẳng không mang được: số `\n` và số dòng mở
+đầu bằng `　`/space. Mất là lỗi, thêm thì không sao (chính các fixer thêm vào).
+Không tham số thì lấy backup mới nhất khớp `_backup\scenario01.*`.
+
+Chạy thử ngược về mốc 15/08 (`scenario01.prenamekey`) thì chốt này **bắt được lỗi
+thật** mà mọi vòng merge trước đã bỏ lọt:
+
+- 3 tin nhắn chat mất ngắt dòng khi một pass sửa cách viết tắt — `sID=86 text[49]`
+  ("E" → "Em"), `sID=86 text[560]` và `sID=124 text[161]` ("a" → "anh"): sửa chữ
+  nhưng `\n` ở ranh giới câu rơi mất.
+- 2 tin nhắn **rỗng hẳn**: `sID=107 text[99]` và `text[302]`, bản Nhật là
+  `「…………」`. Cả file chỉ có đúng 2 chỗ rỗng như vậy (quét toàn bộ 39.803 tin nhắn
+  so với bản Nhật), nên đây là sót của một vòng apply ghi ô trắng đè lên.
+
+`python tools\fix_lost_breaks.py [--apply]` đã trả cả 5 chỗ về (17/08/2026, backup
+`_backup\scenario01.lostbreaks`). Mỗi mục trong bảng `BREAKS`/`EMPTIES` khai đúng
+chuỗi nó chờ tìm thấy, nên chạy lại là no-op và nếu câu chữ đã được dịch lại thì
+tool **dừng** chứ không đoán. Ba chỗ chat chỉ trả `\n` về ranh giới câu, giữ nguyên
+cách viết mới ("Em"/"Anh"); hai chỗ rỗng trả về `「......」` — 300/375 chỗ có bản
+Nhật `「…………」` trong file này đang là `「......」`, khớp cả quy ước `……` → `...`.
+
+`scriptText` của ba tin nhắn chat không khớp verbatim nên tool bỏ qua mirror: cả ba
+nằm trong số 11% mà hai bản đã lệch từ trước (bản `scriptText` còn giữ "E"/"a"
+viết tắt). Không ảnh hưởng hiển thị, nhưng nếu vá đợt lệch đó thì nhớ ba chỗ này.
+
+Sau khi sửa, so lại với mốc 15/08 thì sạch: 349.797 chuỗi cả hai bên, ngắt dòng
+208.817 → 209.760, dòng thụt 17.378 → 17.425, **không chuỗi nào mất**, và số tin
+nhắn rỗng còn 0.
+
+### Ba bản sao của một câu thoại, và bản nào là bản sống
+
+```
+ScenarioData.target[i].text[j]          <- ĐANG HIỆN TRÊN MÁY (người dùng xác nhận)
+ScenarioData.target[i].scriptText       <- bản sao thứ hai, KHÔNG ai index tới
+ScenarioData.target[i].scriptText_Line  <- script chương, VẪN TIẾNG NHẬT, 10.234 dòng
+ScenarioData.target[i].loadLine[j]      <- index vào scriptText_Line, không vào scriptText
+```
+
+`loadLine[98] = 608` và `scriptText_Line[608]` đúng là câu JP của tin nhắn 98 —
+nên **số dòng của `scriptText` đổi bao nhiêu cũng không phá mapping**, nhưng
+`scriptText_Line` và `loadLine` thì không được đụng. `ADVManager.GetScenarioText`
+(RVA 0x18E9A80) nạp file script chương từ bundle, và 143 file đó vẫn là tiếng
+Nhật (chỉ 7 dòng khác bản gốc, đều là tham số `[terinfo text="…"]` đã dịch) — nên
+chữ Việt chỉ có thể đến từ `text[]`.
+
+**`scriptText` đã lệch khỏi `text[]` ở 4371/39.803 tin nhắn (11%); bản JP lệch 0.**
+Vừa là chuẩn hoá (`『』` → `"`, `……` → `...`) vừa là bản dịch mới chỉ vào một bên
+(`1.` trong `scriptText` còn là "theo từng màn (stage)" trong khi `text[]` đã là
+"theo từng Stage"). Tool này đồng bộ `scriptText` theo `text[]` cho 4 mục nó sửa.
+
+### Vì sao việc này không sửa được trên sheet
+
+- Cột tiếng Việt của các tab `sd_*` **luôn là một dòng phẳng** (0/~2.900 hàng có
+  newline) — sheet không có chỗ diễn đạt ngắt dòng cứng, mà bản vá này toàn bộ
+  là ngắt dòng cứng.
+- Mỗi lần merge phải **dựng lại** ngắt dòng bằng `carry_breaks` (difflib) vì bản
+  build có ~730 `\n` mà sheet không có. Ngắt dòng sống ở hạ nguồn, không ở sheet.
+- Áp sheet nguyên văn đã từng **làm phẳng 1.530 ngắt dòng** trên sáu asset.
+- `　` cũng không sống nổi trên sheet: 203 thụt lề của `TerminalRuleData` đã rã
+  thành một space ASCII (sheet còn 0 U+3000), mà space chỉ rộng ~1/3 `　`; nhiều
+  space liền nhau thì lại bị quy ước "double space = ngắt dòng bị làm phẳng" của
+  chính sheet thu về một.
+
+Nên sheet giữ **câu chữ**, còn ngắt dòng + thụt treo là việc của bản build. Lần
+merge sau sẽ xoá nó nếu không có chốt: so số `\n` và số `　` của mục đã sửa với
+backup trước khi ghi.
+
+Dòng cuối trơ một chữ (`phép.`) trông y như đúng cái lỗi đang sửa, nên hàm ngắt
+kéo chữ từ dòng trên xuống khi dòng cuối hẹp hơn 40% giới hạn — chỉ chạm dòng
+cuối, không lan lên trên.
 
 ## Ending List (Recollection) — tiêu đề đè lên dòng dưới
 
