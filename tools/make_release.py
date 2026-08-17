@@ -38,8 +38,9 @@ IPS = "exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips"
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 BUILD = "--build" in sys.argv or "--publish" in sys.argv
 PUBLISH = "--publish" in sys.argv
-if not args or not re.fullmatch(r"v\d+\.\d+", args[0]):
-    raise SystemExit("cần số hiệu bản, ví dụ: python tools\\make_release.py v1.2")
+NOTES_FILE = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--notes-file=")), None)
+if not args or not re.fullmatch(r"v\d+\.\d+(\.\d+)?", args[0]):
+    raise SystemExit("cần số hiệu bản, ví dụ: python tools\\make_release.py v1.2 hoặc v1.2.1")
 VER = args[0]
 ZIP = os.path.join(OUT_DIR, "unlogical-vi-patch-%s-romfs.zip" % VER)
 
@@ -128,8 +129,14 @@ def publish(man):
     font = os.path.join(CLONE, "romfs", "Data", "StreamingAssets", "font", "font_jp")
     cmd = ["gh", "release", "create", VER, ZIP, font,
            "--repo", REPO,
-           "--title", "Vietnamese patch %s (game v1.0.2)" % VER,
-           "--notes", "Xem README để biết cách cài. Phải chép cả `romfs` lẫn `exefs`."]
+           "--title", "Vietnamese patch %s (game v1.0.2)" % VER]
+    if NOTES_FILE:
+        # ghi chú lấy nguyên từ file — dùng khi muốn giữ đúng nội dung bản trước
+        if not os.path.exists(NOTES_FILE):
+            raise SystemExit("không thấy %s" % NOTES_FILE)
+        cmd += ["--notes-file", NOTES_FILE]
+    else:
+        cmd += ["--notes", "Xem README để biết cách cài. Phải chép cả `romfs` lẫn `exefs`."]
     print("\n$ " + " ".join('"%s"' % c if " " in c else c for c in cmd))
     if not PUBLISH:
         return
