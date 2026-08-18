@@ -51,7 +51,7 @@ Nếu thấy `1.0.1` / `[v65536]` thì cài file update `[v131072]` đè lên. K
 
 Chỉ cần **một file duy nhất** — không cần tải cả repository.
 
-1. Tải `unlogical-vi-patch-v1.2.3-romfs.zip` từ trang [Releases](../../releases).
+1. Tải `unlogical-vi-patch-v1.2.4-romfs.zip` từ trang [Releases](../../releases).
 2. Mở thư mục mod của Ryujinx (chuột phải vào game → **Open Mods Directory**, hoặc dán đường dẫn `%APPDATA%\Ryujinx\mods\contents\010068501ff9a000\` vào Explorer).
 3. Giải nén file zip **trực tiếp vào thư mục đó**, sao cho có đủ **cả hai** thư mục:
    * `...\contents\010068501ff9a000\vn-translation\romfs\Data\...`
