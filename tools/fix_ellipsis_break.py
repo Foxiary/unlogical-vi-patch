@@ -19,6 +19,28 @@ in the `json` bundle.  Layout cost, checked with the ADV model: 11 messages gain
 line, 2 drop a size step (`sID 74 text[561]` 42 → 37.75, `sID 91 text[135]`
 42 → 40.75), and **0** end up with a line under the box's corner art.
 
+Extended 2026-08-18 at the user's call: **a full stop also counts as the left run**
+(`tham gia. ...Nói đúng hơn` -> two lines) — but **only where stock breaks the line at
+that same spot**, which is the user's condition (asked and answered the same day: "nếu
+bản jp cũng xuống hàng với `. ...` thì mới làm, còn không thì giữ nguyên").  So this
+half of the rule is NOT a pure text rule: it reads the untouched 1.0.2 bundle at
+`STOCK` and requires `。/！/？` + newline + optional `　` + ellipsis in the same message.
+
+Of 699 candidate places, 627 pass that gate.  The 72 refused are 68 where stock keeps
+the ellipsis on the same line (`「なーんだ、残念。……ま、いいけどさ」`) and 4 with no
+matching shape at all.  Every candidate message holds exactly **one** match, so gating
+per message is positionally exact — no need to pair up match offsets.
+
+Only `.` was added, not `!`/`?`: those exist too (41 and 118 places) and are left alone
+until asked for.  The old ellipsis-to-ellipsis half stays ungated — it was ratified on
+its own and does not depend on stock.
+
+Layout cost of the extension, ADV model: **0** lines under the corner art in any group.
+Across all 699 it was 160 messages gaining a line and 130 dropping a size step (worst
+42 → 29.75); the gated 627 are a subset of that.  No abbreviation false positives —
+every short token before the stop is a Vietnamese final particle (`rồi`, `đấy`, `nữa`,
+`mà`, `nhỉ`), never an initialism.
+
     python tools\\fix_ellipsis_break.py           # chạy thử
     python tools\\fix_ellipsis_break.py --apply
     python tools\\fix_ellipsis_break.py --check   # chốt sau merge, lỗi -> exit 1
@@ -42,11 +64,42 @@ BACKUP = os.path.join(ROOT, "_backup", "scenario01.ellipsisbreak")
 APPLY = "--apply" in sys.argv
 CHECK = "--check" in sys.argv
 
-PAT = re.compile(r"(\.{2,}|…+) (\.{2,}|…+)")
+STOCK = r"D:\Downloads\UNLOGICAL_v2\Data\StreamingAssets\scenario\scenario01"
+
+# Vế trái là một CHUỖI dấu lửng: luật gốc, không phụ thuộc bản Nhật.
+PAT_ELL = re.compile(r"(\.{2,}|…+) (\.{2,}|…+)")
+# Vế trái là MỘT dấu chấm: chỉ ngắt khi bản Nhật cũng xuống hàng ở đúng chỗ đó.
+PAT_DOT = re.compile(r"(\.) (\.{2,}|…+)")
+# Bản Nhật: dấu kết câu, xuống hàng, thụt lề tuỳ ý, rồi dấu lửng.
+JP_BRK = re.compile(r"[。！？]\s*\n\s*[\u3000]*(?:…|\.{2,})")
+# Dùng cho `--check`: chỗ nào ĐÁNG LẼ phải ngắt mà chưa ngắt.
+PAT = PAT_ELL
 
 
-def fix(s):
-    return PAT.sub(lambda m: m.group(1) + "\n" + m.group(2), s)
+def brk(m):
+    return m.group(1) + "\n" + m.group(2)
+
+
+def fix(s, jp=None):
+    """`jp` là chuỗi bản gốc cùng ô; None = không biết, khi đó chỉ áp luật dấu lửng.
+
+    Chạy PAT_ELL trước rồi mới PAT_DOT: sau bước đầu không còn `... ...` nào, nên
+    PAT_DOT không thể cắn vào dấu cuối của một chuỗi dấu lửng.
+    """
+    s = PAT_ELL.sub(brk, s)
+    if jp and JP_BRK.search(jp):
+        s = PAT_DOT.sub(brk, s)
+    return s
+
+
+def stock_text():
+    """{(scenarioID, j): chuỗi} của bản 1.0.2 chưa sửa."""
+    if not os.path.exists(STOCK):
+        raise SystemExit("không thấy bản gốc để đối chiếu: %s" % STOCK)
+    _, _, raw = load(STOCK)
+    data = json.loads(raw.lstrip("﻿"))
+    return {(t["scenarioID"], j): s
+            for t in data["target"] for j, s in enumerate(t["text"])}
 
 
 def load(path):
@@ -75,14 +128,20 @@ def main():
     bom = "﻿" if raw.startswith("﻿") else ""
     data = json.loads(raw.lstrip("﻿"))
 
-    hits = []
+    stock = stock_text()
+    hits, refused = [], 0
     for ti, t in enumerate(data["target"]):
+        sid = t["scenarioID"]
         for j, s in enumerate(t["text"]):
-            if PAT.search(s):
-                hits.append((ti, t["scenarioID"], j, s, fix(s)))
+            new = fix(s, stock.get((sid, j)))
+            if new != s:
+                hits.append((ti, sid, j, s, new))
+            elif PAT_DOT.search(s):
+                refused += 1          # có `. ...` nhưng bản Nhật không xuống hàng
 
     if CHECK:
-        print("chỗ còn 'dấu lửng + space + dấu lửng' trong text[]: %d" % len(hits))
+        print("chỗ còn phải ngắt trong text[]: %d   (bỏ qua %d chỗ `. ...` "
+              "vì bản Nhật không xuống hàng)" % (len(hits), refused))
         for ti, sid, j, old, new in hits[:10]:
             i = PAT.search(old).start()
             print("  FAIL sID=%-4s text[%-5d] …%s…" % (sid, j, old[max(0, i - 34):i + 30]))
@@ -145,7 +204,11 @@ def main():
             assert ta["text"][j] == t["text"][j], "text[%d] target[%d] đổi ngoài dự kiến" % (j, ti)
     for ti, sid, j, old, new in hits:
         assert after["target"][ti]["text"][j] == new
-        assert new.replace("\n", " ") == old, "chữ đổi ở sID=%s text[%d]" % (sid, j)
+        # Phải làm phẳng CẢ HAI bên: từ khi dấu chấm cũng tính là vế trái, luật đụng
+        # cả những ô vốn đã có `\n` sẵn, nên so `new` phẳng với `old` nguyên văn là sai.
+        assert new.replace("\n", " ") == old.replace("\n", " "), \
+            "chữ đổi ở sID=%s text[%d]" % (sid, j)
+        assert new.count("\n") > old.count("\n"), "không thêm ngắt dòng nào ở sID=%s text[%d]" % (sid, j)
     print("kiểm tra: chỉ %d tin nhắn đổi, chữ không đổi, loadLine nguyên vẹn" % len(hits))
 
     if not APPLY:

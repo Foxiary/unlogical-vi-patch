@@ -29,6 +29,7 @@ Guards on every cell before it is written:
     python tools\\apply_sheet_cells.py --match mainframe
     python tools\\apply_sheet_cells.py --match mainframe --apply
     python tools\\apply_sheet_cells.py --new "…(23).xlsx" --base "…(22).xlsx" --match X
+    python tools\apply_sheet_cells.py --take-sheet=71/txt/0064,80/txt/0170 --apply
 """
 import difflib
 import glob
@@ -62,9 +63,31 @@ def arg(name, default=None):
 
 
 MATCH = arg("match")
+# `--take-sheet=id,id,…`: những ô đã xem bằng mắt và chốt "sheet thắng", dù build cũng đã
+# đổi. Sinh ra khi snapshot đã merge bị **tải đè lên cùng tên file** nên không còn bản nền
+# nào khớp build: vòng (32) export lại 18/08 làm 27 ô báo "cả hai bên đổi" mà 26 trong số
+# đó hai bên chỉ khác dấu nháy. Phải liệt kê id tường minh — không có chế độ "lấy tất".
+TAKE = {x.strip() for x in (arg("take-sheet") or "").split(",") if x.strip()}
 TAG = re.compile(r"\[[^\[\]\n]*\]")
 SD_ID = re.compile(r"^(\d+)/txt/(\d+)$")
 DATA_ID = re.compile(r"^([A-Za-z&]+Data)/([A-Za-z_]+)/id(\d+)$")
+
+
+def backup_path(base):
+    """Không bao giờ **bỏ qua** backup vì tên đã tồn tại.
+
+    Tên backup lấy từ tên file snapshot, mà người dùng tải lại **đè lên cùng tên** (memory
+    merge: "N là thứ tự tải, không phải thời gian"). Nên `_backup\\scenario01.UNLOGICAL_v2(32)`
+    đã có nghĩa là *vòng trước cùng tên sheet*, không phải vòng này — bỏ qua là mất đúng
+    cái mốc để lùi một bước. Thật: `(32)` được export lại 18/08 14:11 sau khi vòng `(32)`
+    đầu đã merge xong, hai nội dung khác nhau 670 ô.
+    """
+    if not os.path.exists(base):
+        return base
+    i = 2
+    while os.path.exists("%s-%d" % (base, i)):
+        i += 1
+    return "%s-%d" % (base, i)
 
 
 def newest_two():
@@ -76,7 +99,15 @@ def newest_two():
 
 def read_sheet(path):
     """{id: (tiếng Việt, tiếng Nhật)} — sd_* dịch ở cột D, Nhật ở cột C; tab *Data
-    dịch ở cột C, Nhật ở cột B."""
+    dịch ở cột C, Nhật ở cột B.
+
+    **Làm phẳng `\\n` của sheet ngay ở đây.** Quy ước của cả tool là "sheet giữ câu chữ,
+    build giữ ngắt dòng" — nên mọi so sánh phía dưới đều làm phẳng phía build
+    (`cur.replace("\\n", " ")`). 56/41.247 ô của snapshot (32) lại có `\\n` thật, và
+    những ô đó thì so nguyên văn *không bao giờ* khớp: `80/txt/0166` bị báo "cả hai bên
+    đổi" trong khi thực tế chỉ sheet đổi (dấu `‘ ’` cong → `"`). `carry_breaks()` cũng
+    giả định phía mới là một dòng phẳng, nên để `\\n` sống sót tới đó là chồng ngắt dòng.
+    """
     wb = load_workbook(path, read_only=True, data_only=True)
     out = {}
     for ws in wb.worksheets:
@@ -89,9 +120,70 @@ def read_sheet(path):
                 continue
             val = row[vcol] if len(row) > vcol and isinstance(row[vcol], str) else ""
             jp = row[jcol] if len(row) > jcol and isinstance(row[jcol], str) else ""
+            val = val.replace("\r\n", "\n")
+            if ws.title.startswith("sd_"):
+                # `sd_*` giữ quy ước cũ: build sở hữu ngắt dòng, sheet chỉ giữ câu chữ.
+                val = val.replace("\n", " ")
+            else:
+                # Tab *Data thì SHEET sở hữu ngắt dòng. Đổi Alt+Enter thành dấu `\n` văn
+                # bản để đi tiếp bằng đúng đường của `expand_breaks()`; gộp khoảng trắng
+                # hai bên, vì `space + Alt+Enter` mà để nguyên sẽ thành space đôi rồi
+                # `carry_breaks` chỉ ăn một cái — đúng lỗi space rác của vòng (40).
+                val = re.sub(r"[ \t　]*\n[ \t　]*", BS_N, val)
             out[key] = (val, jp)
     wb.close()
     return out
+
+
+# Nhãn field trên sheet KHÔNG phải tên field thật, và khoá gốc cũng không luôn là `data`.
+# Đo 18/08 trên snapshot (37): trong 11 nhãn sheet dùng chỉ `TerminalHomeAlertData/alert`
+# là khớp thẳng, `rule_body` có nhánh riêng, còn lại 262 hàng **không bao giờ áp được** —
+# 5 nhãn sai tên field, 4 nhãn sai vì `dj.get("data", dj)` không ra list có `id`.
+# Lớp lỗi này ẩn được lâu vì tool chạy theo diff: một nhãn sai chỉ lộ ra ở vòng nào
+# đúng mấy hàng đó tình cờ đổi (vòng (39): 6/44 hàng note đổi -> 6 dòng "không có field").
+FIELD_MAP = {
+    ("GenebarkNoteData", "note"): ("data", "text"),
+    ("GenebarkNewsData", "news_title"): ("data", "title"),
+    ("GenebarkNewsData", "news_body"): ("data", "text"),
+    ("TerminalControlSkillData", "skill_name"): ("data", "request"),
+    ("TerminalControlSkillData", "skill_desc"): ("data", "caption"),
+    ("TerminalProfileData", "prof_name"): ("info", "name"),
+    ("TerminalProfileData", "prof_comment"): ("info", "comment"),
+    ("ShortStoryData", "ss_title"): ("list", "title"),
+    ("TerminalRuleData", "rule_title"): ("data.items", "title"),
+    ("TerminalHomeAlertData", "alert"): ("data", "alert"),
+}
+
+# `\n` dạng VĂN BẢN (U+005C U+006E) là cách các tab *Data khai báo ngắt dòng — asset thì
+# chỉ dùng U+000A. Snapshot (37) có 2 dấu như vậy ở note id1, khớp đúng 3 dòng của build;
+# (39) xoá hết, làm 6 note thành một dòng phẳng. Xem [[unlogical-text-overflow]].
+BS_N = chr(92) + "n"        # viết bằng chr() để khỏi lẫn với escape thật
+
+
+def expand_breaks(s):
+    """`\\n` văn bản -> U+000A, GỘP khoảng trắng hai bên.
+
+    Sheet hay gõ `ngày 9 \\n・ Tài liệu` (có space trước dấu), để nguyên thì dòng trên
+    mang space đuôi — cùng lớp lỗi với `space + Alt+Enter` thành space đôi.
+    """
+    return re.sub(r"[ \t　]*%s[ \t　]*" % re.escape(BS_N), "\n", s)
+
+
+def entries(dj, root):
+    """List các mục có `id`, theo đúng khoá gốc của từng asset."""
+    if root == "data.items":
+        out = []
+        for g in dj.get("data", []):
+            out.extend(g.get("items", []))
+        return out
+    rows = dj.get(root)
+    return rows if isinstance(rows, list) else []
+
+
+def field_get(ent, field):
+    """Giá trị field, gỡ một tầng `{"jp": …}` nếu có (note/news bọc thế)."""
+    v = ent.get(field)
+    return v.get("jp", "") if isinstance(v, dict) else v
 
 
 RULE_ID = re.compile(r"^([A-Za-z&]+Data)/rule_body/id(\d+)$")
@@ -250,6 +342,11 @@ def ruby_change_ok(old, new):
 
 def guards(old, new):
     bad = []
+    # Ô trắng không bao giờ được ghi đè lên chữ đang có: đúng lớp lỗi đã làm
+    # `107/txt/0099` và `0302` rỗng hẳn trên máy (bản Nhật là 「…………」). Tool này so
+    # theo diff nên không chạm vào ô không đổi, nhưng một pass "áp nguyên sheet" thì có.
+    if not new.strip() and old.strip():
+        bad.append("ô sheet trắng mà build đang có chữ")
     # Khoá tra cứu: lệnh diễn xuất, [主人公], [se file=…]… phải khớp từng cái.
     lookup = lambda s: sorted(t for t in TAG.findall(s)                      # noqa: E731
                               if not is_ruby(t) and not DIC.fullmatch(t))
@@ -326,22 +423,41 @@ def main():
             m = DATA_ID.match(key)
             if not m:
                 print("! %s: id lạ" % key); continue
-            asset, field, eid = m.group(1), m.group(2), int(m.group(3))
+            asset, sfield, eid = m.group(1), m.group(2), int(m.group(3))
+            root, field = FIELD_MAP.get((asset, sfield), ("data", sfield))
             _, _, raw_j = load_text(JSONB, asset)
             dj = json.loads(raw_j.lstrip("﻿"))
-            rows = dj.get("data", dj)
-            ent = next((e for e in rows if e.get("id") == eid), None)
+            ent = next((e for e in entries(dj, root) if e.get("id") == eid), None)
             if ent is None:
-                print("! %s: không có id %d trong %s" % (key, eid, asset)); continue
-            cur = ent.get(field, "")
+                print("! %s: không có id %d trong %s (khoá gốc %r)"
+                      % (key, eid, asset, root)); continue
+            # Tên field của sheet phải giải được ra field thật. Đọc `""` cho field không
+            # tồn tại thì ô trông như "build trống" và bị báo sai là "cả hai bên đổi".
+            if field not in ent:
+                print("! %s: %s không có field %r (nhãn sheet %r; có: %s)"
+                      % (key, asset, field, sfield, ", ".join(sorted(ent)))); continue
+            cur = field_get(ent, field)
             kind = asset
 
         # So ba chiều trên bản ĐÃ LÀM PHẲNG: build giữ `\n` mà sheet thì không, nên
         # so nguyên văn sẽ báo "cả hai bên đổi" cho cả những ô build vốn đã đúng.
+        # Tab *Data khai ngắt dòng bằng `\n` VĂN BẢN, asset thì dùng U+000A. Phải mở ra
+        # trước khi so, không thì ô nào có dấu đó cũng "không bao giờ khớp".
+        nv_x = expand_breaks(nv)                     # bản có ngắt dòng do SHEET khai
+        nv, bv = nv_x.replace("\n", " "), expand_breaks(bv).replace("\n", " ")
         flat_cur = cur.replace("\n", " ")
-        if flat_cur == nv:
+        # "Đã có bản mới" phải so NGUYÊN VĂN khi sheet tự khai ngắt dòng — không thì ô chỉ
+        # khác bố cục mà giống câu chữ sẽ bị bỏ qua, và cấu trúc mới không bao giờ xuống
+        # (vòng (40): 4 hàng note đúng kiểu đó).
+        if (cur == nv_x) if "\n" in nv_x else (flat_cur == nv):
             print("=  %-34s đã có bản mới" % key); continue
-        if flat_cur != bv:
+        if flat_cur != bv and key in TAKE:
+            # Người đã xem và chốt "sheet thắng ô này". Vẫn qua đủ các chốt còn lại
+            # (tag khoá tra cứu, `no=` của [dic], [主人公], ngoặc cân, carry_breaks) —
+            # `--take-sheet` chỉ bỏ *một* điều kiện: "build chưa ai sửa".
+            print("~  %-34s LẤY THEO SHEET (--take-sheet, đè bản build)" % key)
+            print("      build bị đè: %r" % flat_cur[:88])
+        elif flat_cur != bv:
             print("!! %-34s CẢ HAI BÊN ĐỔI — bỏ qua" % key)
             print("      nền   : %r" % bv[:88])
             print("      build : %r" % flat_cur[:88])
@@ -350,10 +466,29 @@ def main():
         bad = guards(cur, nv)
         if bad:
             print("!! %-34s chốt chặn: %s" % (key, "; ".join(bad))); continue
-        val = carry_breaks(cur, nv)
-        if val is None:
-            print("!! %-34s không đặt lại được %d ngắt dòng — bỏ qua"
-                  % (key, cur.count("\n"))); continue
+        # Sheet có tự khai ngắt dòng thì SHEET thắng — chỉ các tab *Data làm được, bằng
+        # `\n` văn bản. Không khai thì đắp lại ngắt dòng của build như cũ.
+        if "\n" in nv_x:
+            val = nv_x
+        else:
+            val = carry_breaks(cur, nv)
+            if val is None:
+                print("!! %-34s không đặt lại được %d ngắt dòng — bỏ qua"
+                      % (key, cur.count("\n"))); continue
+        # Space ASCII đứng ngay trước một ngắt dòng cứng thì không bao giờ có nghĩa, mà
+        # `carry_breaks` sinh ra nó khi ô sheet có space đôi: `71/txt/0344` ra `. ⏎Cô`.
+        # (Chỉ cắt space/tab — `　` SAU ngắt dòng là thụt lề thật, phải giữ.)
+        val = re.sub(r"[ \t]+\n", "\n", val)
+        # Chốt chặn LÀM PHẲNG: không ô nào được mất ngắt dòng so với build. Đây đúng là
+        # lớp hỏng đã phá 1 530 ngắt dòng một lần, và vòng (39) tái diễn — 6 hàng note bị
+        # xoá hết dấu `\n` văn bản nên sẽ làm phẳng note 3 dòng thành 1.
+        # …nhưng chỉ khi sheet KHÔNG tự khai bố cục. Sheet có khai thì nó là bên có thẩm
+        # quyền và việc giảm dòng là chủ ý: vòng (40) id6 nối lại đúng 3 dòng như bản gốc
+        # (build đang 4 dòng, ngắt giữa cụm "cách nào / khác là"), chặn là chặn oan.
+        if "\n" not in nv_x and val.count("\n") < cur.count("\n"):
+            print("!! %-34s chốt chặn: sheet làm phẳng, mất %d ngắt dòng (build %d -> %d)"
+                  % (key, cur.count("\n") - val.count("\n"),
+                     cur.count("\n"), val.count("\n"))); continue
 
         print("-> %-34s %s" % (key, kind))
         print("      cũ : %r" % cur[:88].replace("\n", "⏎"))
@@ -361,7 +496,7 @@ def main():
         if kind == "ScenarioData":
             changed_s.append((ti, sid, idx, cur, val))
         else:
-            json_edits.append((kind, field, eid, cur, val))
+            json_edits.append((kind, field, eid, cur, val, root))
 
     # ---- ScenarioData: text[] + bản sao scriptText
     # Vá theo CẢ MẢNG `text[]` của từng target, không theo từng chuỗi: có những câu
@@ -421,6 +556,20 @@ def main():
             if val == cur:
                 print("=  rule_body id%d trang %d: đã có bản mới" % (i, k))
                 continue
+            # So ba chiều như nhánh ScenarioData. Nhánh này vốn thiếu chốt đó, nên một
+            # bản sửa làm thẳng trên build bị vòng merge sau **âm thầm lật lại** — đã
+            # xảy ra thật: `fix_terminal_term.py` đổi id30/44/45 thành "Terminal", sheet
+            # vẫn ghi "terminal", vòng chạy lại sẽ hạ chữ hoa xuống.
+            # Dùng chính `merge_rule_text` với sheet NỀN: ra đúng `cur` thì build chưa ai
+            # sửa; khác `cur` thì hai bên đều đổi.
+            base_val = merge_rule_text(cur, rb[(i, k)])
+            if base_val is not None and base_val != cur:
+                print("!! rule_body id%d trang %d: CẢ HAI BÊN ĐỔI — bỏ qua" % (i, k))
+                for l in difflib.unified_diff(base_val.split("\n"), cur.split("\n"),
+                                              "nền", "build", lineterm="", n=0):
+                    if l[:1] in "+-" and l[:3] not in ("+++", "---"):
+                        print("      %s" % l[:96])
+                continue
             if val.count("　") < cur.count("　"):
                 print("!! rule_body id%d trang %d: mất %d thụt lề `　` — bỏ qua"
                       % (i, k, cur.count("　") - val.count("　")))
@@ -444,10 +593,10 @@ def main():
         return
 
     tag = os.path.splitext(os.path.basename(new_f))[0].replace(" ", "")
+    json_bak = [None]        # bundle json bị hai nhánh ghi, chỉ chụp backup một lần
     if changed_s:
-        bak = os.path.join(ROOT, "_backup", "scenario01.%s" % tag)
-        if not os.path.exists(bak):
-            shutil.copy2(SCENARIO, bak); print("backup ->", bak)
+        bak = backup_path(os.path.join(ROOT, "_backup", "scenario01.%s" % tag))
+        shutil.copy2(SCENARIO, bak); print("backup ->", bak)
         d_s.m_Script = ("﻿" if raw_s.startswith("﻿") else "") + out_s.lstrip("﻿")
         d_s.save()
         with open(SCENARIO, "wb") as f:
@@ -461,9 +610,9 @@ def main():
         print("  đọc lại: %d ô khớp, loadLine nguyên vẹn" % len(changed_s))
 
     if rule_edits:
-        bak = os.path.join(ROOT, "_backup", "json.%s" % tag)
-        if not os.path.exists(bak):
-            shutil.copy2(JSONB, bak); print("backup ->", bak)
+        if json_bak[0] is None:
+            json_bak[0] = backup_path(os.path.join(ROOT, "_backup", "json.%s" % tag))
+            shutil.copy2(JSONB, json_bak[0]); print("backup ->", json_bak[0])
         env_r, d_r, raw_r = load_text(JSONB, "TerminalRuleData")
         out_r = raw_r
         for i, k, cur, val in rule_edits:
@@ -485,13 +634,13 @@ def main():
         print("  đọc lại: %d trang rule_body khớp" % len(rule_edits))
 
     if json_edits:
-        bak = os.path.join(ROOT, "_backup", "json.%s" % tag)
-        if not os.path.exists(bak):
-            shutil.copy2(JSONB, bak); print("backup ->", bak)
+        if json_bak[0] is None:
+            json_bak[0] = backup_path(os.path.join(ROOT, "_backup", "json.%s" % tag))
+            shutil.copy2(JSONB, json_bak[0]); print("backup ->", json_bak[0])
         for asset in sorted({e[0] for e in json_edits}):
             env_j, d_j, raw_j = load_text(JSONB, asset)
             out_j = raw_j
-            for a, field, eid, cur, val in [e for e in json_edits if e[0] == asset]:
+            for a, field, eid, cur, val, root in [e for e in json_edits if e[0] == asset]:
                 oj, nj = (json.dumps(cur, ensure_ascii=False), json.dumps(val, ensure_ascii=False))
                 if out_j.count(oj) != 1:
                     raise SystemExit("%s id%d: chuỗi cũ khớp %d lần" % (asset, eid, out_j.count(oj)))
@@ -502,11 +651,10 @@ def main():
                 f.write(env_j.file.save(packer="lz4"))
             print("đã ghi", JSONB, os.path.getsize(JSONB))
             _, _, back = load_text(JSONB, asset)
-            rows = json.loads(back.lstrip("﻿"))
-            rows = rows.get("data", rows)
-            for a, field, eid, cur, val in [e for e in json_edits if e[0] == asset]:
-                ent = next(e for e in rows if e.get("id") == eid)
-                assert ent[field] == val, "đọc lại %s id%d sai" % (asset, eid)
+            dj_back = json.loads(back.lstrip("﻿"))
+            for a, field, eid, cur, val, root in [e for e in json_edits if e[0] == asset]:
+                ent = next(e for e in entries(dj_back, root) if e.get("id") == eid)
+                assert field_get(ent, field) == val, "đọc lại %s id%d sai" % (asset, eid)
             print("  đọc lại: %s khớp" % asset)
 
 

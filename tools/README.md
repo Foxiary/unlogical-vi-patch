@@ -233,6 +233,46 @@ Khoá lấy đúng cột ID của sheet: `76/txt/0011` → `ScenarioData` scenar
   mainframe"). Đó là cách sheet đang viết; muốn nhất quán một kiểu thì sửa trên
   sheet rồi chạy lại tool này.
 
+### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
+
+`(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
+merge xong (backup `scenario01.UNLOGICAL_v2(32)` lúc 22:29 ngày 17/08). Hai nội dung khác
+nhau **670 ô**. Bản export đã merge không còn trên disk, nên **không có snapshot nào đại diện
+cho bản nền của build** — đó là nguồn của 26 xung đột giả.
+
+Ba bản vá sinh ra từ vòng này:
+
+- **Làm phẳng `\n` của sheet ngay trong `read_sheet()`.** Tool so ba chiều trên bản đã làm
+  phẳng *phía build* (`cur.replace("\n", " ")`) nhưng để nguyên `bv`/`nv`. 56/41.247 ô của
+  `(32)` có `\n` thật, và những ô đó **không bao giờ** khớp được → báo "cả hai bên đổi" oan.
+  `80/txt/0166` là ca thật: chỉ sheet đổi (`‘ ’` cong → `"`), build không ai chạm.
+  `carry_breaks()` cũng giả định phía mới là một dòng phẳng nên để `\n` sống tới đó là chồng
+  ngắt dòng.
+- **`backup_path()` — không bao giờ bỏ qua backup vì tên đã tồn tại.** Tên backup lấy từ tên
+  file snapshot, mà người dùng tải lại đè lên cùng tên (memory: "N là thứ tự tải, không phải
+  thời gian"). Tên trùng nghĩa là *vòng trước cùng tên sheet*; bỏ qua là mất đúng cái mốc để
+  lùi một bước. Giờ thêm hậu tố `-2`, `-3`… Vòng này sinh `scenario01.UNLOGICAL_v2(32)-2`
+  (517 ô) và `-3` (27 ô lấy theo sheet).
+- **`--take-sheet=id,id,…`** — áp ô mà build cũng đã đổi, sau khi người đã xem. Vẫn qua đủ
+  các chốt khác; chỉ bỏ *một* điều kiện "build chưa ai sửa". Phải liệt kê id tường minh,
+  không có chế độ "lấy tất".
+
+Phân loại 27 ô bị chặn — gấp dấu nháy + khoảng trắng rồi so:
+
+| nhóm | số | xử lý |
+|---|---|---|
+| chỉ khác dấu nháy (`'…'` build vs `"…"` sheet) | 22 | lấy sheet — upstream, và `"` là quy ước đa số |
+| áp thì mất thụt treo `　` | 4 | lấy sheet rồi `fix_novel_list_wrap.py --apply` (nó dựng lại đúng 4 khối) |
+| khác chữ thật | 1 | `71/txt/1133`, sheet thêm ngoặc mở còn thiếu + hoa `Chẳng` → lấy sheet |
+
+Tổng vòng: **544 ô ScenarioData + 1 trang rule_body**. Sheet cũng mang luôn 5 chỗ `thiết bị`
+trần thành `terminal` (viết thường) — `fix_terminal_term.py --apply` hạ về `Terminal`, đúng
+lý do gate đó có mặt trong danh sách chốt.
+
+Ba trang `rule_body` id30/44/45 vẫn bị chặn đúng: build đã là `Terminal`, sheet vẫn `terminal`.
+id46 lệch số dòng (build 9 / sheet 10 — sheet thêm một dòng trắng) **và** vẫn `qua thiết bị`
+**và** đổi `kỹ năng` thành `skill`. Ba việc phải sửa trên sheet.
+
 ### Tab `TerminalRuleData` map theo (id, trang), và đừng lấy khoảng trắng của sheet
 
 `rule_body/idN` **lặp một hàng cho mỗi trang** của id đó (39 hàng / 21 id), nên hàng
@@ -242,6 +282,19 @@ chữ** của sheet nhưng **giữ khoảng trắng đầu dòng của build**: 
 thành một space ASCII và biến dòng trắng thành một dấu cách, áp nguyên văn là ép thụt
 lề còn 1/3 và phá bậc bullet. Số dòng hai bên lệch thì bỏ qua, và có chốt riêng: số
 `　` không được giảm.
+
+**Chốt ba chiều 18/08/2026** — nhánh này vốn *thiếu* nó, khác nhánh ScenarioData: nó
+chỉ hỏi "sheet có đổi không", không hỏi "build có ai sửa chưa", nên một bản sửa làm
+thẳng trên build bị vòng merge sau **âm thầm lật lại**. Bắt được vì
+`fix_terminal_term.py` đổi id30/44/45 thành `Terminal` mà sheet vẫn ghi `terminal`:
+chạy lại `apply_sheet_cells.py` là hạ ngay chữ hoa xuống. Cách kiểm không cần thêm dữ
+liệu — chạy `merge_rule_text(cur, sheet_nền)`: ra đúng `cur` thì build chưa ai sửa,
+khác `cur` thì hai bên đều đổi → in diff `nền` vs `build` rồi bỏ qua.
+
+Cùng vòng đó, nhánh `*Data/field/idN` đổi `ent.get(field, "")` thành lỗi rõ ràng khi
+field không tồn tại: sheet ghi `TerminalControlSkillData/skill_desc/id0` mà field thật
+tên là `caption`, nên tool đọc `""` và báo "build trống / cả hai bên đổi" — nghe như
+build bị mất chữ, thật ra chữ vẫn còn nguyên.
 
 Vòng `(31)` 17/08/2026 (backup `_backup\json.UNLOGICAL_v2(31)`): 7 trang, đổi
 `<…>` → `(…)` cho phần gloss tiếng Anh (`<Player>` → `(Player)`, `<Selector>`,
@@ -320,6 +373,195 @@ thoại. 20 mục còn lại thoại dùng tiếng Việt hoặc gần như khô
 Đếm phải bỏ ruby ra mới đúng: tính cả ruby thì `212` ra 281 và `112` ra 175, đủ để
 kết luận sai ở những mục mà loanword chỉ xuất hiện *bên trong* tag ruby.
 
+### Vòng "Terminal" 18/08/2026 — và ba chỗ sheet không với tới
+
+`python tools\fix_terminal_term.py [--apply] [--check] [--report]`
+
+Bắt đầu từ một ảnh chụp máy thật: băng-rôn tím trong cảnh sID 71 vẫn là
+`ターミナルを開いてください` (art nướng trong tranh, không phải TMP text), mà thoại ngay
+trên nó thì viết "mở thiết bị đầu cuối lên". Đếm ra build đang **chia ba**:
+`text[]` có 73 "thiết bị đầu cuối" / 36 "Terminal", `selText` 2 "thiết bị đầu cuối",
+`TerminalRuleData` viết "thiết bị" và "thiết bị (terminal)".
+
+Không có mục từ điển nào neo thuật ngữ này: **80/80 mục không có `ターミナル`**, và
+không `no=` nào trong 85 link `[dic …]` của `ScenarioData` trỏ tới nó. Nên khác vòng
+"mainframe", ở đây không có tiêu đề từ điển để đối chiếu — chốt bằng cách chọn dạng
+danh xưng, đúng như câu game dùng để *đặt tên* cho nó
+(`「Đây là 『Terminal』。Là bảng menu hệ thống…」`, sID 69).
+
+Sheet `(32)` (nền `(31)`) đổi **118 ô `text[]`** + 8 trang `rule_body`; backup
+`_backup\scenario01.UNLOGICAL_v2(32)`, `_backup\json.UNLOGICAL_v2(32)`. Còn ba chỗ
+sheet **không mang được**, đó là việc của tool này (backup
+`_backup\scenario01.terminalterm`, `_backup\json.terminalterm`):
+
+| chỗ | vì sao sheet không với tới | số |
+|---|---|---|
+| `selText[]` | không có cột nào trên sheet cho nhãn lựa chọn | 2 ô |
+| `scriptText` | `apply_sheet_cells.py` bỏ mirror khi chuỗi cũ khớp ≠1 lần | 24 script |
+| `TerminalRuleData` | sheet ghi "terminal" chữ thường; id46 lệch số dòng nên bị bỏ | 4 trang |
+
+Hai luật quét (`thiết bị đầu cuối` → `Terminal`; `terminal` đứng riêng → `Terminal`)
+cộng bảng `PLAN` cho chỗ một lần — `id46` trang 1 gọi là "thiết bị" mà bản Nhật là
+`ターミナルから『犯人投票』を行う`.
+
+**Không quét `thiết bị` đứng một mình.** 85 chỗ trong `text[]`, và quá nửa là thiết bị
+thật: `thiết bị y tế`, `thiết bị điện tử`, `thiết bị nghe lén`, `thiết bị VR`,
+`thiết bị định vị`, `thiết bị mạng`. Số còn lại (`thiết bị cầm tay`,
+`thiết bị của Ran`, `mở thiết bị lên`, `thao tác trên thiết bị`) đúng là Terminal
+nhưng phải xem từng câu — `--report` in ra danh sách đã lọc bớt nhóm rõ ràng không
+phải. Hai chỗ `thiết bị Terminal` (`85/txt/0764`, `0960`) giờ thừa chữ.
+
+Chốt: đổi tên làm chuỗi **ngắn đi** (17 ký tự → 8) nên không có rủi ro tràn khung;
+`check_layout_breaks` xác nhận 209.819 → 209.819 ngắt dòng, 17.425 → 17.425 dòng thụt.
+
+## Tin nhắn bị cắt mất đầu câu (dấu `（` lẻ)
+
+`python tools\fix_paren_balance.py [--apply] [--check]`
+
+Lớp lỗi vô hình: bản dịch mất mệnh đề đầu, câu vẫn đọc trôi, chỉ dấu `）` lẻ là tố giác.
+`guards()` của `apply_sheet_cells.py` cân `"`, `「」`, `『』` nhưng **không** cân ngoặc đơn.
+
+Nhận diện chính xác cần hai điều kiện, và **phải gộp hai độ rộng ngoặc**:
+
+```
+số  ） + )  >  số  （ + (     trong bản dịch
+VÀ  bản Nhật của đúng tin nhắn đó có một cặp đầy đủ
+```
+
+Điều kiện hai loại emoticon: `75/txt/0044` "Gì vậy, tự dưng hỏi thế **=))**" dịch từ
+`なに、いきなり笑` — bản Nhật không có ngoặc nào nên không bị bắt. Gộp độ rộng thì bắt buộc:
+bản dịch quen dùng `(` nửa rộng ở chỗ bản Nhật dùng `（`, đếm tách theo từng cặp bỏ sót
+đúng **3/4** ô lỗi.
+
+Đo 18/08/2026 trên 39.803 tin nhắn: **5 ô lệch, 4 lỗi thật**, cả 4 cùng một kiểu (mất `（`)
+và **cả 4 đã bị cắt sẵn trên sheet** — cột Nhật của sheet vẫn nguyên, chỉ cột dịch mất cụm
+đầu, nên chữa gốc là chữa upstream.
+
+| ô | bản dịch trong build | bản Nhật |
+|---|---|---|
+| `126/txt/0269` | `Nhưng giờ Yuri đang bận, nếu mình giữ…` | `（でも、ユーリさんは仕事が忙しいし` ⏎ `　遅くまで…かな）` |
+| `85/txt/1353` | `lúc nào trông cũng thảnh thơi quá nhỉ...)` | `（このひとは、いつ見ても気楽だな……）` |
+| `85/txt/1429` | `Kai lại...)` | `（……なんで、戒くんが……）` |
+| `85/txt/1431` | `anh Yuri có thể sẽ phải mất mạng sao?)` | `（現実でユーリさんが死ぬかもしれないって、` ⏎ `　わかってるのに？）` |
+
+`--apply` chỉ chữa ô đã **đủ chữ**, liệt kê tường minh trong `PLAN`. Đã chạy 18/08/2026
+(backup `_backup\scenario01.parenbalance`): 1 ô — `126/txt/0269`, snapshot (32) cấp đủ câu
+nên chỉ cần thêm `（` và dựng lại ngắt dòng + thụt `　` theo bản Nhật. Ba ô kia thiếu chữ,
+tool không đoán — `--check` exit 1 cho tới khi sheet được sửa.
+
+> Ô này còn là ví dụ cho chuyện `check_layout_breaks` báo "MẤT THỤT LỀ" mà thực ra là
+> **sửa đúng**: bản cũ `' nếu mình giữ…'` mở đầu bằng một space rác (di chứng của việc bị
+> cắt), tool đếm space đó là dòng thụt. Đừng vá ngược theo cảnh báo mà không xem bản Nhật.
+
+## Caption giữa màn (`[textmode=5]`) — lề thật không phải mép khung
+
+`python tools\fix_center_caption_wrap.py [--apply] [--check]`
+
+Widget: `level10` pid **898** `RenderCanvas_Final/EXTRALayer/EXTRAText` — rect **1920×720**,
+cỡ 39, charSpacing 3,8, `m_HorizontalAlignment=2` (giữa), `m_VerticalAlignment=512` (giữa),
+`m_TextWrappingMode=1` (wrap BẬT), `m_overflowMode=0` (Overflow). Nhận diện bằng cách loại
+trừ trên ảnh chụp máy thật: ảnh cho **một dòng** nằm **đúng giữa** theo trục dọc, trong khi
+`Message(Novel2)` (1600×720, canh **trên**) sẽ phải wrap dòng đó thành 2 và `Message(Novel)`
+canh trái. `[textmode=5]` = `;//演出：ノベルモード　黒背景に白文字を中央表示`.
+
+Engine **không vẽ `「」`** ở chế độ này — hai đầu dòng trên ảnh sạch, chữ mở đầu bằng `...`
+và kết thúc bằng `này.`. Chi tiết này đổi số đo 83 px (1904 → 1821), đủ để đảo kết luận.
+
+**Cái bẫy: rect 1920 = đúng bằng cả canvas, nên "vừa khung" không bảo vệ gì.** Chữ chạy sát
+mép màn vẫn tính là vừa khung. Giới hạn thật là **lề an toàn**, và trong game có mốc sẵn —
+watermark tam giác UL ở góc dưới-phải:
+
+    tam giác UL: x 1725..1842, y 930..1050  ->  lề phải 78 px
+    vùng an toàn = 1920 - 2 x 78 = 1764 px
+
+`71/txt/0344` rộng 1821 px = **95% khung** nhưng **103% lề an toàn**. Bản Nhật
+`……可哀想。こんなに泣いて、傷ついて` chỉ ~750 px = 43% lề — chưa bao giờ tới gần, nên đây là
+vấn đề độ dài bản dịch.
+
+> **Sai số đã mắc, ghi để không lặp:** lần đầu tôi suy lề này từ ảnh chụp điện thoại IMG_7147
+> và ra **184 px** (vùng an toàn 1552) — hơn gấp đôi. Mép LCD tối, lẫn với bezel và ốp nhựa,
+> nên chỗ tôi nhận là "mép màn" thực ra là mép ốp. Ảnh chụp Ryujinx thay thế hẳn phép đo đó.
+> Ảnh chụp tay **vẫn dùng được cho phần tương đối** trong cùng ảnh (nó nói đúng rằng chữ lấn
+> qua tam giác ~22 px), nhưng không dùng cho số tuyệt đối. Cũng nhớ: quét từng hàng mới tách
+> được **tam giác** (mép 1842) khỏi **chữ ©BROCCOLI** (chìa thêm ~60 px) — chỉ có ở màn ADV.
+
+**Ngắt theo DẤU CÂU, không cân độ dài.** Cân bằng cho ra chỗ ngắt giữa câu, đọc gãy; dấu câu
+thì trùng nhịp bản gốc. Kiểm được: `71/txt/0345` ngắt ra **đúng chỗ bản Nhật tự ngắt**
+(`大切な人を失うのはつらいでしょ？` / `　こんな風に死んでほしくはないでしょ？`).
+
+Đã chạy 18/08/2026 (backup `_backup\scenario01.centercaption`):
+
+| ô | trước | sau |
+|---|---|---|
+| `71/txt/0344` | 1821 px (103%) | 488 px (28%) + 1318 px (75%) |
+| `71/txt/0345` | 2592 px (147%) | 1232 px (70%) + 1344 px (76%) |
+| `71/txt/0346` | 754 px (43%) | không cần |
+
+Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
+
+Tool **tự dò lại chỗ ngắt từ câu chữ hiện tại** nên chạy lại được sau mỗi merge (sheet làm
+phẳng `\n` mỗi vòng); `PLAN` chỉ ghi *id ô*. **Hạn chế đã biết:** chưa quét được cả chế độ vì
+chưa biết engine reset `textmode` ở lệnh nào — dò ngược tới `[textmode=5]` gần nhất cho ra ca
+cách **2593 dòng script**, tức có thứ khác `[textmode=N]` đang reset mode. Ô nào xác định chắc
+thì thêm vào `PLAN`.
+
+## Ô SHORT STORY rộng hơn lề watermark — thu rect một float
+
+`python tools\fix_ss_box_width.py [--apply] [--revert]`
+
+`[textmode=4]` = chế độ short story, vẽ bởi `level10` TMP pid **893**
+`RenderCanvas_Final/Message(SS)/SSText`, RectTransform pid **719**: rect **1700×944,28**,
+`m_AnchoredPosition (-787, 437)`, `m_Pivot (0, 1)`. Trên canvas 1920 hộp nằm ở **x 173..1873**
+— lề trái 173 px mà **lề phải chỉ 47 px**, lệch hẳn. Watermark tam giác UL có lề phải **78 px**
+(x 1725..1842), nên hộp rộng hơn lề cho phép **31 px**.
+
+TMP wrap đúng ở rect và không biết gì về watermark, nên dòng nào đầy sẽ dừng ở 1699,x = mép
+1873. Đo trên build: **348 / 2 872 dòng (12,1%)** của 15 script short story lấn qua tam giác,
+và **tất cả** đều dồn sát 1699,x — dấu hiệu kinh điển của "rect là thứ giới hạn, không phải
+câu chữ".
+
+| rect | tổng dòng | dòng lấn | thêm dòng | mép phải |
+|---|---|---|---|---|
+| 1700 (cũ) | 2 872 | 348 | — | 1873 |
+| 1690 | 2 883 | 221 | +11 | 1863 |
+| 1680 | 2 890 | 128 | +18 | 1853 |
+| **1669** | **2 896** | **0** | **+24** | **1842** |
+| 1650 | 2 905 | 0 | +33 | 1823 |
+| 1574 (cân lề trái) | 3 020 | 0 | +148 | 1747 |
+
+**Đã chốt: lề trái 120, mép phải 1842 → rect 1722** (`--left=120`, áp 18/08/2026).
+
+| lề trái | rect | dòng | qua 1842 | trang >16 slot | đụng biên nghiêng |
+|---|---|---|---|---|---|
+| 173 (gốc) | 1700 | 2 872 | 348 | 2 | — |
+| 173 | 1669 | 2 896 | 0 | 2 | 3 (tệ nhất +22) |
+| **120** | **1722** | **2 850** | **0** | **1** | **3 (tệ nhất +44)** |
+| 78 (cân hai bên) | 1764 | 2 809 | 0 | 0 | 1 (+7) |
+
+Đánh đổi: rect rộng hơn thì dòng **dài hơn mới wrap**, nên chỗ đụng biên nghiêng nặng thêm
+(+22 → +44) dù tổng dòng và số trang quá slot đều giảm. Vá rect vẫn rẻ hơn vá dữ liệu **và**
+không phải chạy lại sau mỗi merge sheet.
+
+Ảnh review ở `tools/ss_margin_preview_fixed.png` (trang `133`/24, thấy rõ cái được: 17 → 16
+slot) và `tools/ss_margin_preview_worst.png` (trang `141`/8, trang thừa chữ thật nên không
+cải thiện). Dựng lại bằng `python tools\_previewuild_ss_margin.py <sID> <trang> <hau-to>` —
+script vẽ chữ bằng **chính font trong game** và đặt glyph theo đúng công thức advance của
+`adv_layout`, đã kiểm là trùng từng chỗ ngắt dòng với ảnh chụp Ryujinx.
+
+`m_Pivot.x = 0` nên thu `m_SizeDelta.x` ghim mép trái, chỉ kéo mép phải vào — không cần bù vị
+trí. `level10` không có type tree nhúng nên **vá byte tại chỗ** (`env.file.save()` lên level10
+ghi rỗng phần lớn object — xem CLAUDE.md), cùng mẹo `fix_adv_box_width.py`: đuôi RectTransform
+là 10 float liền nhau, `sizeDelta.x` ở +24.
+
+Đã chạy 18/08/2026 (backup `_backup\level10.ssboxw`): đổi **2 byte** tại offset 94716, file vẫn
+160 480 byte, 1259 object, chiều cao/vị trí/pivot nguyên vẹn.
+
+> **Còn tồn:** hộp cao tới y 1047 mà tam giác chiếm y 930..1050, nên 2 dòng cuối của một trang
+> đầy nằm *ngang hàng* tam giác — ở đó giới hạn phải là x 1725 (rect 1552), không phải 1842.
+> Ảnh đang có kết ở y 930, đúng chỗ tam giác bắt đầu, nên chưa biết engine có phân trang để
+> tránh hay không. Cần ảnh chụp một trang đầy; nếu có đụng thì phải làm giới hạn theo từng
+> dòng như `fix_adv_wrap.py`.
+
 ## Thuật ngữ trong bundle `json`
 
 `python tools\json_term.py <TênAsset> "<cũ>" "<mới>" [--apply]` — thay một chuỗi
@@ -332,6 +574,90 @@ Bảy file đã dịch trong bundle này **không có tab nào trên sheet**, n�
 
 Đã dùng: `DictionaryData` mục `no=212` "Thiên sứ tập sự" → **"Thiên thần tập sự"**
 (16/08/2026, backup `_backup\json.prespiritterm`).
+
+## Chuỗi UI nằm trong code (`global-metadata.dat`)
+
+`python tools\metadata_term.py "<cũ>" "<mới>" [--apply]` — thay một literal IL2CPP
+tại chỗ. Dùng khi grep cả `romfs` lẫn các bundle **đều không ra chữ nào**: chuỗi
+là hằng trong code, không phải dữ liệu.
+
+Bảng `stringLiteral` của metadata v31: cặp (offset, size) của bảng ở header 0x08 /
+0x0C, của khối dữ liệu ở 0x10 / 0x14; mỗi mục là `{uint32 length; uint32 dataIndex}`
+và **dữ liệu xếp khít nhau, không có một byte đệm nào**. Nên bản dịch phải ngắn hơn
+hoặc bằng bản gốc tính theo **byte UTF-8**: script ghi đè tại chỗ, điền `\x00` phần
+dư, hạ `length` trong bảng. Kích thước file không đổi nên mọi offset khác an toàn.
+Muốn dài hơn thì phải dời hết các khối phía sau và viết lại header — chưa làm.
+
+Sau khi ghi, script đọc lại từ disk và đối chiếu với backup: chỉ được khác đúng
+vùng dữ liệu của literal đó cộng 4 byte `length`, lệch một byte ra ngoài là dừng.
+
+Đã dùng: alert của TERMINAL khi bấm `EXECUTION` mà kỹ năng chưa dùng được —
+literal **15058** `現在使用できません` (27 byte, trống sau = 0) → **"Chưa thể sử dụng"**
+(23 byte), 18/08/2026, backup `_backup\global-metadata.dat.prelitterm`.
+
+> Chuỗi này chỉ xuất hiện trong script dưới dạng **chú thích** `;//アラート：現在使用
+> できません。` ở `00_03` và `04_03_02` — chữ thật do engine vẽ khi chạy
+> `[terminal tutorial=…]` và `[terminal control start]`. Tìm trong `ScenarioData`
+> rồi sửa ở đó là sửa nhầm chú thích, màn hình vẫn nguyên tiếng Nhật.
+>
+> Không giữ được `現在` vì hết chỗ: "Hiện không thể sử dụng" 31 byte, "Hiện chưa
+> thể sử dụng" 30 byte, đều vượt 27. "Chưa" gánh phần nghĩa đó — cả hai cảnh
+> (tutorial `PRO-03-14`, và `SOU-03-39` lúc gọi kỹ năng 『閉鎖』) đều là *chưa*
+> dùng được lúc này chứ không phải vĩnh viễn.
+
+### Alert "ターミナルを開いてください" — và vì sao đừng đi tìm nó trong tranh
+
+Đã vá 18/08/2026 — literal **14856** `ターミナルを開いてください` (39 byte, trống sau = 0)
+→ **"Vui lòng mở Terminal"** (23 byte). Backup `_backup\global-metadata.dat.prelitterm2`.
+File offset 494190, `dataIdx` 372142; literal kế bên (`ダ`, dataIdx 372181) nguyên vẹn vì
+372142 + 39 = 372181, tức phần đệm `\x00` lấp vừa khít tới đầu literal sau.
+
+**Ảnh chụp máy thật trông y như art nướng** — một tấm băng-rôn tím giữa cảnh tàu lượn, có
+cả `UN:LOGICAL` dọc mép và dãy vạch thước. Nó không phải tranh. Vệt loại trừ (quét byte
+UTF-8 trên cả 25 container `.assets`/`level*` **và** giải nén từng object của mọi bundle
+trong `StreamingAssets`):
+
+- chuỗi đầy đủ chỉ hiện ở `resources.assets` (4 lần) và `scenario01` (4 lần) — **cả 8 đều
+  là chú thích** `;//アラート：ターミナルを開いてください`. Dịch chú thích thì màn hình vẫn
+  nguyên tiếng Nhật, đúng cái bẫy mục trên đã ghi cho chuỗi cùng widget.
+- `global-metadata.dat` có **đúng một** chỗ chứa `ターミナル` trong cả 9.259.608 byte, và nó
+  chính là câu này.
+- `ui_jp` (7937 object, 122 Texture2D, 707 Sprite, 25 SpriteAtlas) **không có prefab
+  alert/notification nào**; quét tím theo từng sprite trên 165 sprite dạng băng-rôn không ra
+  chỗ nào có dãy 12 glyph trắng canh giữa.
+
+Widget thật: `level10` `Canvas_UI/NotificationLayer/Notification_Terminal/Panel/Text (TMP)`
+= MonoBehaviour **888**; tấm nền tím là Image MonoBehaviour 984 lấy Sprite 387 / Texture2D 32
+của `sharedassets10.assets`. Engine bật nó sau **10 giây không thao tác** ở
+`[terminal time=10 target=*test_01 tutorial=1]`, hiện ở **góc trên phải** (600×124 tại
+x1302..1902, y241..365 trên canvas 1920×1080) — không phải giữa màn như ảnh chụp làm tưởng.
+
+Hai giới hạn phải cùng thoả, và giới hạn byte cắn trước:
+
+| | mốc | `ターミナルを開いてください` | `Vui lòng mở Terminal` |
+|---|---|---|---|
+| byte UTF-8 | ≤ 39 (trống sau = 0) | 39 | **23** |
+| bề rộng vẽ | ≤ 580 px | 444,6 | **369,5** |
+
+Khung TMP 580×94, `m_TextWrappingMode=0` (NoWrap), `m_overflowMode=1` (Ellipsis) và
+**auto-size TẮT** (`m_enableAutoSizing=0`) — quá 580 px là bị chặt rồi thay bằng `…`, chứ
+không co lại. Đo ở fontSize 32 / charSpacing 2,2 với chính file font trong bundle mod.
+
+> **Widget này dùng font KHÁC ô thoại.** Thoại ADV lấy `sharedassets7.assets` pid 85
+> (`FOT-NewRodinProN-DB SDF-Dynamic`), còn alert lấy `sharedassets10.assets` pid 3568
+> (`FOT-DNPShueiMGoStd-B SDF-Dynamic`). Nên "thoại tiếng Việt hiện đúng" **không** chứng minh
+> alert cũng hiện đúng. Cả hai là font **Dynamic**: `m_CharacterTable` rỗng, atlas dựng lúc
+> chạy từ file font nhúng (`m_SourceFontFile` → pid 305 và pid 7), nên coverage phải soi ở
+> cmap của chính file font, không phải ở bảng ký tự của asset.
+>
+> Soi rồi: **bản 1.0.2 gốc thiếu ư/ể/ở/ụ/ử ở cả hai font**, bản mod đã dựng lại cả hai và
+> đủ hết (notif 14.590 → 8.366 codepoint, ADV 16.149 → 10.178 — bỏ bớt CJK, thêm tiếng Việt).
+> Kiểm nhanh:
+>
+> ```python
+> from fontTools.ttLib import TTFont       # rút m_FontData của object Font rồi
+> codes = set().union(*(t.cmap for t in TTFont(blob).\_\_getitem\_\_("cmap").tables))
+> ```
 
 ## Trường `ruby` của từ điển
 
@@ -659,6 +985,8 @@ nên không khớp verbatim; vô hại vì `scriptText` không được vẽ.
 python tools\fix_novel_list_wrap.py --apply     # dựng lại ngắt dòng + thụt treo
 python tools\fix_novel_list_wrap.py --check     # exit 1 nếu còn khối sai
 python tools\fix_dictionary_wrap.py  --apply    # ô từ điển, cùng lý do
+python tools\fix_terminal_term.py    --check    # exit 1 nếu sheet mang lại cách gọi cũ
+python tools\fix_paren_balance.py    --check    # exit 1 nếu tin nhắn mất dấu `（` mở
 python tools\check_layout_breaks.py  [<backup>] # exit 1 nếu MẤT ngắt dòng/thụt lề
 python tools\check_layout_breaks.py  --json     # cùng chốt cho bundle json
 ```
@@ -1107,6 +1435,73 @@ Cả 14 tên khớp đúng bản xuất `UNLOGICAL_v2 (5).xlsx` (16/08 20:39) �
 
 > Nếu sau này phải sửa tên này lần nữa thì thay **trọn cụm**: `Ryo` trần còn
 > trúng `Hinode Ryoku`, nhân vật khác, 80 chỗ.
+
+## Ô Comment của popup Profile — nới ra sát hai icon
+
+Cùng prefab `Terminal_Profile`, ô chữ dài nằm dưới gạch chân "Comment":
+
+```
+BG/Pop/Common/Comment・Property   pid rect -6189876832534220432   TMP pid 1053535555780865634
+                                 rect 880x150 tại (3,-142), cỡ 31, wrap=1, charSpacing -3.3
+BG/Pop/Player/UL_term_c_popup_icon_player_01 / _02   64x64 tại (417,-89) và (417,-158)
+```
+
+Toạ độ tính theo gốc `Pop` (1056×624; trên ảnh 1920×1080 tâm `Pop` ở x = 1122).
+Ô chữ dùng chung cho cả tab Player (trường `comment`) lẫn tab Spirit.
+
+**Rect vốn đã thừa, không phải thiếu**: mép phải của nó ở 443, tức là chạy xuyên
+qua cả hai icon (mép trái icon 385). Cái bó chữ lại là `\n` cứng trong
+`TerminalProfileData.comment` — dòng dài nhất chỉ 584 px, dừng cách icon hơn
+250 px. Bản gốc Nhật ngắt tay ở 20–21 chữ kanji (~675 px) và **không mục nào quá
+3 dòng**; bản dịch ngắt hẹp hơn thế nên phình thành 4–6 dòng, tràn xuống dưới
+khung 150 px (3 dòng = 119 px, 4 dòng = 163 px).
+
+`python tools\fix_profile_comment.py [--check|--apply]` làm hai việc cùng lúc —
+làm một việc thôi thì màn hình không đổi gì:
+
+```
+rect  m_SizeDelta.x        880 -> 800      mép trái -437 đứng yên (thẳng nhãn "Comment")
+      m_AnchoredPosition.x   3 -> -37      mép phải 443 -> 363, cách mép icon thấy được
+                                           (387) đúng 24 px; TMP không vẽ dưới icon được nữa
+data  ngắt lại 13/14 chuỗi comment cho cột 792 px (= 800 × 0.99)
+```
+
+> **Mô hình bề rộng phải hiệu chuẩn từ ảnh chụp, đừng tin `m_characterSpacing`.**
+> Advance lấy từ **TTF nhúng trong `ui_jp`** (`Font` `FOT-iroha21popuraStdN-R`,
+> pid 2079251334914095402, unitsPerEm 1000 — chính bản mod đã thay để có chữ
+> Việt; font asset trỏ tới nó là Dynamic, bảng glyph nhúng chỉ 84 mục nên vô
+> dụng, xem mục trên). Công thức:
+>
+> ```
+> W(dòng) = tổng(advance) * 31/1000 + (số ký tự - 1) * 1.25
+> ```
+>
+> `m_characterSpacing` ghi **-3.3** nhưng game vẽ *rộng ra*: đo 25 bước chữ liên
+> tiếp trên `_2026-08-18_03-12-37.png` (dòng 2 của Kyosuke, 26 chữ ứng đúng 26
+> vệt mực) ra **+1.19 ± 0.10 px mỗi khe**, và phần dư không tỉ lệ với bề rộng
+> chữ nên là hằng số mỗi khe chứ không phải sai số scale. Lấy 1.25 cho chắc. Với
+> mô hình này gốc bút của cả ba dòng rơi đúng x = 685 = mép trái rect, và bề
+> rộng dự đoán luôn nhích hơn thực tế ~5 px — lệch về phía an toàn.
+
+Kết quả: 9 mục Player đều còn **≤ 3 dòng** như bản gốc (id 5 và id 7 gọn vào 1
+dòng); 5 mục Spirit còn 3–4 dòng, trước đó tới 6. Ba mục Spirit dài nhất
+(`id 15` Hotaru, `id 17` Ruri, `id 18` Menou) vẫn 4 dòng = 163 px, quá khung
+150 px 13 px — **không cột nào ≤ 822 px cứu được** (id 15 cần 840 px mới xuống 3
+dòng, id 17/18 thì xa hơn nữa). Muốn hết hẳn thì phải nới `m_SizeDelta.y`
+150 → 176 kèm dời `m_AnchoredPosition.y` -142 → -155 cho khung mọc xuống, hoặc
+cắt chữ; chưa làm.
+
+Đã chạy 18/08/2026 (backup `_backup\ui_jp.preprofcomment`,
+`_backup\json.preprofcomment`). Đọc lại từ disk, so từng object theo byte:
+`ui_jp` 7937/7937 object, **đúng 1 object đổi** (RectTransform đó, vẫn 108 byte),
+bản vá tên cũ còn nguyên (`Name/Text` vẫn 400×40, NoWrap, auto-size 20..31);
+bundle `json` 37/37 object, **đúng 1 TextAsset đổi**.
+
+> **`check_layout_breaks.py --json` sẽ báo MẤT NGẮT DÒNG cho 13 khoá
+> `TerminalProfileData/info[*]/comment`** — đó là chủ ý, cột rộng hơn thì ít dòng
+> hơn. Lần chạy sau khi vá báo đúng 13 khoá đó và không khoá nào khác, tức là
+> không có gì bị phẳng thêm. Cổng đó dùng để so với backup *trước khi merge
+> sheet*, nên đừng chỉa nó vào `_backup\json.preprofcomment`.
 
 ## Danh sách SHORT STORY tràn khung
 
