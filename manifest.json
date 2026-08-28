@@ -2,7 +2,7 @@
   {
     "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
     "bytes": 9259608,
-    "md5": "846c0b25f2a1e1db69be31c688f927ec",
+    "md5": "252d2da8501dd985a0598053892351b0",
     "where": "repo"
   },
   {
@@ -61,8 +61,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8739098,
-    "md5": "9b024d0aabbc0d55390b393b6110f091",
+    "bytes": 8739145,
+    "md5": "cef3898316249e49070188bf87df3d4e",
     "where": "repo"
   },
   {

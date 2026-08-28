@@ -2418,6 +2418,68 @@ lần nào. Backup `_backup\ui_jp.presysplate-<ngày giờ>`.
 nguyên `.resS` (`sharedassets10.assets.resS` một mình đã 62 MB) và game chạy
 bình thường, vì các texture còn lại vẫn trỏ đúng offset vào `.resS` của romfs nền.
 
+## Nhãn route trên thẻ SAVE/LOAD còn tiếng Nhật (`戒・SECTION 1`)
+
+Thẻ save hiện `<tên nhân vật>・<chương>`. Phần chương lấy từ `ChapterData.chapter`
+(`SECTION 1`, đã Latin sẵn), còn **tên route là literal IL2CPP**, không nằm trong
+bundle nào — nên grep `romfs` không ra:
+
+```
+#14936 ユーリ・   #15016 奏壱・   #15030 戒・   #15074 藍・   #15090 雅火・
+```
+
+> **Đừng nhầm với `SystemTextData`.** `resources.assets` có id 84–88 đúng bằng năm cái
+> tên đó và slot `JP` **đã dịch từ trước** (`Miyabi`, `Kai`, `Ran`, `Soichi`, `Yuri`).
+> Màn save vẫn ra tiếng Nhật vì nó không đọc bảng đó. Thấy chuỗi đã dịch trong dữ liệu
+> mà màn hình vẫn sai thì phải nghĩ tới literal, đừng sửa lại chỗ vốn đã đúng.
+
+> **Chỉ vá biến thể có `・`, tuyệt đối không đụng literal tên trần.** `戒` (#15029),
+> `藍` (#15072), `雅火` (#15089), `奏壱` (#15015), `ユーリ` (#14935) là **khoá tra cứu** —
+> `Q&AData.bustup.chara`, `GenebarkChatCharaIdData`, `AdvCharacterBustUpDatabase` đều
+> so bằng đúng mấy chuỗi đó. Biến thể `X・` thì chỉ dùng để ghép nhãn nên đổi vô hại.
+
+Đã vá 28/08/2026 bằng `tools\metadata_term.py` (backup
+`_backup\global-metadata.dat.prelitterm3..7`). Ngân sách byte vừa khít, không phải
+nới khối nào:
+
+| literal | cũ | mới | byte |
+|---|---|---|---|
+| #15090 | `雅火・` | `Miyabi・` | 9 → 9 |
+| #15030 | `戒・` | `Kai・` | 6 → 6 |
+| #15074 | `藍・` | `Ran・` | 6 → 6 |
+| #15016 | `奏壱・` | `Soichi・` | 9 → 9 |
+| #14936 | `ユーリ・` | `Yuri・` | 12 → 7 |
+
+Giữ nguyên dấu `・` — đó là dấu phân cách của chính thiết kế thẻ. `Kai - ` cũng vừa
+đúng 6 byte nếu muốn đổi.
+
+### Hậu tố mùa của route EXTRA — phải xếp lại cả vùng
+
+`python tools\fix_extra_season_label.py [--apply]`. Ba literal `・夏\n\r`, `・春\n\r`,
+`・秋\n\r` (#14955–57) mỗi cái 8 byte. `・Hè` và `・Thu` vừa khít, nhưng **`・Xuân` cần 10**
+nên `metadata_term.py` bó tay — nó chỉ vá tại chỗ từng literal một.
+
+Cách ra: bảng literal là cặp `(length, dataIndex)`, mà **cả 37 byte** từ `・` (#14953) đến
+hết `・秋` là của riêng năm literal ấy, không literal nào khác chen vào. Xếp lại cả vùng
+thì tự do phân bổ:
+
+```
+373480  ・EXTRA\n\r   10      <- #14954, và #14953 trỏ vào 3 byte đầu
+373490  ・Hè\n\r       8      <- #14955
+373498  ・Xuân\n\r    10      <- #14956
+373508  ・Thu\n\r      8      <- #14957
+373516  \x00            1      thừa
+```
+
+> **Mẹo đủ chỗ: cho `・` (#14953) trỏ CHỒNG lên 3 byte đầu của `・EXTRA\n\r`.** Literal chỉ
+> là `(offset, length)` nên chồng lấn khi đọc là vô hại, và nội dung nó nhận vẫn đúng bằng
+> `・`. Không có mẹo này thì thiếu đúng 2 byte — 36 cần, 34 có.
+
+Đã chạy 28/08/2026, backup `_backup\global-metadata.dat.preseason`. Kiểm sau khi ghi:
+kích thước file không đổi, **39 byte đổi — 34 trong vùng dữ liệu, 5 trong bảng literal, 0
+chỗ khác**, và năm khoá tra cứu tên trần vẫn nguyên. `・EXTRA` vốn đã Latin nên giữ. Chạy
+lại lần hai thì script từ chối vì không thấy chuỗi Nhật cũ.
+
 ## Tên nhân vật chính vẫn là `環無` sau khi bấm New Game
 
 Vá literal 15063 trong `global-metadata.dat` **chỉ đổi giá trị mặc định cho máy
