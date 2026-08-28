@@ -132,6 +132,10 @@ def main():
         print("\nFAIL — merge đã làm phẳng bố cục. Chạy lại các fixer:")
         print("   python tools\\fix_novel_list_wrap.py --apply")
         print("   python tools\\fix_dictionary_wrap.py --apply")
+        print("   python tools\\fix_ellipsis_break.py --apply")
+        print(chr(10) + "LƯU Ý: fix_ellipsis_break.py cũng GỠ ngắt được (luật dòng "
+              "cụt), nên ngay sau đợt đó check này báo mất xuống-dòng là ĐÚNG DỰ "
+              "KIẾN — xem mục 'Luật dòng cụt' trong tools/README.md.")
         raise SystemExit(1)
     print("\nPASS không chuỗi nào mất ngắt dòng hay thụt lề")
 

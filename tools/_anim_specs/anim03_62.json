@@ -1,0 +1,35 @@
+{
+ "bundle": "anim03",
+ "texture": "62",
+ "note": "Bảng Order/Details — 処刑執行の天秤01: 『ユーリがビリビリの刑』『戒が串刺しの刑』どっち？ (script 05_04_02 dòng 543). Nguồn dịch: ScenarioData sID=122 text[75] ビリビリ -> 'tê điện', text[78]/[79] 串刺し -> 'xiên người'; selText[52] 'ユーリさんを処刑する' -> 'Xử tử anh Yuri'. Tên riêng: 戒 = Kai (TerminalProfileData id=5), ユーリ/神楽 侑莉 = Yuri (dùng thống nhất trong ScenarioData_vn, vd text[395] 'Yuri hoặc là giết tôi'). 『』 đổi thành dấu nháy kép theo lệ bản VN. | Bản Nhật 『A』『B』どっち？ là câu hỏi HAI LỰA CHỌN, đặt hai vế cạnh nhau không có liên từ thì tiếng Việt đọc ra như liệt kê. Thêm 'hay' vào giữa. Riêng tấm này: 串刺しの刑 đổi 'xiên người' -> 'xiên cọc' để dòng vừa khung ở CÙNG cỡ 32 với 61/63/64/65 (709 px tràn 696, 'xiên cọc' còn 678 px, hở 20 px tới hoạ tiết ngoặc x1319) — và 串刺し vốn là xiên lên cọc nên sát nghĩa hơn. | ビリビリ dịch 'sốc điện' (không phải 'tê điện'). Sheet (48) không có mục nào chứa ビリビリ nên không có tiền lệ để bám. Nới max_width 696 -> 703: dòng dài 697 px, còn hoạ tiết ngoặc trang trí ở x1319 tức giới hạn thật là 719 px — vẫn hở 11 px mỗi bên, và giữ được cỡ 32 đồng bộ với 61/63/64/65. Giữ 'xiên cọc' vì 'xiên người' đẩy dòng lên 728 px, vượt cả giới hạn thật.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    610,
+    415,
+    1310,
+    515
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "\"Yuri chịu án sốc điện\" hay \"Kai chịu án xiên cọc\"\nChọn bên nào?",
+   "font": "B",
+   "size": 32,
+   "leading": 48,
+   "color": "auto",
+   "align": "center",
+   "x": 959.5,
+   "y": 466,
+   "yref": "mid",
+   "max_width": 703
+  }
+ ]
+}

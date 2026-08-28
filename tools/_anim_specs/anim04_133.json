@@ -1,0 +1,169 @@
+{
+ "bundle": "anim04",
+ "texture": "133",
+ "note": "Ảnh chụp Terminal > PROFILE, popup hồ sơ 有沢 ザドキエル. Nguồn dịch: ref/json_vn/TerminalProfileData.json info id=3 — name 'Arisawa Zadkiel', comment 3 dòng chép nguyên văn. Bản VN có ruby='' nên dòng romaji nhỏ 'Zadkiel Arisawa' bên phải tên bị xoá hẳn (đúng như game sẽ hiển thị). HAI THẺ NỀN cũng phải sửa: nhãn thẻ trong danh sách Profile lấy từ trường ruby của bản Nhật (id=1 ruby='Ran Nagamori', id=3 ruby='Zadkiel Arisawa') nên nướng theo thứ tự TÊN-TRƯỚC, ngược với thứ tự HỌ-TRƯỚC mà popup và toàn bộ bản VN dùng — mâu thuẫn thấy được ngay trong cùng khung. Đã đo: chữ thẻ là font B cỡ 30 ('Ran Naga' gốc rộng 134px, B/30 cho 133px; 'Zadkiel A' bị mép thẻ chân dung cắt ở x=1252). Thẻ trái: xoá 'Ran Naga' (x462-595, độ đậm mực trung bình 80/765) rồi vẽ 'Nagamori' — vừa khít kết thúc ở mép panel x=595 y như chữ cũ; phần 'mori' nằm sau panel mờ (đậm 9-11/765) xoá bằng HAI khung riêng [597-622] và [628-660] để CHỪA cột 623-627 là đường viền tím của popup (vẽ đè lên đó sẽ khoét thủng viền). Thẻ phải: xoá 'Zadkiel A' mờ rồi vẽ 'Arisawa' (110px, hết ở x=1243, không chạm viền hồng thẻ chân dung x=1254-1256); màu 'auto' tự lấy đúng độ mờ của chữ cũ (247,241,247) nên tổng mực khớp 7.9 vs 8.3. Nhãn Profile/Name/Birthday/Bloodtype/Comment/ID, 'June 25', 'B' và 'No Data' vốn đã là Latin nên giữ nguyên. | Theo sheet (48) TerminalProfileData/prof_comment/id3: '...hòa thuận thôi nha~' (bản trong romfs đang là '...hòa thuận mà chơi nha~' — dữ liệu json chưa merge sheet, xem báo cáo).",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    815,
+    398,
+    1252,
+    440
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 460
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Arisawa Zadkiel",
+   "font": "B",
+   "size": 33,
+   "color": "auto",
+   "align": "left",
+   "x": 827,
+   "y": 418,
+   "yref": "mid",
+   "max_width": 420
+  },
+  {
+   "op": "erase",
+   "rect": [
+    680,
+    636,
+    1210,
+    770
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 520
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "〈Chơi game vui vẻ nào!〉 Chắc ai cũng vì phần",
+   "font": "L",
+   "size": 33,
+   "color": "auto",
+   "align": "left",
+   "x": 707,
+   "y": 659,
+   "yref": "mid",
+   "max_width": 800
+  },
+  {
+   "op": "text",
+   "text": "thưởng mà tham gia thôi, nhưng đừng gắt gỏng",
+   "font": "L",
+   "size": 33,
+   "color": "auto",
+   "align": "left",
+   "x": 689,
+   "y": 703,
+   "yref": "mid",
+   "max_width": 800
+  },
+  {
+   "op": "text",
+   "text": "quá, tụi mình cứ hòa thuận thôi nha~",
+   "font": "L",
+   "size": 33,
+   "color": "auto",
+   "align": "left",
+   "x": 689,
+   "y": 747,
+   "yref": "mid",
+   "max_width": 800
+  },
+  {
+   "op": "erase",
+   "rect": [
+    456,
+    476,
+    594,
+    510
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 730
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Nagamori",
+   "font": "B",
+   "size": 30,
+   "color": "auto",
+   "align": "left",
+   "x": 462,
+   "y": 493.5,
+   "yref": "mid",
+   "max_width": 133
+  },
+  {
+   "op": "erase",
+   "rect": [
+    597,
+    476,
+    622,
+    510
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 742
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "erase",
+   "rect": [
+    628,
+    476,
+    660,
+    510
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 742
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1130,
+    474,
+    1252,
+    508
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 742
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Arisawa",
+   "font": "B",
+   "size": 30,
+   "color": "auto",
+   "align": "left",
+   "x": 1136,
+   "y": 491,
+   "yref": "mid",
+   "max_width": 117
+  }
+ ]
+}

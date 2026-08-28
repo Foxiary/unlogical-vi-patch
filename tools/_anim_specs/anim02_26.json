@@ -1,0 +1,21 @@
+{
+  "bundle": "anim02",
+  "texture": "26",
+  "note": "Bài đăng xin lỗi của Kogasaki Shiori (story 3). Nguồn dịch: ScenarioData_vn idx48 (04_03_01) dòng 716/718/720 — nguyên văn, chỉ ngắt dòng lại theo dấu câu. Nền đen phẳng nên xoá bằng fill đen. Font L (mảnh) khớp nét chữ gốc. Tên tài khoản S_hi0ri_kxoxo giữ nguyên.",
+  "ops": [
+    {"op": "erase", "rect": [70, 300, 460, 750],
+     "detect": {"mode": "all"}, "how": "fill", "fill_from": [0, 0, 0], "grow": 0},
+
+    {"op": "text", "text": "Tôi thành thật xin lỗi\nvì đã có những bài đăng không đúng mực",
+     "font": "L", "size": 19, "leading": 40, "color": [235, 235, 235],
+     "align": "center", "x": 262, "y": 323, "yref": "mid", "max_width": 470},
+
+    {"op": "text", "text": "Khi nghĩ rằng có thể đó là lỗi của mình,\ntôi đã cảm thấy rất sợ hãi,\nvì muốn trốn tránh thực tại\nnên tôi mới đăng những lời lẽ như thế",
+     "font": "L", "size": 19, "leading": 40, "color": [235, 235, 235],
+     "align": "center", "x": 262, "y": 497, "yref": "mid", "max_width": 470},
+
+    {"op": "text", "text": "Tôi cầu nguyện cho tất cả các nạn nhân\nsẽ sớm bình phục vào một ngày gần nhất",
+     "font": "L", "size": 19, "leading": 40, "color": [235, 235, 235],
+     "align": "center", "x": 262, "y": 699, "yref": "mid", "max_width": 470}
+  ]
+}

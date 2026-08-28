@@ -1,0 +1,401 @@
+{
+ "bundle": "anim02",
+ "texture": "47",
+ "note": "Cùng trang Nexus News nhưng bị 'chữ lạ xâm thực' (;//演出：ネットのブラウザ画面に変な文字が侵食 / ニュースの検索画面なのに変な文面が混ざっている). Chỉ vá phần chữ Nhật còn NGUYÊN VẸN và đọc rõ trên nền sạch. THANH TÌM KIẾM: câu khẩu hiệu lắp bắp 私たちは私たちは私たちは人類にとってよ…構築します。します。…しまままま私たちままま nằm ở y39..59, mực (134,133,133), chạy từ x402 tới mép tranh 1919. Đo từng cột: chỉ hai chỗ là KHÔNG dựng lại được — logo 'Nexus News' (đen x843..954 + teal xanh x972..1085) và cái đầu người trong ảnh (chắn kín băng chữ ở x1502..1653). Ba đoạn còn lại nằm trên nền phẳng của thanh tìm kiếm nên xoá + vẽ lại được: x398..832, x1087..1500, x1656..1919. Mốc 1087 là cột đầu tiên không còn pixel teal của logo 'News' (teal hết ở 1086), nhờ vậy xoá được nốt chữ ま lộ ra sát mép logo mà không cắt vào logo. Chữ Nhật ở hai vùng bị chắn giữ nguyên, đúng như bản gốc để nó 'chui' sau logo và sau ảnh. Câu VN chia làm ba mảnh khớp đúng ba đoạn: mảnh 1 hết ở 'xâ', phần 'y dựng hệ thống tốt đẹp hơn' (đo được 262 px) vừa khít khoảng logo 833..1095 (263 px) nên mảnh 2 mở lại bằng '. dựng.' cho liền mạch. Mảnh 2 ghim màu mực [134,133,133] thay vì 'auto': khung xoá của nó phủ cả mép ảnh xanh ở x1400..1500 nên trung vị lõi nét ra (99,115,131), lệch màu so với hai mảnh kia. Khung xoá dừng ở hàng 37..61 (chữ ở 39..59): các vệt nhiễu chéo phía trên/dưới thanh nằm ngoài dải này nên còn nguyên. Cách gọi 'Chúng tôi vì nhân loại' lấy đúng chuỗi đã dùng cho mục Trending News số 5 cùng tấm. Các chỗ khác: danh sách 7 dòng 'いくつかのシステムでエラーが発生しています' (dựng lại đúng chỗ chèn UNLOGICAL của từng dòng), '写真を拡大', '外部サイト' (dùng lại chuỗi của anim02_45) và mục Trending News số 5. Không đụng: đoạn văn trên cùng và mục Trending 1/3 (đã thành mojibake 縺ゅ↑縺溘↓… đúng ý đồ hiệu ứng). Mũi tên ▼ đầu dòng giữ nguyên: khung xoá bắt đầu từ x403. Dòng 2 tách làm hai khung để không quét qua thanh cuộn trắng x1018..1029. Dòng kẻ dọc 1 px (205,205,205) ở x1230 cắt ngang '写真を拡大' được tô lại rồi mới vẽ chữ đè lên, đúng thứ tự lớp của bản gốc. | KHUNG THANH TÌM KIẾM thu lại để KHÔNG ăn vào ảnh nhân vật: ảnh cắt chéo qua thanh, mép trái chạy từ x1500 ở y39 xuống x1350 ở y61 và mép phải tới x≈1700, nên khung 2 dừng ở x1345 và khung 3 bắt đầu từ x1706. Vòng trước để [1087..1500] và [1656..1919] nên xoá mất 1059 + 114 px ảnh, tạo một dải sáng phẳng cắt ngang vai và tóc (bậc màu 143/255 ở mối ghép). Hai mảnh chữ rút ngắn cho vừa khung — chúng vốn là câu lắp bắp cố ý nên cắt bớt không mất nghĩa.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    398,
+    37,
+    832,
+    61
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Chúng tôi Chúng tôi Chúng tôi vì nhân loại xâ",
+   "font": "L",
+   "size": 20,
+   "color": "auto",
+   "align": "left",
+   "x": 402,
+   "y": 49,
+   "yref": "mid",
+   "max_width": 434
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1087,
+    37,
+    1345,
+    61
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": ". dựng. dựng. dựng. dựng",
+   "font": "L",
+   "size": 20,
+   "color": [
+    134,
+    133,
+    133
+   ],
+   "align": "left",
+   "x": 1090,
+   "y": 49,
+   "yref": "mid",
+   "max_width": 255
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1706,
+    37,
+    1919,
+    61
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "g dựmmmm Chúng tôi",
+   "font": "L",
+   "size": 20,
+   "color": "auto",
+   "align": "left",
+   "x": 1708,
+   "y": 49,
+   "yref": "mid",
+   "max_width": 211
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    886,
+    900,
+    905
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảy ra lỗi ở một số hệ UNLOGICAL thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 894,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1031,
+    914,
+    1100,
+    936
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    914,
+    1016,
+    936
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảy ra lỗi ở một số hệ thống▼ Đã xảy ra lỗi ở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 925,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    944,
+    800,
+    966
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảy ra UNLOGICALi ở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 955,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    976,
+    830,
+    998
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảyUNLOGICAL ở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 986,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    1005,
+    990,
+    1027
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã UNLOGICALUNLOGICALUNLOGICALở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 1016,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    1036,
+    800,
+    1058
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảy ra lỗi ở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 1047,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    403,
+    1066,
+    800,
+    1079
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Đã xảy ra lỗi ở một số hệ thống",
+   "font": "L",
+   "size": 16,
+   "color": "auto",
+   "align": "left",
+   "x": 407,
+   "y": 1077,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1163,
+    552,
+    1246,
+    578
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 520
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1230,
+    552,
+    1230,
+    578
+   ],
+   "detect": {
+    "mode": "all"
+   },
+   "how": "fill",
+   "fill_from": [
+    205,
+    205,
+    205
+   ],
+   "grow": 0
+  },
+  {
+   "op": "text",
+   "text": "Phóng to ảnh",
+   "font": "L",
+   "size": 15,
+   "color": [
+    82,
+    142,
+    188
+   ],
+   "align": "right",
+   "x": 1240,
+   "y": 565,
+   "yref": "mid",
+   "max_width": 110
+  },
+  {
+   "op": "erase",
+   "rect": [
+    378,
+    836,
+    495,
+    864
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 570
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Liên kết ngoài",
+   "font": "L",
+   "size": 20,
+   "color": "auto",
+   "align": "left",
+   "x": 384,
+   "y": 849,
+   "yref": "mid",
+   "max_width": 200
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1394,
+    980,
+    1548,
+    1024
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 710
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Chúng tôi vì nhân loại\nChúng tôi vì nhân loại",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 1400,
+   "y": 1003,
+   "yref": "mid",
+   "leading": 22,
+   "max_width": 148
+  }
+ ]
+}

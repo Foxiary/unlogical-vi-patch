@@ -1,0 +1,80 @@
+{
+ "bundle": "anim06",
+ "texture": "223",
+ "note": "Sổ tay có mẩu báo dán vào (script 04_03_02, \";//演出 サブグラ（新聞記事の切り抜き）\"). Vá chữ Nhật ở CẢ BA mẩu báo dán trong sổ. Nguồn dịch: DictionaryData mục no=504 (kịch bản trỏ tới bằng [dic no=504 text=連続失踪事件]), json_vn ghi title \"Vụ mất tích liên tiếp\". Tiêu đề gốc xếp DỌC; tiếng Việt không xếp dọc được nên tách mỗi từ một dòng, canh giữa cột. (1) Mẩu TO: 6 chữ Hán ở x551..583 y213..436, cột nền x545..589 giữa nét kẻ dọc (x541-543) và mép phải mẩu báo (x591-592); khung erase dừng ở y209 (nét chữ đầu) để không ăn vào ĐƯỜNG VÁT góc trên phải (chạy (579,194)->(592,208)) và dừng ở y436 để chừa nét kẻ ngang đáy y437. interp_v: nền cột chuyển màu theo CỘT chứ không theo hàng, và giữ được vân hạt giấy (std 13,4 so với 16,6 của giấy thật; fill phẳng chỉ còn 6,2). lum=350 vì lum=430 bắt luôn giấy nền (giấy tối nhất mean 128 -> tổng 384). grow>=3 làm 3 cột bị mask KÍN nên interp_v bỏ qua, để lại vệt chữ Hán. (2) Mẩu NHỎ: dải xám x747..767 (lòng 749..766) mang cùng tít, chữ TRẮNG (mực 207) x750..764 y451..537, cao 15 px -> ở 1080p tấm 1320x720 phóng ~1,45x nên cao ~22 px, ĐỌC RÕ, phải vá. B/9 tracking -2 cho khối 16x91 px, khớp gần đúng khối cũ 15x87. (3) Mẩu báo THỨ BA ở góc trên phải (phần lớn bị giấy nhớ vàng che) còn hai chữ katakana イン cao 16 px ở x874..888 y224..257 — đọc rõ, nhưng là MẨU CỤT (chữ tiếp theo nằm dưới giấy nhớ) nên không có gì để dịch: xoá hẳn, cột tít thành cột trắng như các cột thân bài bên cạnh. Phần còn lại của tranh (thân bài báo, chữ trên giấy nhớ, dòng kẻ sổ tay) là nét nguệch ngoạc mô phỏng chữ, không đọc được -> ĐỂ NGUYÊN.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    545,
+    209,
+    589,
+    436
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 350
+   },
+   "how": "interp_v",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "VỤ\nMẤT\nTÍCH\nLIÊN\nTIẾP",
+   "font": "B",
+   "size": 19,
+   "tracking": -1,
+   "leading": 52,
+   "color": "auto",
+   "align": "center",
+   "x": 567,
+   "y": 324.5,
+   "yref": "mid",
+   "max_width": 44
+  },
+  {
+   "op": "erase",
+   "rect": [
+    748,
+    443,
+    766,
+    548
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 450
+   },
+   "how": "interp_v",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "VỤ\nMẤT\nTÍCH\nLIÊN\nTIẾP",
+   "font": "B",
+   "size": 9,
+   "tracking": -2,
+   "leading": 21,
+   "color": "auto",
+   "align": "center",
+   "x": 757,
+   "y": 494,
+   "yref": "mid",
+   "max_width": 17
+  },
+  {
+   "op": "erase",
+   "rect": [
+    872,
+    220,
+    891,
+    259
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 380
+   },
+   "how": "interp_v",
+   "grow": 2
+  }
+ ]
+}

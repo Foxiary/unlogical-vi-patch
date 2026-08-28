@@ -1,0 +1,644 @@
+{
+  "bundle": "anim02",
+  "texture": "44",
+  "note": "Trang Nexus News — bản tin bắt CEO Genebark. Nguồn dịch thân bài và tiêu đề: ScenarioData_vn idx21 (01_04_02) dòng 1056/1058/1060/1062/1066/1068 — nguyên văn, chỉ ngắt dòng lại cho vừa cột. Nhãn tab / breadcrumb / placeholder tìm kiếm / Đăng nhập / Đăng tải tự dịch (không có trong dữ liệu game). Giữ màu xanh link cho 'Công ty Cổ phần Genebark' và 'ông Katagiri Hidaka' như bản Nhật. Pick up / HOT / Nexus News / LIVE giữ nguyên vì đã là tiếng Anh; các dòng XXXX là chỗ trống giả định, không động.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        458,
+        34,
+        575,
+        62
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 730
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tìm kiếm tin tức",
+      "font": "L",
+      "size": 17,
+      "color": "auto",
+      "align": "right",
+      "x": 565,
+      "y": 48,
+      "yref": "mid"
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1438,
+        34,
+        1515,
+        64
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Đăng nhập",
+      "font": "L",
+      "size": 17,
+      "color": "auto",
+      "align": "right",
+      "x": 1507,
+      "y": 49,
+      "yref": "mid"
+    },
+    {
+      "op": "erase",
+      "rect": [
+        330,
+        132,
+        456,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Trang chủ",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 393,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 118
+    },
+    {
+      "op": "erase",
+      "rect": [
+        468,
+        132,
+        581,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tin khẩn",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 524,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 105
+    },
+    {
+      "op": "erase",
+      "rect": [
+        593,
+        132,
+        705,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Trực tiếp",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 649,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 104
+    },
+    {
+      "op": "erase",
+      "rect": [
+        717,
+        132,
+        829,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Trong nước",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 773,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 104
+    },
+    {
+      "op": "erase",
+      "rect": [
+        841,
+        132,
+        954,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Quốc tế",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 897,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 105
+    },
+    {
+      "op": "erase",
+      "rect": [
+        966,
+        132,
+        1078,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Kinh tế",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 1022,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 104
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1090,
+        132,
+        1202,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "IT",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 1146,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 104
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1214,
+        132,
+        1327,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Thể thao",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 1270,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 105
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1339,
+        132,
+        1451,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Giải trí",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 1395,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 104
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1463,
+        132,
+        1590,
+        162
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 700
+      },
+      "how": "fill",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Khoa học",
+      "font": "L",
+      "size": 18,
+      "color": "auto",
+      "align": "center",
+      "x": 1526,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 119
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        198,
+        535,
+        225
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Trang tin>Tin khẩn",
+      "font": "L",
+      "size": 16,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 211,
+      "yref": "mid"
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        234,
+        1158,
+        286
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "【Tin khẩn】 Lệnh bắt giữ CEO công ty điều hành mạng xã hội lớn",
+      "font": "L",
+      "size": 30,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 260,
+      "yref": "mid",
+      "max_width": 906
+    },
+    {
+      "op": "erase",
+      "rect": [
+        526,
+        300,
+        568,
+        327
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Đăng tải",
+      "font": "L",
+      "size": 15,
+      "color": "auto",
+      "align": "left",
+      "x": 533,
+      "y": 313,
+      "yref": "mid"
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        372,
+        952,
+        588
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Vì nghi ngờ ",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 391,
+      "yref": "mid"
+    },
+    {
+      "op": "text",
+      "text": "Công ty Cổ phần Genebark",
+      "font": "B",
+      "size": 25,
+      "color": [
+        84,
+        143,
+        190
+      ],
+      "align": "left",
+      "x": 522,
+      "y": 391,
+      "yref": "mid"
+    },
+    {
+      "op": "text",
+      "text": ", đơn vị điều",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 836,
+      "y": 391,
+      "yref": "mid"
+    },
+    {
+      "op": "text",
+      "text": "hành mạng xã hội lớn, đã tiếp tay cho các sai phạm",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 435,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "nghiên cứu tại Viện Nghiên cứu Nội tạng Nhân tạo thuộc",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 479,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "tập đoàn liên kết, cảnh sát đã yêu cầu lệnh bắt giữ đối",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 523,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "với CEO của công ty, ",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 567,
+      "yref": "mid"
+    },
+    {
+      "op": "text",
+      "text": "ông Katagiri Hidaka",
+      "font": "B",
+      "size": 25,
+      "color": [
+        84,
+        143,
+        190
+      ],
+      "align": "left",
+      "x": 629,
+      "y": 567,
+      "yref": "mid"
+    },
+    {
+      "op": "text",
+      "text": " (34 tuổi).",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 863,
+      "y": 567,
+      "yref": "mid"
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        635,
+        952,
+        718
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Ông Katagiri đã mất tích, cảnh sát đang truy tìm tung\ntích vì cho rằng ông ta đang có ý định bỏ trốn.",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 671,
+      "yref": "mid",
+      "leading": 44,
+      "max_width": 700
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        766,
+        952,
+        893
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Theo điều tra, công ty này đã thực hiện các thử nghiệm\nlâm sàng bất hợp pháp bằng cách sử dụng dữ liệu của\nngười dùng như một phần của việc huy động vốn, dự kiến\nsố lượng nạn nhân tiềm năng là rất lớn.",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 841,
+      "yref": "mid",
+      "leading": 44,
+      "max_width": 700
+    },
+    {
+      "op": "erase",
+      "rect": [
+        376,
+        941,
+        962,
+        1024
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Về vụ việc này, phía công ty chỉ bình luận rằng “đang\nxác nhận sự thật” và từ chối đưa ra giải thích cụ thể.",
+      "font": "B",
+      "size": 25,
+      "color": "auto",
+      "align": "left",
+      "x": 384,
+      "y": 1011,
+      "yref": "mid",
+      "leading": 44,
+      "max_width": 700
+    },
+    {
+      "op": "erase",
+      "rect": [
+        1336,
+        782,
+        1558,
+        801
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 700
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Bắt giữ CEO công ty mạng xã hội",
+      "font": "L",
+      "size": 14,
+      "color": "auto",
+      "align": "left",
+      "x": 1342,
+      "y": 794,
+      "yref": "mid",
+      "max_width": 210
+    }
+  ]
+}

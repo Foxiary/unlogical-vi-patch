@@ -1,0 +1,115 @@
+{
+  "bundle": "anim03",
+  "texture": "53",
+  "note": "Bảng Order — 王様の命令 + 3 tên lệnh. Tiêu đề lấy từ TerminalRuleData_vn /data/4/items/2 ('Mệnh lệnh của Nhà vua là tuyệt đối' = 王様の命令は絶対). Ba lệnh 『片想いマジック』『ホンネの告白』『愛のしるし』 (script 05_04_01 dòng 2411, chỉ có trong comment ;//サブグラ, không hề xuất hiện trong thoại — đã grep ScenarioData_jp: 片想い/マジック mỗi thứ 1 lần, đúng dòng comment đó). Tự dịch: 片想いマジック='Bùa tình đơn phương' (片想い=tình đơn phương giữ nguyên làm bổ ngữ, マジック=bùa/phép — KHÔNG dùng 'Phép màu đơn phương' vì 'đơn phương' hoá ra bổ nghĩa cho 'phép màu'), ホンネの告白='Thổ lộ tiếng lòng' (本音 -> 'tiếng lòng' ScenarioData_vn sID=122), 愛のしるし='Dấu ấn tình yêu'. Số '1. 2. 3.' (font điểm ảnh) và nhãn 'Order'/'Select'/'Unlogical' giữ nguyên. VÒNG 2: bỏ hết op copy — op erase nay nội suy CẢ 4 KÊNH nên hết bóng ma alpha mà không cắt hoạ tiết chìm như dải copy cũ. VÒNG 3: trả lại KHE 46px giữa số và chữ đúng như bản Nhật thay vì siết còn 24-30px để kéo tâm cụm. Đo mask 'dark lum=620': mép phải số của tấm này là x=835, nên lề trái chữ = 882 (46 cột trống ở dòng chật nhất, 48 ở dòng '1.'). So bản Nhật (lề trái ink 880) lệch tối đa 2px — sai khác đó là bearing của glyph đầu dòng, không phải bố cục. Hệ quả đã chấp nhận: tâm cụm lệch phải như bản gốc vốn lệch, vì chữ Việt dài hơn mà số bị chốt không vẽ lại. max_width=302 = 1184 − x, tức chạm hoạ tiết hai vòng tròn nhỏ của viên Select (đo được bắt đầu đúng x=1184 trên cả 54/56/58/60) là báo 'over'.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        264,
+        1240,
+        314
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Mệnh lệnh của Nhà vua",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "center",
+      "x": 960,
+      "y": 288.5,
+      "yref": "mid",
+      "max_width": 520
+    },
+    {
+      "op": "erase",
+      "rect": [
+        852,
+        406,
+        1170,
+        458
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Bùa tình đơn phương",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 882,
+      "y": 432,
+      "yref": "mid",
+      "max_width": 302
+    },
+    {
+      "op": "erase",
+      "rect": [
+        852,
+        514,
+        1170,
+        566
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Thổ lộ tiếng lòng",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 882,
+      "y": 540.5,
+      "yref": "mid",
+      "max_width": 302
+    },
+    {
+      "op": "erase",
+      "rect": [
+        852,
+        623,
+        1170,
+        675
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Dấu ấn tình yêu",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 882,
+      "y": 649.5,
+      "yref": "mid",
+      "max_width": 302
+    }
+  ]
+}

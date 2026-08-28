@@ -1,0 +1,1285 @@
+{
+ "bundle": "anim04",
+ "texture": "123",
+ "note": "Khung tin TV khẩn (01_04_02 line 3151, ;//演出：サブグラ（テレビのニュース画面）). Nguồn dịch: ScenarioData sID 80 (mảng idx 21) dòng 1227-1249 bản VN đã có (総務省='Bộ Tổng vụ', 視覚ウイルス='Virus thị giác', câu ngắt kết nối Internet); 【速報】='TIN NHANH' theo GenebarkNewsData /data/3 title. 速報 vốn có quầng đỏ sẫm quanh nét trắng — công cụ chưa có op quầng nên xoá cả quầng, chữ Việt vẽ trắng phẳng. Dòng vàng nhỏ dựng lại viền đen bằng 8 op text lệch ±2 px. Hai dòng chữ DỌC ở dải đỏ (政府が警戒を呼びかける / 視覚ウイルス) ĐỂ NGUYÊN: công cụ chưa có op xoay 90°. | DẢI ĐỎ DỌC: bản Nhật xếp 視覚ウイルス (vàng) và 政府が警戒を呼びかける (trắng) thành hai CỘT DỌC. Tiếng Việt không xếp dọc được nên đổi bố cục: chữ VÀNG nằm trên, chữ TRẮNG nằm dưới, cùng canh giữa dải. Xoá bằng detect 'lowchroma' (|R−G| ≤ 40): nền đỏ có R−G ≈ 100..120 còn chữ trắng/viền đen/chữ vàng đều ≤ 5, trong khi dải SÁNG của nền (189..414) chồng hẳn lên dải sáng của viền đen nên 'dark' bắt nhầm nền. Nội suy NGANG vì dải đỏ chuyển màu thuần theo chiều dọc — đo hai mép mọi hàng cho giá trị giống hệt nhau. Viền đen dựng bằng 8 op lệch ±3 px như bản gốc. Bề ngang tối đa 210 px là chỗ hẹp nhất của dải. | Hộp góc trên phải và dải đỏ dùng font NGOÀI 'elephant' (CCElephantmenTall): bản Nhật vẽ hai chỗ này bằng gothic rất NẶNG (mật độ mực 30-40%), font trong game không có cấp đậm đó. Font này hẹp và cao nên còn cho đặt cỡ lớn hơn hẳn: hộp góc phải dòng 1 cỡ 44 cho mực cao 45 px (bản Nhật 44) và ba cụm màu canh đều đúng bề ngang 590 px của bản Nhật, dòng 2 cỡ 36 (mực cao 41, bản Nhật 40). Dải đỏ: vàng cỡ 76, trắng cỡ 60. | Tít lớn ('Virus thị giác' / 'lan rộng') và 'TIN NHANH' cũng chuyển sang 'elephant' cho đồng bộ độ nặng với hộp góc phải và dải đỏ — để font mảnh ở đây thì đầu dải nhẹ hẳn so với phần dưới. Tít lớn cỡ 95 -> 108 (645/660 và 341/390 px); TIN NHANH cỡ 44 -> 60, leading 64 để khối cao 126 px vừa khung xoá 130 px. | Toàn bộ chữ còn lại trên tấm cũng chuyển sang 'elephant' cho đồng đều độ nặng: 'Tránh xem hình ảnh, video!' cỡ 60, 'Bộ Tổng vụ công bố' cỡ 50, dòng chạy dưới cỡ 42, dòng vàng nhỏ cỡ 30. 'NGUY HIỂM' gộp về MỘT dòng cỡ 46 (198/205 px): bản Nhật 危険 là một dòng ngang lấp đầy ô đỏ, để hai dòng thì bị giới hạn chiều cao ô nên chữ chỉ rộng 93/205 px, ô trông rỗng.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    2,
+    8,
+    238,
+    138
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 690
+   },
+   "how": "interp_h",
+   "grow": 18
+  },
+  {
+   "op": "text",
+   "text": "TIN\nNHANH",
+   "font": "elephant",
+   "size": 60,
+   "leading": 64,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "align": "center",
+   "x": 118,
+   "y": 72.5,
+   "yref": "mid",
+   "max_width": 183
+  },
+  {
+   "op": "erase",
+   "rect": [
+    268,
+    28,
+    935,
+    108
+   ],
+   "detect": {
+    "mode": "magenta",
+    "rg": 45,
+    "gmax": 200
+   },
+   "how": "interp_v",
+   "grow": 5
+  },
+  {
+   "op": "text",
+   "text": "Tránh xem hình ảnh, video!",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    205,
+    66,
+    66
+   ],
+   "align": "left",
+   "x": 290,
+   "y": 65,
+   "yref": "mid",
+   "max_width": 660
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1302,
+    34,
+    1884,
+    118
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "fill",
+   "fill_from": [
+    253,
+    253,
+    253
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Virus thị giác",
+   "font": "elephant",
+   "size": 44,
+   "color": [
+    203,
+    58,
+    58
+   ],
+   "align": "left",
+   "x": 1305.0,
+   "y": 57.5,
+   "yref": "mid",
+   "max_width": null
+  },
+  {
+   "op": "text",
+   "text": "lan tràn trên",
+   "font": "elephant",
+   "size": 44,
+   "color": [
+    45,
+    45,
+    45
+   ],
+   "align": "left",
+   "x": 1533.5,
+   "y": 57.5,
+   "yref": "mid",
+   "max_width": null
+  },
+  {
+   "op": "text",
+   "text": "Internet",
+   "font": "elephant",
+   "size": 44,
+   "color": [
+    70,
+    72,
+    172
+   ],
+   "align": "left",
+   "x": 1757.0,
+   "y": 57.5,
+   "yref": "mid",
+   "max_width": null
+  },
+  {
+   "op": "text",
+   "text": "Bộ Tổng vụ họp báo: \"Hạn chế dùng mạng\"",
+   "font": "elephant",
+   "size": 36,
+   "color": [
+    45,
+    45,
+    45
+   ],
+   "align": "left",
+   "x": 1305,
+   "y": 97.5,
+   "yref": "mid",
+   "max_width": 600
+  },
+  {
+   "op": "erase",
+   "rect": [
+    330,
+    687,
+    745,
+    737
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 620
+   },
+   "how": "fill",
+   "fill_from": [
+    108,
+    169,
+    176
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Bộ Tổng vụ công bố",
+   "font": "elephant",
+   "size": 50,
+   "color": [
+    240,
+    246,
+    247
+   ],
+   "align": "left",
+   "x": 355,
+   "y": 711,
+   "yref": "mid",
+   "max_width": 385
+  },
+  {
+   "op": "erase",
+   "rect": [
+    367,
+    758,
+    575,
+    869
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 330
+   },
+   "how": "fill",
+   "fill_from": [
+    202,
+    53,
+    53
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "NGUY HIỂM",
+   "font": "elephant",
+   "size": 46,
+   "color": [
+    255,
+    255,
+    255
+   ],
+   "align": "center",
+   "x": 470.5,
+   "y": 814,
+   "yref": "mid",
+   "max_width": 205
+  },
+  {
+   "op": "erase",
+   "rect": [
+    620,
+    750,
+    1770,
+    885
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 660
+   },
+   "how": "fill",
+   "fill_from": [
+    255,
+    255,
+    255
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "\"Virus thị giác\"",
+   "font": "elephant",
+   "size": 108,
+   "color": [
+    202,
+    53,
+    53
+   ],
+   "align": "left",
+   "x": 673,
+   "y": 814,
+   "yref": "mid",
+   "max_width": 660
+  },
+  {
+   "op": "text",
+   "text": "lan rộng",
+   "font": "elephant",
+   "size": 108,
+   "color": [
+    8,
+    8,
+    8
+   ],
+   "align": "left",
+   "x": 1366,
+   "y": 814,
+   "yref": "mid",
+   "max_width": 390
+  },
+  {
+   "op": "erase",
+   "rect": [
+    246,
+    988,
+    1919,
+    1048
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 480
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Hãy tạm ngắt kết nối Internet    Tránh dùng mạng xã hội và trang web phát video, hạn chế tối đa",
+   "font": "elephant",
+   "size": 42,
+   "color": [
+    36,
+    33,
+    67
+   ],
+   "align": "left",
+   "x": 246,
+   "y": 1017,
+   "yref": "mid"
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1442,
+    118,
+    1880,
+    170
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 380
+   },
+   "how": "interp_v",
+   "grow": 4
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1872,
+   "y": 139,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1872,
+   "y": 141,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1872,
+   "y": 143,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1874,
+   "y": 139,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1874,
+   "y": 143,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1876,
+   "y": 139,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1876,
+   "y": 141,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    23,
+    23,
+    14
+   ],
+   "align": "right",
+   "x": 1876,
+   "y": 143,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "text",
+   "text": "Bất thường về nhận thức và hành vi",
+   "font": "elephant",
+   "size": 30,
+   "color": [
+    188,
+    187,
+    88
+   ],
+   "align": "right",
+   "x": 1874,
+   "y": 141,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "erase",
+   "rect": [
+    16,
+    168,
+    228,
+    1035
+   ],
+   "detect": {
+    "mode": "lowchroma",
+    "rg": 40
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 129.5,
+   "y": 360.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 129.0,
+   "y": 362.7,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 127.4,
+   "y": 364.9,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 125.2,
+   "y": 366.5,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 367.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 119.8,
+   "y": 366.5,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 117.6,
+   "y": 364.9,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 116.0,
+   "y": 362.7,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 115.5,
+   "y": 360.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 116.0,
+   "y": 357.3,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 117.6,
+   "y": 355.1,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 119.8,
+   "y": 353.5,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 353.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 125.2,
+   "y": 353.5,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 127.4,
+   "y": 355.1,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 129.0,
+   "y": 357.3,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 126.4,
+   "y": 360.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 125.2,
+   "y": 362.7,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 363.9,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 119.8,
+   "y": 362.7,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 118.6,
+   "y": 360.0,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 119.8,
+   "y": 357.3,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 356.1,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 125.2,
+   "y": 357.3,
+   "yref": "mid",
+   "leading": 122
+  },
+  {
+   "op": "text",
+   "text": "Virus\nthị giác",
+   "font": "elephant",
+   "size": 76,
+   "color": [
+    224,
+    211,
+    101
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 360,
+   "yref": "mid",
+   "leading": 122,
+   "max_width": 212
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 128.5,
+   "y": 760.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 128.0,
+   "y": 762.3,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 126.7,
+   "y": 764.2,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 124.8,
+   "y": 765.5,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 766.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 120.2,
+   "y": 765.5,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 118.3,
+   "y": 764.2,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 117.0,
+   "y": 762.3,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 116.5,
+   "y": 760.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 117.0,
+   "y": 757.7,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 118.3,
+   "y": 755.8,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 120.2,
+   "y": 754.5,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 754.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 124.8,
+   "y": 754.5,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 126.7,
+   "y": 755.8,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 128.0,
+   "y": 757.7,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 125.8,
+   "y": 760.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 124.8,
+   "y": 762.3,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 763.3,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 120.2,
+   "y": 762.3,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 119.2,
+   "y": 760.0,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 120.2,
+   "y": 757.7,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 756.7,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    26,
+    13,
+    12
+   ],
+   "align": "center",
+   "x": 124.8,
+   "y": 757.7,
+   "yref": "mid",
+   "leading": 108
+  },
+  {
+   "op": "text",
+   "text": "Chính phủ\nkêu gọi\ncảnh giác",
+   "font": "elephant",
+   "size": 60,
+   "color": [
+    252,
+    252,
+    252
+   ],
+   "align": "center",
+   "x": 122.5,
+   "y": 760,
+   "yref": "mid",
+   "leading": 108,
+   "max_width": 212
+  }
+ ]
+}

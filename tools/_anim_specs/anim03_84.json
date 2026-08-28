@@ -1,0 +1,103 @@
+{
+  "bundle": "anim03",
+  "texture": "84",
+  "note": "Man Question (01_02). Cau hoi: NGUYEN VAN ScenarioData sID75 text[1034] - in trong hop thoai ngay khi tranh dang hien. Dap an: nguyen van nhan nut [seladd] 01_02:6542-6545 (= selText sID75), dung thu tu, bo muc thu 5 'Het gio' nhu ban Nhat. Dap an DUNG 友好度 = 'Muc do hao cam': PHAI theo nhan nut vi [anim delete] chay TRUOC [seladd]/[select_monitor], nguoi choi doc tranh roi bam nut mang chinh chuoi nay. DictionaryData no=451 dat ten no la 'Do huu hao' va than muc mo dau bang 'Muc do than thiet...' (= dung nhan dap an SAI so 1) - do la loi DU LIEU, khong sua o tranh. LUU Y: [select_monitor] cung canh dich khac.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        420,
+        288,
+        1445,
+        482
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tên gọi của giá trị thể hiện sợi dây liên kết\ngiữa Spirit và Player là gì?",
+      "font": "B",
+      "size": 44,
+      "leading": 62,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 386,
+      "yref": "mid",
+      "max_width": 1010
+    },
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        578,
+        1190,
+        952
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Mức độ thân thiết",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 614,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Mức độ hảo cảm",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 714,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Mức độ hòa hợp",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 814,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Mức độ thân mật",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 914,
+      "yref": "mid",
+      "max_width": 700
+    }
+  ]
+}

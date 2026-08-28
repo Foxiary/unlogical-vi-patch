@@ -1,0 +1,115 @@
+{
+  "bundle": "anim03",
+  "texture": "57",
+  "note": "Bảng Order — 王様の命令 + 3 tên lệnh. Tiêu đề lấy từ TerminalRuleData_vn /data/4/items/2 ('Mệnh lệnh của Nhà vua là tuyệt đối' = 王様の命令は絶対). Ba lệnh 『お腹ぐちゃぐちゃ』『処刑執行の天秤』『指１０本ぽっきん』. Dòng 2 nguyên văn ScenarioData_vn sID=122 text[141]. Dòng 1/3 tự dịch (ぐちゃぐちゃ->'nát bét', ぽっきん = tiếng gãy 'rụp'); số toàn giác １０ -> '10'. Số '1. 2. 3.' (font điểm ảnh) và nhãn 'Order'/'Select'/'Unlogical' giữ nguyên. VÒNG 2: bỏ hết op copy — op erase nay nội suy CẢ 4 KÊNH nên hết bóng ma alpha mà không cắt hoạ tiết chìm như dải copy cũ. VÒNG 3: trả lại KHE 46px giữa số và chữ đúng như bản Nhật thay vì siết còn 24-30px để kéo tâm cụm. Đo mask 'dark lum=620': mép phải số của tấm này là x=816, nên lề trái chữ = 863 (46 cột trống ở dòng chật nhất, 48 ở dòng '1.'). So bản Nhật (lề trái ink 861) lệch tối đa 2px — sai khác đó là bearing của glyph đầu dòng, không phải bố cục. Hệ quả đã chấp nhận: tâm cụm lệch phải như bản gốc vốn lệch, vì chữ Việt dài hơn mà số bị chốt không vẽ lại. max_width=321 = 1184 − x, tức chạm hoạ tiết hai vòng tròn nhỏ của viên Select (đo được bắt đầu đúng x=1184 trên cả 54/56/58/60) là báo 'over'.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        264,
+        1240,
+        314
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Mệnh lệnh của Nhà vua",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "center",
+      "x": 960,
+      "y": 288.5,
+      "yref": "mid",
+      "max_width": 520
+    },
+    {
+      "op": "erase",
+      "rect": [
+        838,
+        406,
+        1180,
+        458
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Bụng nát bét",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 863,
+      "y": 432,
+      "yref": "mid",
+      "max_width": 321
+    },
+    {
+      "op": "erase",
+      "rect": [
+        838,
+        514,
+        1180,
+        566
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Cân tiểu ly hành hình",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 863,
+      "y": 540.5,
+      "yref": "mid",
+      "max_width": 321
+    },
+    {
+      "op": "erase",
+      "rect": [
+        838,
+        623,
+        1180,
+        675
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Gãy rụp 10 ngón tay",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "align": "left",
+      "x": 863,
+      "y": 650,
+      "yref": "mid",
+      "max_width": 321
+    }
+  ]
+}

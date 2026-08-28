@@ -1,0 +1,103 @@
+{
+  "bundle": "anim03",
+  "texture": "83",
+  "note": "Man Question (01_02, MIYA-02-33). Cau hoi: NGUYEN VAN cau thoai hien CUNG LUC voi tranh - ScenarioData sID75 text[1020] \"Mon nao khong co trong thuc don an uong tai sanh cho?\" (tranh bat o 01_02:12677, hop thoai in cau nay o 12685, [anim delete] mai 12789), bo cap nhay bao ngoai giong ban Nhat. Dap an: selText sID75 selText[1027], nguyen van, dung thu tu. LUU Y: [select_monitor] cua chinh canh nay dich khac (\"Mon nao KHONG co trong thuc don cua sanh cho?\") - chua dong bo, xem flags.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        420,
+        288,
+        1445,
+        482
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Món nào không có trong thực đơn ăn uống\ntại sảnh chờ?",
+      "font": "B",
+      "size": 44,
+      "leading": 62,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 386,
+      "yref": "mid",
+      "max_width": 1010
+    },
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        578,
+        1190,
+        952
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Gratin",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 614,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Bánh sandwich",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 714,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Hamburger",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 814,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Udon",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 914,
+      "yref": "mid",
+      "max_width": 700
+    }
+  ]
+}

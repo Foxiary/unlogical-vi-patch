@@ -1,0 +1,352 @@
+{
+  "bundle": "anim04",
+  "texture": "134",
+  "note": "Ảnh chụp trang Terminal > RULE > 1st.STAGE 運命の交差路. Nguồn dịch: ref/json_vn/TerminalRuleData.json data[2].items id=31 (title + 3 heading/content), chép nguyên văn. Nhãn tab và menu trái vốn đã là tiếng Anh nên giữ nguyên. Ruy băng hồng của heading được nới rộng 160px (copy phần trang trí chéo + nắp phải sang phải, chèn thân ruy băng sạch vào giữa; src của op copy nắp phải dừng đúng ở x=757 — mép ruy băng đo bằng R−G>10, cả 3 ruy băng đều 757 — chứ không lấy tới 790, vì 33px thừa là TRANH NỀN và sẽ chép đè lên hoạ tiết tàu lượn ở x918-950, lệch tới 20/255 mỗi kênh) vì heading tiếng Việt dài hơn 4-5 chữ Nhật. Dòng cuối bị khung cắt ở y=972: vẽ rồi xoá phần thò xuống dưới đường cắt.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        538,
+        240,
+        790,
+        290
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_v",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Giao Lộ Định Mệnh",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 546,
+      "y": 263,
+      "yref": "mid",
+      "max_width": 1000
+    },
+    {
+      "op": "copy",
+      "src": [
+        716,
+        330,
+        757,
+        394
+      ],
+      "dst": [
+        876,
+        330
+      ]
+    },
+    {
+      "op": "erase",
+      "rect": [
+        540,
+        338,
+        715,
+        376
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 460
+      },
+      "how": "fill",
+      "fill_from": [
+        255,
+        225,
+        241
+      ],
+      "grow": 3
+    },
+    {
+      "op": "copy",
+      "src": [
+        530,
+        330,
+        689,
+        394
+      ],
+      "dst": [
+        716,
+        330
+      ]
+    },
+    {
+      "op": "text",
+      "text": "Nội dung cập nhật",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "center",
+      "x": 707,
+      "y": 360,
+      "yref": "mid",
+      "max_width": 340
+    },
+    {
+      "op": "copy",
+      "src": [
+        716,
+        590,
+        757,
+        654
+      ],
+      "dst": [
+        876,
+        590
+      ]
+    },
+    {
+      "op": "erase",
+      "rect": [
+        540,
+        598,
+        715,
+        636
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 460
+      },
+      "how": "fill",
+      "fill_from": [
+        255,
+        225,
+        241
+      ],
+      "grow": 3
+    },
+    {
+      "op": "copy",
+      "src": [
+        530,
+        590,
+        689,
+        654
+      ],
+      "dst": [
+        716,
+        590
+      ]
+    },
+    {
+      "op": "text",
+      "text": "Điều kiện hoàn thành",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "center",
+      "x": 707,
+      "y": 620,
+      "yref": "mid",
+      "max_width": 340
+    },
+    {
+      "op": "copy",
+      "src": [
+        716,
+        741,
+        757,
+        806
+      ],
+      "dst": [
+        876,
+        741
+      ]
+    },
+    {
+      "op": "erase",
+      "rect": [
+        540,
+        749,
+        715,
+        787
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 460
+      },
+      "how": "fill",
+      "fill_from": [
+        255,
+        225,
+        241
+      ],
+      "grow": 3
+    },
+    {
+      "op": "copy",
+      "src": [
+        530,
+        741,
+        689,
+        806
+      ],
+      "dst": [
+        716,
+        741
+      ]
+    },
+    {
+      "op": "text",
+      "text": "Nội dung trò chơi",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "center",
+      "x": 707,
+      "y": 771,
+      "yref": "mid",
+      "max_width": 340
+    },
+    {
+      "op": "erase",
+      "rect": [
+        525,
+        398,
+        1400,
+        552
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "・Toàn bộ Player đều là \"Người lựa chọn\" (Selector).",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 420,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "text",
+      "text": "・Nếu tất cả Selector đưa ra câu trả lời trùng khớp, tất cả sẽ chiến thắng.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 492,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "text",
+      "text": "　Chỉ cần một người chọn khác đi, tất cả sẽ thất bại.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 555,
+      "y": 528,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "erase",
+      "rect": [
+        515,
+        660,
+        1100,
+        702
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Tất cả Selector phải thống nhất câu trả lời",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 523,
+      "y": 681,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "erase",
+      "rect": [
+        525,
+        812,
+        1450,
+        974
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "・Tàu lượn sẽ khởi động mỗi vòng một lần.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 833,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "text",
+      "text": "・Selector có thể lựa chọn 3 đường ray sau:",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 904,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "text",
+      "text": "　1. Đường ray khiến 2 Player do Selector chỉ định tử vong",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 556,
+      "y": 978,
+      "yref": "mid",
+      "max_width": 1240
+    },
+    {
+      "op": "erase",
+      "rect": [
+        520,
+        973,
+        1500,
+        1012
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 2
+    }
+  ]
+}

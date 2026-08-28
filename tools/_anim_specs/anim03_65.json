@@ -1,0 +1,12 @@
+{
+  "bundle": "anim03",
+  "texture": "65",
+  "note": "Bảng Order/Details — ふたりの未来_差分: 『ユーリを殺す』が光る (script 05_04_02 dòng 3373). Cùng chuỗi với anim03_64 vế 'を' nên dùng y nguyên vế đó: 'Yuri bị giết' (thể bị động, không nêu ai giết — khớp text[395] ScenarioData_vn 'hoặc là bị tôi giết'). ユーリ = Yuri (ScenarioData_vn sID=122). B/32 = 160px, thừa sức trong rect xoá 810..1120.",
+  "ops": [
+    {"op": "erase", "rect": [810, 428, 1120, 492],
+     "detect": {"mode": "dark", "lum": 620}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Yuri bị giết",
+     "font": "B", "size": 32, "color": "auto",
+     "align": "center", "x": 959.5, "y": 457.5, "yref": "mid", "max_width": 696}
+  ]
+}

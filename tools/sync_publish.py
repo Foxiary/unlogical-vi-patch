@@ -42,6 +42,12 @@ APPLY = "--apply" in sys.argv
 # file mới cần thêm vào manifest, kèm nhãn where
 NEW_FILES = {
     "romfs/Data/level13": "repo",
+    "romfs/Data/StreamingAssets/cg/cg_end": "repo",   # 32 thẻ THE END, 7,7 MB
+    # sub-graphic: tranh có chữ Nhật nướng sẵn, vá bằng tools/fix_anim_text.py
+    "romfs/Data/StreamingAssets/anim/anim02": "repo",   # ~22 MB
+    "romfs/Data/StreamingAssets/anim/anim03": "repo",   # ~19 MB
+    "romfs/Data/StreamingAssets/anim/anim04": "repo",   # ~18 MB
+    "romfs/Data/StreamingAssets/anim/anim06": "repo",   # ~5 MB
 }
 
 # mã nguồn đi kèm repo nhưng KHÔNG thuộc manifest (manifest chỉ là dữ liệu game)

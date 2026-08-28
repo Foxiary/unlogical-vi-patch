@@ -1,0 +1,35 @@
+{
+ "bundle": "anim03",
+ "texture": "63",
+ "note": "Bảng Order/Details — 処刑執行の天秤02: 『戒に毒を飲ませる』『ユーリに毒を飲ませる』どっち？ (script 05_04_02). Nguồn dịch: ScenarioData sID=122 (index 63) selText[150] 'ユーリさんに毒を飲ませる' -> 'Cho anh Yuri uống thuốc độc', '戒くんに毒を飲ませる' -> 'Cho Kai uống thuốc độc'; bỏ kính ngữ vì tranh dùng tên trần, rút 'thuốc độc' -> 'độc' (毒 = độc) để giữ cỡ 32 như anim03_62/64 — bản Nhật không hạ cỡ giữa hai bảng liên tiếp cùng loại dù dòng 63 dài hơn (hộp mực 657 vs 626). B/32 = 570px, hở 63px mỗi bên trong max_width 696. | Bản Nhật 『A』『B』どっち？ là câu hỏi HAI LỰA CHỌN, đặt hai vế cạnh nhau không có liên từ thì tiếng Việt đọc ra như liệt kê. Thêm 'hay' vào giữa.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    610,
+    415,
+    1310,
+    515
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "\"Cho Kai uống độc\" hay \"Cho Yuri uống độc\"\nChọn bên nào?",
+   "font": "B",
+   "size": 32,
+   "leading": 48,
+   "color": "auto",
+   "align": "center",
+   "x": 959.5,
+   "y": 466,
+   "yref": "mid",
+   "max_width": 696
+  }
+ ]
+}

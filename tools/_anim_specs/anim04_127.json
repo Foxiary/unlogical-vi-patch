@@ -1,0 +1,46 @@
+{
+  "bundle": "anim04",
+  "texture": "127",
+  "note": "Ảnh chụp Terminal > HOME, thông báo What's New: 『ターミネーションコードの権限が永守藍に移行されました』. Câu này KHÔNG có trong dữ liệu đã dịch (chỉ nằm trong comment ;//演出 của script 03_05_01 dòng 4450) nên phải tự dịch; giọng và từ vựng lấy theo TerminalHomeAlertData VN (thể bị động, tên riêng dạng họ-trước không kính ngữ 'Nagamori Ran'), thuật ngữ 'Termination Code' giữ nguyên như ScenarioData_vn (19 lần, so với 4 chỗ lạc 'mã chấm dứt' — lỗi dữ liệu, đã báo riêng). Ngắt 2 dòng ở ranh giới chủ ngữ/vị ngữ, mirror bản Nhật (Nhật ngắt sau 「権限が」, tức sau chủ ngữ): dòng 1 là chủ ngữ 'Quyền hạn Termination Code', dòng 2 là vị ngữ 'đã được chuyển giao cho Nagamori Ran'. Nhãn View/HOME/Information/What's New/menu trái vốn đã là tiếng Anh.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        680,
+        315,
+        1360,
+        432
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 500
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Quyền hạn Termination Code",
+      "font": "L",
+      "size": 44,
+      "color": "auto",
+      "align": "left",
+      "x": 693,
+      "y": 343,
+      "yref": "mid",
+      "max_width": 900
+    },
+    {
+      "op": "text",
+      "text": "đã được chuyển giao cho Nagamori Ran",
+      "font": "L",
+      "size": 44,
+      "color": "auto",
+      "align": "left",
+      "x": 692,
+      "y": 401,
+      "yref": "mid",
+      "max_width": 900
+    }
+  ]
+}

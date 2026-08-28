@@ -1,0 +1,103 @@
+{
+  "bundle": "anim03",
+  "texture": "87",
+  "note": "Man Question (00_01, PRO-01-01). Hop thoai KHONG in cau hoi nay; cau hoi chi xuat hien o [select_monitor] cua chinh canh do - lay NGUYEN VAN tu ScenarioData sID75->sID69 scriptText [select_monitor time=5 text=\"Mot ngay ban mat tat ca.\nNeu chi co the bao ve mot thu, ban se chon gi?\"], giu dung cho ngat \n cua no. Dap an: selText sID69 selText[32] (\"Tinh ban/Ai tinh/Uoc mo/Cong viec\"), khong dung ban sID72 (\"Tinh yeu\") vi tranh chi dung o 00_01.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        420,
+        288,
+        1445,
+        482
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Một ngày bạn mất tất cả.\nNếu chỉ có thể bảo vệ một thứ, bạn sẽ chọn gì?",
+      "font": "B",
+      "size": 44,
+      "leading": 62,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 386,
+      "yref": "mid",
+      "max_width": 1010
+    },
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        578,
+        1190,
+        952
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tình bạn",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 614,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Ái tình",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 714,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Ước mơ",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 814,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "Công việc",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 914,
+      "yref": "mid",
+      "max_width": 700
+    }
+  ]
+}

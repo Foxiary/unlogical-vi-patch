@@ -1,0 +1,12 @@
+{
+  "bundle": "anim03",
+  "texture": "74",
+  "note": "Bản đồ tầng 01, ô Place góc dưới phải: 藍の部屋. CỐ Ý KHÔNG dùng MapData_vn id=10 ('Phòng của Ai') vì ô dữ liệu đó dịch sai tên: romaji chính thức của 永守 藍 là Ran (TerminalProfileData jp id=1 ruby='Ran Nagamori', bản vn ghi name='Nagamori Ran'). Con trỏ sao xanh trên chính tấm này đứng đè lên ô 'ID: PF4pn' (còn đọc được sau con trỏ) = charID của 永守 藍 -> đúng là phòng của Ran. Vẽ 'Phòng của Ran'. Cần sửa MapData_vn id=10 cho khớp. Các nhãn khác trên bản đồ đã là tiếng Anh -> giữ nguyên.",
+  "ops": [
+    {"op": "erase", "rect": [1388, 900, 1565, 952],
+     "detect": {"mode": "dark", "lum": 600}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Phòng của Ran",
+     "font": "B", "size": 40, "color": "auto",
+     "align": "left", "x": 1396, "y": 925, "yref": "mid", "max_width": 379}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "bundle": "anim03",
+  "texture": "75",
+  "note": "Bản đồ tầng 01, ô Place góc dưới phải: ザドキエルの部屋 -> MapData_vn id=1 'Phòng của Zadkiel' (dùng nguyên văn). Các nhãn khác trên bản đồ đã là tiếng Anh -> giữ nguyên.",
+  "ops": [
+    {"op": "erase", "rect": [1388, 900, 1730, 952],
+     "detect": {"mode": "dark", "lum": 600}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Phòng của Zadkiel",
+     "font": "B", "size": 40, "color": "auto",
+     "align": "left", "x": 1396, "y": 925, "yref": "mid", "max_width": 379}
+  ]
+}

@@ -1,0 +1,99 @@
+{
+ "bundle": "anim06",
+ "texture": "218",
+ "note": "Item window \"伏倉の手紙\" (script 04_04_01, \";//アイテムウィンドウ：伏倉の手紙\"). Chỉ vá dòng tên người nhận trên PHONG BÌ: 東堂さんへ (mực x526..581 y264..287). Nguồn dịch: ScenarioData_vn cùng cảnh — \"Trên phong bì trắng có ghi người nhận là 『Gửi Todo』\" (họ Todo lấy theo TerminalProfileData ruby \"Itsuki Todo\"). Dùng font L (mảnh) chứ KHÔNG dùng B: 東堂さんへ là nét viết tay mảnh, đo mực trung bình trên vùng chữ (ngưỡng <235) bản gốc 174,2 trên 260 px; B/13 màu 85 cho 136,3 — đậm hơn hẳn, trông như chữ in đậm; L/14 màu 115 cho 161,8, sát bản gốc nhất trong các phương án dựng thử (L/13-115: 161,7; L/14-105: 156,7; pop/15-105: 152,1). Khe TRONG TỪ 1 px, khe GIỮA TỪ 4 px. Chữ trên TỜ THƯ (14 dòng viết tay + chữ ký 伏倉 朋美) cao 4-5 px, chỉ là nét nguệch ngoạc mô phỏng, không đọc được ở 1080p -> ĐỂ NGUYÊN (nội dung thư được đọc bằng chế độ novel ngay sau đó). Phong bì nghiêng hệ số 0,294 (16,4 độ) nên tên người nhận vẫn phải vẽ TỪNG KÝ TỰ chạy theo đường nghiêng — tool chưa xoay được chữ. | ĐẶT CHỮ THEO ĐƯỜNG CHÂN CHỮ, không phải theo tâm hộp mực: dòng viết tay nghiêng dy/dx=0,286 (đo bằng trọng tâm từng cột của nét gốc) nên mỗi ký tự một op, nhưng canh yref=mid làm G/T/d có nét trên cao bị đẩy lệch so với o/i và cả dòng trôi lởm chởm. yref=baseline đặt mọi ký tự lên cùng một đường; bước tiến lấy theo advance thật của font thay vì ghim tay.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    523,
+    261,
+    585,
+    290
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 720
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "G",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 526.0,
+   "y": 273.5,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "ử",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 536.0,
+   "y": 276.3,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "i",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 544.0,
+   "y": 278.6,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "T",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 551.0,
+   "y": 280.6,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "o",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 560.0,
+   "y": 283.2,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "d",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 568.0,
+   "y": 285.5,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "o",
+   "font": "L",
+   "size": 14,
+   "color": "auto",
+   "align": "left",
+   "x": 576.0,
+   "y": 287.8,
+   "yref": "baseline"
+  }
+ ]
+}

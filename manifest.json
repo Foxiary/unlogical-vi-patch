@@ -12,6 +12,36 @@
     "where": "repo"
   },
   {
+    "path": "romfs/Data/StreamingAssets/anim/anim02",
+    "bytes": 27809821,
+    "md5": "df6d7cfdf063171ea39d1b95588316c4",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/anim/anim03",
+    "bytes": 30585072,
+    "md5": "f01a3a063e8fb0a2c52a781bda505f50",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/anim/anim04",
+    "bytes": 26280746,
+    "md5": "28e0501ae47f15b64d846ca7d3e7ea66",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/anim/anim06",
+    "bytes": 5377605,
+    "md5": "0b1657de69c26899a9e1f436fa1a90ae",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/cg/cg_end",
+    "bytes": 7703313,
+    "md5": "450374e66b8667c4a002af177e28f768",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/StreamingAssets/font/font_jp",
     "bytes": 269643817,
     "md5": "045b926f019e144e7eb853892c9c7bf0",
@@ -19,8 +49,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/json/json",
-    "bytes": 115202,
-    "md5": "38fb79606fc90de9c6e930c63d763c0e",
+    "bytes": 113944,
+    "md5": "3827d2af46287510a3c7cb4a1094ad8d",
     "where": "repo"
   },
   {
@@ -31,8 +61,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8717535,
-    "md5": "510f33bb79cd5eb03c86f2b1e6049dd2",
+    "bytes": 8739098,
+    "md5": "9b024d0aabbc0d55390b393b6110f091",
     "where": "repo"
   },
   {
@@ -43,8 +73,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/ui/ui_jp",
-    "bytes": 51928612,
-    "md5": "c43810821b6540db565ba4a5fd42abb2",
+    "bytes": 51926999,
+    "md5": "edb03e44013f9480c3a84e38585f7c55",
     "where": "repo"
   },
   {

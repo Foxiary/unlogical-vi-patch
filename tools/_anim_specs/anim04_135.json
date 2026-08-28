@@ -1,0 +1,208 @@
+{
+  "bundle": "anim04",
+  "texture": "135",
+  "note": "Ảnh chụp Terminal > RULE > tab Operator, 運営のルール. Nguồn dịch: ref/json_vn/TerminalRuleData.json data[0].items id=10 (title 'Quy tắc vận hành' + content), chép nguyên văn. Trang đang cuộn tới cuối: khung chỉ hiện 16 dòng cuối, và bản VN của id=10 ngắt dòng TRÙNG KHỚP 1:1 với bản Nhật nên dóng thẳng từng dòng. Bản Nhật bị khung cắt mất 6px đỉnh dòng đầu; chữ Việt mà cắt như vậy thì bay hết dấu thanh (đọc thành lỗi chính tả), nên cả khối được đẩy xuống 11px để dòng đầu nằm sát mép cắt y=337 mà vẫn đủ dấu — khoảng hở trên vẫn y hệt bản gốc. Trang này không có ruy băng heading. LƯU Ý dữ liệu: id=10 dòng 1 của TerminalRuleData VN đang sai chính tả ('Nghiệm vụ chính của Operator' — phải là 'Nhiệm vụ'), nhưng dòng đó nằm NGOÀI khung: trang đang cuộn tới cuối, dòng đầu tiên còn thấy là dòng thứ 5 ('Operator phải điều chỉnh độ khó…'), nên tranh không phải vẽ lại. Lỗi đã báo riêng để sửa trong dữ liệu.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        538,
+        240,
+        790,
+        290
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_v",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Quy tắc vận hành",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 547,
+      "y": 263,
+      "yref": "mid",
+      "max_width": 1000
+    },
+    {
+      "op": "erase",
+      "rect": [
+        515,
+        330,
+        1520,
+        910
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 560
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "　Operator phải điều chỉnh độ khó tùy theo tình hình,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 555,
+      "y": 357,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　Khi phát hiện lỗi quy tắc hoặc vấn đề vận hành,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 557,
+      "y": 393,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　phải nhanh chóng xem xét thay đổi hệ thống.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 556,
+      "y": 428,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "・Nếu xác nhận người chơi có hành vi cấm,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 500,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　Operator có quyền gửi yêu cầu cưỡng chế đăng xuất.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 555,
+      "y": 536,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　Ví dụ: Tại Stage cấm hành vi bạo lực giữa người chơi,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 555,
+      "y": 608,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　　　   nếu Operator có mặt tại đó xác nhận là hành vi bạo lực,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 644,
+      "y": 644,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　　　   có thể yêu cầu đăng xuất ngay lập tức.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 643,
+      "y": 680,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "・Không được tiết lộ các thông tin gây ảnh hưởng đến",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 752,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　kết quả thắng bại cho người chơi.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 556,
+      "y": 788,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "・Để nâng cao chất lượng trải nghiệm và tạo nội dung kịch tính hơn,",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 535,
+      "y": 860,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "text",
+      "text": "　Operator phải nỗ lực sáng tạo và cải tiến.",
+      "font": "B",
+      "size": 32,
+      "color": "auto",
+      "align": "left",
+      "x": 555,
+      "y": 896,
+      "yref": "mid",
+      "max_width": 1260
+    },
+    {
+      "op": "erase",
+      "rect": [
+        500,
+        302,
+        1520,
+        336
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 2
+    }
+  ]
+}

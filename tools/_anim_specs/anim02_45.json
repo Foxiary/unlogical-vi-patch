@@ -1,0 +1,25 @@
+{
+  "bundle": "anim02",
+  "texture": "45",
+  "note": "Trang Nexus News (đã cuộn xuống, ảnh Katagiri). Header giống hệt anim02_44 nên dùng lại y nguyên ô tìm kiếm + Đăng nhập. Đoạn văn trên cùng là ScenarioData_vn idx21 (01_04_02) text[223] — cùng câu cuối của anim02_44, giữ nguyên cách ngắt dòng để hai tấm khớp nhau. Dòng đầu bị header cắt ngang trong bản gốc: vẽ đủ hai dòng rồi op copy chép lại dải nền sạch y74..94 (nền phẳng 236,239,241 + đường kẻ 204,204,204) để dựng lại đúng chỗ cắt. Mục Trending News số 1 dùng lại chuỗi của anim02_44, xuống 2 dòng cho vừa cột 148 px trước ảnh thumb ở x1551. 'Trending News', 'Nexus News', các dòng XXXX và ảnh nhân vật giữ nguyên.",
+  "ops": [
+    {"op": "erase", "rect": [458, 34, 575, 62], "detect": {"mode": "dark", "lum": 730}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Tìm kiếm tin tức", "font": "L", "size": 17, "color": "auto", "align": "right", "x": 565, "y": 48, "yref": "mid"},
+
+    {"op": "erase", "rect": [1438, 34, 1515, 64], "detect": {"mode": "dark", "lum": 700}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Đăng nhập", "font": "L", "size": 17, "color": "auto", "align": "right", "x": 1507, "y": 49, "yref": "mid"},
+
+    {"op": "erase", "rect": [380, 95, 1010, 156], "detect": {"mode": "dark", "lum": 700}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Về vụ việc này, phía công ty chỉ bình luận rằng “đang\nxác nhận sự thật” và từ chối đưa ra giải thích cụ thể.", "font": "B", "size": 25, "color": "auto", "align": "left", "x": 384, "y": 117, "yref": "mid", "leading": 44, "max_width": 700},
+    {"op": "copy", "src": [1221, 74, 1837, 94], "dst": [384, 74]},
+
+    {"op": "erase", "rect": [1125, 640, 1204, 662], "detect": {"mode": "dark", "lum": 690}, "how": "interp_h", "grow": 2},
+    {"op": "text", "text": "Phóng to ảnh", "font": "L", "size": 15, "color": "auto", "align": "right", "x": 1200, "y": 651, "yref": "mid", "max_width": 110},
+
+    {"op": "erase", "rect": [1396, 710, 1535, 754], "detect": {"mode": "dark", "lum": 700}, "how": "interp_h", "grow": 2},
+    {"op": "text", "text": "Bắt giữ CEO công ty\nmạng xã hội lớn", "font": "L", "size": 15, "color": "auto", "align": "left", "x": 1400, "y": 732, "yref": "mid", "leading": 22, "max_width": 148},
+
+    {"op": "erase", "rect": [378, 836, 492, 864], "detect": {"mode": "dark", "lum": 700}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Liên kết ngoài", "font": "L", "size": 20, "color": "auto", "align": "left", "x": 384, "y": 849, "yref": "mid", "max_width": 200}
+  ]
+}

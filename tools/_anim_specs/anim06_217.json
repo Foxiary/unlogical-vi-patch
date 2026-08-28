@@ -1,0 +1,247 @@
+{
+ "bundle": "anim06",
+ "texture": "217",
+ "note": "Item window 婚姻届 (script 05_05_02, \";//アイテムウィンドウ：婚姻届け\"). Nguồn dịch: ScenarioData_vn cùng cảnh — \"Một đơn đăng ký kết hôn.\" nên tiêu đề biểu mẫu ghi ĐỦ \"ĐƠN ĐĂNG KÝ KẾT HÔN\". Chỗ trống thật đo được: mép giấy tối chạy (345,88)->(340,116), giấy trắng sạch từ x≈348; ô hồng đầu tiên (khối 受理 góc trên phải) có mép trái ở x≈484 với đỉnh (485,114) — vậy còn 348..483, tức 136 px. Khối chữ B/10 xếp khe TRONG TỪ 1 px, khe GIỮA TỪ 4 px chiếm x351..478 (128 px), chừa 6 px mỗi bên. Khe 1/4 px này thay cho cách đặt cũ (khe 0-3 px lẫn lộn làm \"ĐĂNG\" đọc thành \"ĐĂN G\"). Chữ trong các ô kẻ và dòng 令和 年 月 日届出 là chữ nhỏ 4-6 px mô phỏng văn bản, không đọc được ở 1080p -> ĐỂ NGUYÊN. Tờ giấy nghiêng hệ số 0,198 (11,2 độ) nên tiêu đề vẫn phải vẽ TỪNG KÝ TỰ chạy theo đường nghiêng — tool chưa xoay được chữ; gộp một op text sẽ cho một hàng NGANG, lệch 25 px so với mép giấy ở đầu kia.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    408,
+    99,
+    463,
+    121
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 700
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Đ",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 351.0,
+   "y": 100.8,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Ơ",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 359.0,
+   "y": 102.3,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "N",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 367.0,
+   "y": 103.9,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Đ",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 377.0,
+   "y": 105.9,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Ă",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 385.0,
+   "y": 107.5,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "N",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 393.0,
+   "y": 109.1,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "G",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 400.0,
+   "y": 110.5,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "K",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 411.0,
+   "y": 112.6,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Ý",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 419.0,
+   "y": 114.2,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "K",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 430.0,
+   "y": 116.4,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Ế",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 438.0,
+   "y": 118.0,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "T",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 446.0,
+   "y": 119.6,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "H",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 457.0,
+   "y": 121.7,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "Ô",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 465.0,
+   "y": 123.3,
+   "yref": "baseline"
+  },
+  {
+   "op": "text",
+   "text": "N",
+   "font": "B",
+   "size": 10,
+   "color": [
+    100,
+    100,
+    100
+   ],
+   "align": "left",
+   "x": 473.0,
+   "y": 124.9,
+   "yref": "baseline"
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+  "bundle": "anim02",
+  "texture": "24",
+  "note": "Bài đăng SNS của Kogasaki Shiori (story 1). Nguồn dịch: ScenarioData_vn idx27 (KAI-02-01) dòng 2894/2896/2900/2902 — nguyên văn, chỉ ngắt dòng lại cho vừa khung. Ký tự ▽ trong script chính là ♡ nướng trong tranh nên giữ ♡. Tên tài khoản S_hi0ri_kxoxo giữ nguyên.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        55,
+        643,
+        275,
+        682
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 430
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Khoan đã. Mình vừa tìm thấy\n“chân ái” của đời mình rồi ♡",
+      "font": "L",
+      "size": 14,
+      "leading": 16,
+      "color": "auto",
+      "align": "center",
+      "x": 162,
+      "y": 656,
+      "yref": "mid",
+      "max_width": 300
+    },
+    {
+      "op": "erase",
+      "rect": [
+        8,
+        690,
+        312,
+        747
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 430
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Anh ấy chỉ nhìn mình thôi. Bằng ánh mắt mà\nanh ấy không bao giờ dành cho ai khác,\nvà đã làm những chuyện không thể nói ra\nở đây với mình...",
+      "font": "L",
+      "size": 14,
+      "leading": 16,
+      "color": "auto",
+      "align": "center",
+      "x": 160,
+      "y": 720,
+      "yref": "mid",
+      "max_width": 300
+    },
+    {
+      "op": "erase",
+      "rect": [
+        80,
+        754,
+        246,
+        794
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 430
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Dù có rất nhiều cô gái ở đó, nhưng mình\nvẫn được đối xử đặc biệt, vui quá đi.",
+      "font": "L",
+      "size": 14,
+      "leading": 16,
+      "color": "auto",
+      "align": "center",
+      "x": 162,
+      "y": 780,
+      "yref": "mid",
+      "max_width": 300
+    },
+    {
+      "op": "erase",
+      "rect": [
+        28,
+        866,
+        424,
+        942
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 430
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Dù có phải luân hồi bao nhiêu kiếp,\nem vẫn sẽ đi tìm anh.\nHãy đợi em nhé, K ♡",
+      "font": "L",
+      "size": 24,
+      "leading": 30,
+      "color": "auto",
+      "align": "right",
+      "x": 417,
+      "y": 903,
+      "yref": "mid",
+      "max_width": 396
+    }
+  ]
+}

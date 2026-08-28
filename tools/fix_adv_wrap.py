@@ -48,7 +48,10 @@ import re
 import shutil
 import sys
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+# Bọc một lần thôi: bọc chồng lên nhau thì lớp cũ bị thu gom và ĐÓNG luôn buffer,
+# và mọi print sau đó ném ValueError (đúng lỗi này khi hai script cùng bọc).
+if (getattr(sys.stdout, "encoding", "") or "").lower().replace("-", "") != "utf8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
@@ -431,4 +434,5 @@ def main():
     print("  đọc lại: %d tin nhắn khớp, loadLine/scriptText_Line nguyên vẹn" % len(plan))
 
 
-main()
+if __name__ == "__main__":   # để fix_ellipsis_break.py mượn được mô hình bố cục
+    main()

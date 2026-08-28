@@ -1,0 +1,97 @@
+{
+ "bundle": "anim02",
+ "texture": "46",
+ "note": "Cùng trang Nexus News của anim02_45 nhưng bị hiệu ứng nhiễu 'UNLOGICAL' phủ kín (;//演出：ネットのブラウザ画面いっぱいに『UNLOGICAL』の文字). Hai chỗ còn là chữ Nhật sạch, đọc rõ: đoạn văn trên cùng và nhãn 写真を拡大. Đoạn văn dịch nguyên văn ScenarioData_vn idx21 (01_04_02) text[223], cùng cách ngắt dòng với anim02_44/45. Dò nét bằng ngưỡng hẹp lum 440 để không quét trúng dải nhiễu (dải nhiễu tối nhất ~418, chữ ~280). Không dựng lại chỗ bị header cắt như ở 45 vì dải nền y74..94 của tấm này đã kín chữ nhiễu, không có nguồn sạch để chép; thay vào đó đặt dòng 1 ngay dưới đường kẻ (mực y95..124) và hạ leading 44 -> 32 để dòng 2 (y127..156) kết thúc sát mép trên dải nhiễu — đo được: chữ Nhật dòng 2 nằm ở y128..149, dải nhiễu bắt đầu từ y150 và dày nhất ở y162..173. Leading 44 của vòng trước đẩy dòng 2 xuống y139..168, cắt ngang đúng chỗ nhiễu dày. Khung xoá dừng ở y151 (JP dòng 2 hết ở 149): xuống 153/155 thì bắt đầu ăn vào nét nhiễu. Nhãn 写真を拡大 (x1130..1206, y641..658) phải nội suy DỌC: nhiễu ở đây là các vạch dọc, interp_h kéo thành vệt hồng ngang thấy rõ. Mọi chỗ còn lại — ô tìm kiếm 'UNLOGICAL検索', '外部サイト' bị dải nhiễu đè, mục Trending News, danh sách link — đều đã bị hiệu ứng làm vỡ nên GIỮ NGUYÊN. | Nhãn 'Phóng to ảnh' ghim màu [90,147,191] thay vì auto: khung erase có dải nhiễu hồng/xanh lẫn vào nên trung vị lõi nét ra (90,130,155), lệch 36/255 kênh B so với mực gốc và so với biểu tượng kính lúp ngay cạnh. | Ô tìm kiếm: chỉ phần ニュース bị lớp nhiễu UNLOGICAL đè, còn 検索 (x526..578) vẫn sạch và đọc rõ. Vá đúng phần sạch đó bằng đuôi của nhãn 'Tìm kiếm tin tức' mà anim02_44/45 đã dùng, để lớp nhiễu vẫn nằm trên như bản gốc. Mực ghim [197,197,197] đo từ chính nét 検索; nhiễu ở tấm này là vạch DỌC nên nội suy theo trục dọc.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    380,
+    95,
+    1010,
+    151
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 440
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Về vụ việc này, phía công ty chỉ bình luận rằng “đang\nxác nhận sự thật” và từ chối đưa ra giải thích cụ thể.",
+   "font": "B",
+   "size": 25,
+   "color": "auto",
+   "align": "left",
+   "x": 384,
+   "y": 126,
+   "yref": "mid",
+   "leading": 32,
+   "max_width": 700
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1126,
+    639,
+    1206,
+    658
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 520
+   },
+   "how": "interp_v",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Phóng to ảnh",
+   "font": "L",
+   "size": 15,
+   "color": [
+    90,
+    147,
+    191
+   ],
+   "align": "right",
+   "x": 1200,
+   "y": 650,
+   "yref": "mid",
+   "max_width": 110
+  },
+  {
+   "op": "erase",
+   "rect": [
+    524,
+    38,
+    580,
+    64
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 700
+   },
+   "how": "interp_v",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "tin tức",
+   "font": "L",
+   "size": 17,
+   "color": [
+    197,
+    197,
+    197
+   ],
+   "align": "right",
+   "x": 578,
+   "y": 52,
+   "yref": "mid",
+   "max_width": 56
+  }
+ ]
+}

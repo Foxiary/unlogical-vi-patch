@@ -1,0 +1,34 @@
+{
+ "bundle": "anim03",
+ "texture": "73",
+ "note": "Ô Place trên bản đồ tầng (自分の部屋). Giữ TIẾNG VIỆT cho đồng bộ với anim03_74/75: bản dịch đã chốt lối 'chữ nướng trên hoạ tiết bản đồ giữ tiếng Anh, trường dữ liệu/Place thì tiếng Việt' — MapData_vn dịch ラウンジ='Phòng chờ', 入口='Lối vào' dù hoạ tiết vẽ sẵn Lounge/Entrance. Bản Nhật cũng ghép 自分の部屋 ở ô Place với nhãn 'My Room' trên bản đồ trong cùng màn hình.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    1388,
+    900,
+    1606,
+    952
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 600
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Phòng của mình",
+   "font": "B",
+   "size": 40,
+   "color": "auto",
+   "align": "left",
+   "x": 1396,
+   "y": 925,
+   "yref": "mid",
+   "max_width": 379
+  }
+ ]
+}

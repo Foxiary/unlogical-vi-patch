@@ -1,0 +1,35 @@
+{
+  "bundle": "anim04",
+  "texture": "107",
+  "note": "System Message — 『永守藍』に票が入りました (comment ;//アラート trong scripts_jp/03_05_01.txt dòng 4084). Thuật ngữ bỏ phiếu theo TerminalRuleData/TerminalHomeAlertData (json_vn); tên 永守藍 = 'Nagamori Ran' (ruby TerminalProfileData), viết thứ tự Nhật như ScenarioData_vn. Xoá bằng op erase (nội suy CẢ 4 kênh, kể cả ALPHA) — chữ nướng gốc đục hẳn (alpha 255) trên tấm nền bán trong suốt (~182), nếu chỉ nội suy RGB thì hình chữ Nhật còn nguyên trong kênh alpha và hiện lại khi tranh chồng lên cảnh TỐI. Vòng 1 né bằng 4 op copy, nhưng dải copy khoét một rãnh ngang xuyên qua hoa văn logo chìm (ở 103 logo mã hoá bằng alpha 213 so với nền 183); erase nội suy giữ được hoa văn. Trục interp_h vì nền chuyển màu theo chiều DỌC (alpha 187->180 từ y400 tới y500). color/alpha = \"auto\" nên nét chữ mới đúng màu và đúng độ đục của nét gốc.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        755,
+        427,
+        1199,
+        473
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Nagamori Ran đã nhận được phiếu bầu",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 960,
+      "y": 450,
+      "yref": "mid",
+      "max_width": 840
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "bundle": "anim04",
+  "texture": "102",
+  "note": "System Message — 犯人役は『結城 蒼馬』です. 犯人役 = 'Hung thủ' theo TerminalRuleData id44/45 (json_vn). Tên 結城蒼馬: 読み ゆうき そうま (scripts_jp/04_01.txt), chính tả 'Yuuki Soma' theo ScenarioData_vn (71 lần). Xoá bằng op erase (nội suy CẢ 4 kênh, kể cả ALPHA) — chữ nướng gốc đục hẳn (alpha 255) trên tấm nền bán trong suốt (~182), nếu chỉ nội suy RGB thì hình chữ Nhật còn nguyên trong kênh alpha và hiện lại khi tranh chồng lên cảnh TỐI. Vòng 1 né bằng 4 op copy, nhưng dải copy khoét một rãnh ngang xuyên qua hoa văn logo chìm (ở 103 logo mã hoá bằng alpha 213 so với nền 183); erase nội suy giữ được hoa văn. Trục interp_h vì nền chuyển màu theo chiều DỌC (alpha 187->180 từ y400 tới y500). color/alpha = \"auto\" nên nét chữ mới đúng màu và đúng độ đục của nét gốc.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        733,
+        427,
+        1188,
+        473
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 2
+    },
+    {
+      "op": "text",
+      "text": "Vai Hung thủ là Yuuki Soma",
+      "font": "B",
+      "size": 31,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 960,
+      "y": 450,
+      "yref": "mid",
+      "max_width": 840
+    }
+  ]
+}

@@ -1,0 +1,94 @@
+{
+ "bundle": "anim02",
+ "texture": "21",
+ "note": "Sub-graphic SELECT Stage 1 — ba nhãn đường ray. Chữ nằm đúng một toạ độ ở cả 19/20/21/22, chỉ nền viên đổi giữa trạng thái mờ và sáng. Tên đường ray lấy nguyên từ ScenarioData đã dịch (『Tự sát』/『2 người hy sinh』/『5 người hy sinh』). Khoảng trống giữa hai hoạ tiết mạch 174 px, chữ canh giữa theo tâm viên nên bề ngang tối đa ~160 px. Trạng thái: đã chọn 5 người hy sinh grow=3 chứ không phải 2: ở grow 2 viên C còn đọng bóng ma alpha +11/255 trên 65 px — nét chữ nướng đục 255 còn nền viên 229..250, phần rìa khử răng cưa mà mặt nạ theo màu không bắt được chính là chỗ đọng lại.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    335,
+    423,
+    403,
+    455
+   ],
+   "detect": {
+    "mode": "magenta",
+    "rg": 90,
+    "gmax": 150,
+    "amin": 150
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Tự sát",
+   "font": "B",
+   "size": 22,
+   "color": "auto",
+   "align": "center",
+   "x": 367.5,
+   "y": 439.0,
+   "yref": "mid",
+   "max_width": 159
+  },
+  {
+   "op": "erase",
+   "rect": [
+    670,
+    621,
+    800,
+    655
+   ],
+   "detect": {
+    "mode": "magenta",
+    "rg": 90,
+    "gmax": 150,
+    "amin": 150
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "5 người hy sinh",
+   "font": "B",
+   "size": 22,
+   "color": "auto",
+   "align": "center",
+   "x": 734.0,
+   "y": 638.0,
+   "yref": "mid",
+   "max_width": 158
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1559,
+    440,
+    1689,
+    473
+   ],
+   "detect": {
+    "mode": "magenta",
+    "rg": 90,
+    "gmax": 150,
+    "amin": 150
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "2 người hy sinh",
+   "font": "B",
+   "size": 22,
+   "color": "auto",
+   "align": "center",
+   "x": 1623.5,
+   "y": 456.5,
+   "yref": "mid",
+   "max_width": 159
+  }
+ ]
+}

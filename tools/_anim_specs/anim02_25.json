@@ -1,0 +1,197 @@
+{
+ "bundle": "anim02",
+ "texture": "25",
+ "note": "Bài đăng SNS của Kogasaki Shiori (story 2). Nguồn dịch caption: ScenarioData_vn idx47 (04_02) dòng 1724/1726/1728/1732 — nguyên văn, chỉ ngắt dòng lại. Phần (ngạc nhiên)/(vừa khóc vừa cười) trong script chính là 2 emoji nướng sẵn nên giữ nguyên emoji, không viết chữ. Tiêu đề dưới màn TV 26歳男性死亡／ビル屋上から転落 tự dịch (không có trong dữ liệu game). Băng nhỏ 11日未明 霞加市内 và hộp tin góc phải TV để nguyên: cao ~7-9 px, không đọc được ở 1080p, lại chứa địa danh 霞加市 chưa có romaji chính thức. Tên tài khoản S_hi0ri_kxoxo giữ nguyên. Khối caption 1 [238,564,534,611] phải nội suy DỌC: khung chạm viền khung ảnh tối ở x528..534 và cả hàng chữ bị mask liền một dải nên interp_h chỉ còn 2 mốc ở hai mép, dựng ra dốc tuyến tính (hố đen y592..599, vệt sáng y600..606). Các cột viền tối vốn không đổi theo chiều dọc nên interp_v giữ nguyên chúng đúng từng pixel. | Ngắt dòng sau 'Thật luôn chứ' thay vì giữa 'ngẫu nhiên'/'thì đúng là' — tách đúng ranh giới hai câu. Khối caption nhích sang TRÁI: tâm 387 -> 358. Ở tâm cũ dòng 2 kết ở x530 trên texture rộng 540, sát mép; bản Nhật cũng chỉ tới x526. Dời sang trái cho mép phải hở 25 px, và nhờ đó trả lại được cỡ 14 (bằng các caption khác trên cùng tấm) thay vì phải hạ xuống 13 vì thiếu bề ngang. Đã kiểm không đụng thanh xám của ảnh nền ở x213..302 / y567..574: dòng 1 bắt đầu từ x315.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    20,
+    193,
+    364,
+    226
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 480
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Vừa xem tin tức xong, kinh thật\nChắc là do lỗi tại mình rồi",
+   "font": "L",
+   "size": 18,
+   "leading": 22,
+   "color": "auto",
+   "align": "right",
+   "x": 358,
+   "y": 197,
+   "yref": "mid",
+   "max_width": 340
+  },
+  {
+   "op": "erase",
+   "rect": [
+    78,
+    446,
+    236,
+    478
+   ],
+   "detect": {
+    "mode": "magenta",
+    "rg": 40,
+    "gmax": 140
+   },
+   "how": "interp_v",
+   "grow": 3
+  },
+  {
+   "op": "erase",
+   "rect": [
+    243,
+    446,
+    436,
+    478
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 340
+   },
+   "how": "interp_v",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Nam 26 tuổi tử vong",
+   "font": "B",
+   "size": 20,
+   "color": [
+    93,
+    20,
+    24
+   ],
+   "align": "left",
+   "x": 76,
+   "y": 461,
+   "yref": "mid",
+   "max_width": 200
+  },
+  {
+   "op": "text",
+   "text": "Rơi từ sân thượng",
+   "font": "B",
+   "size": 20,
+   "color": [
+    9,
+    11,
+    15
+   ],
+   "align": "left",
+   "x": 286,
+   "y": 461,
+   "yref": "mid",
+   "max_width": 180
+  },
+  {
+   "op": "erase",
+   "rect": [
+    238,
+    564,
+    534,
+    611
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 500
+   },
+   "how": "interp_v",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Thật luôn chứ\nBị trúng ngẫu nhiên thì đúng là tội nghiệp thiệt kkk",
+   "font": "L",
+   "size": 14,
+   "leading": 19,
+   "color": "auto",
+   "align": "center",
+   "x": 358,
+   "y": 588,
+   "yref": "mid",
+   "max_width": 320
+  },
+  {
+   "op": "erase",
+   "rect": [
+    276,
+    622,
+    498,
+    663
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 500
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "erase",
+   "rect": [
+    276,
+    664,
+    447,
+    688
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 500
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Cái mặt lúc đó trông buồn cười vãi chưởng\nNhưng mà không ngờ lại nhảy xuống thật\nChẳng biết tinh thần bất ổn\nđến mức nào nữa",
+   "font": "L",
+   "size": 14,
+   "leading": 18,
+   "color": "auto",
+   "align": "right",
+   "x": 442,
+   "y": 647,
+   "yref": "mid",
+   "max_width": 290
+  },
+  {
+   "op": "erase",
+   "rect": [
+    24,
+    896,
+    418,
+    932
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 500
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Còn mình thì vẫn bình an vô sự,\nchắc là nhờ sức mạnh tình yêu chăng?",
+   "font": "L",
+   "size": 22,
+   "leading": 27,
+   "color": "auto",
+   "align": "left",
+   "x": 32,
+   "y": 913,
+   "yref": "mid",
+   "max_width": 480
+  }
+ ]
+}

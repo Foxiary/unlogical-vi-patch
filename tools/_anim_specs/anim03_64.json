@@ -1,0 +1,35 @@
+{
+ "bundle": "anim03",
+ "texture": "64",
+ "note": "Bảng Order/Details — ふたりの未来: 『ユーリを殺す』『ユーリが殺す』どっち？ (script 05_04_02 dòng 2970). Nguồn dịch: ScenarioData sID=122 (index 63) text[393] 「オレが『誰に』殺されるかも、オレが『誰を』殺すかも指定がない」 -> 「Ở đây không chỉ định là anh sẽ bị \"ai\" giết, hay anh sẽ giết \"ai\" cả.」 và text[395] つまり、ユーリさんは私を殺すか、私に殺されるか -> 'Nói cách khác, Yuri hoặc là giết tôi, hoặc là bị tôi giết.' Cặp JP khác nhau ĐÚNG một trợ từ を/が nên bản VN giữ Yuri đứng đầu cả hai vế để vẫn trông như MỘT mệnh lệnh hai cách hiểu: を -> 'Yuri bị giết' (bị động, không nêu ai giết), が -> 'Yuri giết người' (chủ động). ユーリ = Yuri (ScenarioData_vn dùng nhất quán). Cỡ 32 giữ như anim03_62/63 (JP không đổi cỡ giữa các bảng cùng loại); B/32 = 430px, thừa lề trong max_width 696. | Bản Nhật 『A』『B』どっち？ là câu hỏi HAI LỰA CHỌN, đặt hai vế cạnh nhau không có liên từ thì tiếng Việt đọc ra như liệt kê. Thêm 'hay' vào giữa.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    670,
+    415,
+    1250,
+    515
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "\"Yuri bị giết\" hay \"Yuri giết người\"\nChọn bên nào?",
+   "font": "B",
+   "size": 32,
+   "leading": 48,
+   "color": "auto",
+   "align": "center",
+   "x": 959.5,
+   "y": 466,
+   "yref": "mid",
+   "max_width": 696
+  }
+ ]
+}

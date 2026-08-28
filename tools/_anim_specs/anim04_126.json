@@ -1,0 +1,429 @@
+{
+ "bundle": "anim04",
+ "texture": "126",
+ "note": "Man hinh Mail (Gmail-like) - cung LA THU MOI nhu anim02_1, chi khac dong nguoi nhan. NGUON DICH than thu + tieu de: ScenarioData_vn sID 00_00 (khoi novel-mode ngay sau [anim slot=0 file=1 seqno=10]) - lay nguyen van de 4 tam dong nhat. 'Ban dieu hanh Unlogical' = アンロジカル運営 theo ScenarioData_vn. Nhan sidebar/nut Nhat dich sang TIENG ANH cho khop phan da co san (Important/Draft/Category/Trash can). Ten rieng lay romaji CHINH THUC tu TerminalProfileData.ruby, thu tu ho-ten theo json_vn/TerminalProfileData: 有沢ザドキエル 様 -> 'Arisawa Zadkiel' (ruby 'Zadkiel Arisawa', json_vn name 'Arisawa Zadkiel'); goi la 07_09. SUA (soat lai): (a) dia chi <unlogical@opt.net> ha size 19->17 va y 261->262 de khop hop muc goc x763..918 rong 156 px cao 17, tam y=262; (b) 『Unlogical』 -> \"Unlogical\" o 3 op (tieu de, doan 1, dong cuoi) - ScenarioData_vn dung \"Unlogical\" 25 lan va 『』 chi 6 lan trong ca 23 MB, dong thoi bo side-bearing nua-em cua 『』 lam dau cham cuoi cau bi mo coi 17 px; (c) doan 1 \"tro choi VR\" -> \"game VR\" de khop nguyen van ScenarioData_vn 00_00 dong 54 (moi op khac da la nguyen van, rieng dong nay lech tu). SUA VONG 2: (c) doi nguoc lai 'game VR' -> 'tro choi VR' o doan 1. Vong 1 ghi nham: nguyen van ScenarioData_vn target[9] (sID 68 = 00_00) dong 283 la 'tro choi VR', chi RIENG TIEU DE (dong 279) moi dung 'game VR'. Tam nay bi overlay novel-mode cua 00_00 ve DE LEN, nen chu tren tranh phai khop tung chu voi dong 283. | Tiêu đề thư dùng font L: đo nét gốc 2 px trên chiều cao 34 px (0,059) — mảnh hơn cả L; B cho nét 4 px, nặng gấp đôi và triệt tiêu tương phản tiêu đề/thân thư mà nhà phát triển cố ý tạo ra. | Lá thư theo sheet (48) sd_015 — CHƯƠNG 07, đúng cảnh của ba tấm này (07_03/07_07/07_09). Sheet có HAI bản dịch cho cùng lá thư: sd_068 (chương 00_00, dùng cho anim02_1) và sd_015. Ở 07_03 game còn vẽ ĐÈ chính lá thư này dạng novel-mode, nên tranh phải khớp sd_015 hoặc người chơi thấy hai bản dịch cùng lúc. Ba dòng sd_015 không phủ (◇◇◇ / 'Bạn đã được lựa chọn' / 'Hãy tận hưởng') giữ theo sd_068 vì sheet không có bản nào khác.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    200,
+    250,
+    340,
+    284
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Inbox",
+   "font": "L",
+   "size": 27,
+   "color": [
+    86,
+    70,
+    139
+   ],
+   "align": "left",
+   "x": 206,
+   "y": 266,
+   "yref": "mid",
+   "max_width": 130
+  },
+  {
+   "op": "erase",
+   "rect": [
+    200,
+    382,
+    345,
+    416
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Sent",
+   "font": "L",
+   "size": 27,
+   "color": [
+    86,
+    70,
+    139
+   ],
+   "align": "left",
+   "x": 206,
+   "y": 399,
+   "yref": "mid",
+   "max_width": 130
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1483,
+    250,
+    1567,
+    280
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Reply",
+   "font": "L",
+   "size": 19,
+   "color": [
+    86,
+    70,
+    139
+   ],
+   "align": "center",
+   "x": 1524.5,
+   "y": 264,
+   "yref": "mid",
+   "max_width": 80
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1586,
+    250,
+    1670,
+    280
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Forward",
+   "font": "L",
+   "size": 19,
+   "color": [
+    86,
+    70,
+    139
+   ],
+   "align": "center",
+   "x": 1627.5,
+   "y": 264,
+   "yref": "mid",
+   "max_width": 80
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1689,
+    250,
+    1773,
+    280
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Delete",
+   "font": "L",
+   "size": 19,
+   "color": [
+    86,
+    70,
+    139
+   ],
+   "align": "center",
+   "x": 1730.5,
+   "y": 264,
+   "yref": "mid",
+   "max_width": 80
+  },
+  {
+   "op": "erase",
+   "rect": [
+    585,
+    140,
+    1440,
+    190
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Lời mời tham gia thử nghiệm phát triển Game VR \"Unlogical\"",
+   "font": "L",
+   "size": 38,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 164.5,
+   "yref": "mid",
+   "max_width": 1250
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    244,
+    930,
+    278
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Ban điều hành Unlogical",
+   "font": "B",
+   "size": 22,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 260,
+   "yref": "mid",
+   "max_width": 260
+  },
+  {
+   "op": "text",
+   "text": "〈unlogical@opt.net〉",
+   "font": "L",
+   "size": 17,
+   "color": [
+    145,
+    145,
+    165
+   ],
+   "align": "left",
+   "x": 857,
+   "y": 262,
+   "yref": "mid",
+   "max_width": 210
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    362,
+    845,
+    400
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Kính gửi quý khách Arisawa Zadkiel",
+   "font": "B",
+   "size": 26,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 381.5,
+   "yref": "mid",
+   "max_width": 500
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    450,
+    1092,
+    532
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Chân thành cảm ơn quý khách đã luôn ủng hộ\nGame VR \"Unlogical\" trong suốt thời gian qua.",
+   "font": "B",
+   "size": 26,
+   "leading": 43,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 491,
+   "yref": "mid",
+   "max_width": 1200
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    581,
+    1066,
+    665
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Nhân dịp cập nhật quy mô lớn lần này, chúng tôi\nđang tuyển thêm Player thử nghiệm phát triển mới.",
+   "font": "B",
+   "size": 26,
+   "leading": 44,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 623,
+   "yref": "mid",
+   "max_width": 1200
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    712,
+    1056,
+    752
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "◇◇◇! Xin chúc mừng! ◇◇◇",
+   "font": "B",
+   "size": 26,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 732,
+   "yref": "mid",
+   "max_width": 1200
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    800,
+    966,
+    883
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Bạn đã được lựa chọn.\nChào mừng bạn đến với \"Unlogical\".",
+   "font": "B",
+   "size": 26,
+   "leading": 44,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 841.5,
+   "yref": "mid",
+   "max_width": 1200
+  },
+  {
+   "op": "erase",
+   "rect": [
+    583,
+    931,
+    1066,
+    970
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 2
+  },
+  {
+   "op": "text",
+   "text": "Hãy tận hưởng một trải nghiệm trò chơi đầy kích thích.",
+   "font": "B",
+   "size": 26,
+   "color": [
+    41,
+    44,
+    106
+   ],
+   "align": "left",
+   "x": 591,
+   "y": 950.5,
+   "yref": "mid",
+   "max_width": 1200
+  }
+ ]
+}

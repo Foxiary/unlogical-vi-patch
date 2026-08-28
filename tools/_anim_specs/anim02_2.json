@@ -1,0 +1,351 @@
+{
+ "bundle": "anim02",
+ "texture": "2",
+ "note": "Khung tin TV (00_04 line 16747). Nguồn dịch: ScenarioData sID 72 idx 1089-1091 (bản VN đã có) + sID 68 idx 110 cho địa danh 霧加市 = 'thành phố Kirika'. Tiêu đề lớn 26歳男性死亡 / ビル屋上から転落; hộp góc trên phải 霧加市 男性(26) ビルから転落 / 搬送先で死亡 事件と事故の両面で捜査; nhãn xanh 11日未明 霧加市内. 転落 dùng 'ngã' theo bản dịch chính thức (GenebarkNewsData /data/3, ScenarioData_vn sID72 idx1089, [dic no=254] 'án ngã lầu'). Dòng vàng nhỏ 同様の転落事件との関連は…？ ĐÃ VÁ. (Vòng trước bỏ qua với lý do 'nét bị vẽ nhoè hẳn, gradient tối đa 39, đúng 0 px > 40' — ĐO LẠI THẤY SAI: max 116/765 và 1.593 px > 40. Dải này có mềm hơn chữ đen bên trên thật, mật độ biên 13% so với 32%, nhưng vẫn đọc rõ.) Thuật ngữ 転落事件 lấy theo [dic no=254] 'án ngã lầu'. Nền là dải mờ liền mạch, không mép khung chặn bên trái, nên chữ Việt dài hơn bản Nhật (475 px so với 331) vẫn đặt được, canh phải theo mép cũ x1862. Viền tối dựng bằng 8 op lệch ±2 px; vẽ nét SẮC, không làm mềm. | Tít lớn dùng font ngoài 'elephant' (CCElephantmenTall) cho khớp độ NẶNG của tít bản Nhật (mật độ mực 27%, cao 130 px). Font hẹp hơn nên cỡ lên 80 -> 96 mà vẫn vừa khung: 737/760 và 659/690 px.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    92,
+    788,
+    566,
+    843
+   ],
+   "detect": {
+    "mode": "light",
+    "lum": 460
+   },
+   "how": "fill",
+   "fill_from": [
+    108,
+    169,
+    176
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Rạng sáng 11   Kirika",
+   "font": "DB",
+   "size": 34,
+   "color": [
+    243,
+    248,
+    249
+   ],
+   "align": "left",
+   "x": 167,
+   "y": 811,
+   "yref": "mid",
+   "max_width": 425
+  },
+  {
+   "op": "erase",
+   "rect": [
+    150,
+    868,
+    1700,
+    1012
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 660
+   },
+   "how": "fill",
+   "fill_from": [
+    255,
+    255,
+    255
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Nam 26 tuổi tử vong",
+   "font": "elephant",
+   "size": 96,
+   "color": [
+    184,
+    59,
+    59
+   ],
+   "align": "left",
+   "x": 169,
+   "y": 940,
+   "yref": "mid",
+   "max_width": 760
+  },
+  {
+   "op": "text",
+   "text": "Ngã từ sân thượng",
+   "font": "elephant",
+   "size": 96,
+   "color": [
+    14,
+    14,
+    14
+   ],
+   "align": "left",
+   "x": 1010,
+   "y": 940,
+   "yref": "mid",
+   "max_width": 690
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1212,
+    33,
+    1884,
+    140
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 690
+   },
+   "how": "fill",
+   "fill_from": [
+    253,
+    253,
+    253
+   ],
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "TP. Kirika",
+   "font": "DB",
+   "size": 24,
+   "color": [
+    34,
+    34,
+    34
+   ],
+   "align": "left",
+   "x": 1229,
+   "y": 62,
+   "yref": "mid",
+   "max_width": 160
+  },
+  {
+   "op": "text",
+   "text": "Nam (26)",
+   "font": "DB",
+   "size": 24,
+   "color": [
+    34,
+    34,
+    34
+   ],
+   "align": "left",
+   "x": 1385,
+   "y": 62,
+   "yref": "mid",
+   "max_width": 160
+  },
+  {
+   "op": "text",
+   "text": "Ngã từ tòa nhà",
+   "font": "DB",
+   "size": 24,
+   "color": [
+    186,
+    62,
+    62
+   ],
+   "align": "left",
+   "x": 1550,
+   "y": 62,
+   "yref": "mid",
+   "max_width": 220
+  },
+  {
+   "op": "text",
+   "text": "Tử vong tại bệnh viện",
+   "font": "DB",
+   "size": 24,
+   "color": [
+    186,
+    62,
+    62
+   ],
+   "align": "left",
+   "x": 1229,
+   "y": 111,
+   "yref": "mid",
+   "max_width": 320
+  },
+  {
+   "op": "text",
+   "text": "Điều tra án mạng/tai nạn",
+   "font": "DB",
+   "size": 24,
+   "color": [
+    34,
+    34,
+    34
+   ],
+   "align": "left",
+   "x": 1540,
+   "y": 111,
+   "yref": "mid",
+   "max_width": 345
+  },
+  {
+   "op": "erase",
+   "rect": [
+    1522,
+    143,
+    1872,
+    181
+   ],
+   "detect": {
+    "mode": "delta",
+    "ref": [
+     176,
+     178,
+     180
+    ],
+    "tol": 70
+   },
+   "how": "interp_v",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1860,
+   "y": 162,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1864,
+   "y": 162,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1862,
+   "y": 160,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1862,
+   "y": 164,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1860,
+   "y": 160,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1864,
+   "y": 160,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1860,
+   "y": 164,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    50,
+    49,
+    28
+   ],
+   "align": "right",
+   "x": 1864,
+   "y": 164,
+   "yref": "mid"
+  },
+  {
+   "op": "text",
+   "text": "Liên quan tới các vụ án ngã lầu tương tự...?",
+   "font": "B",
+   "size": 24,
+   "color": [
+    168,
+    163,
+    88
+   ],
+   "align": "right",
+   "x": 1862,
+   "y": 162,
+   "yref": "mid",
+   "max_width": 500
+  }
+ ]
+}

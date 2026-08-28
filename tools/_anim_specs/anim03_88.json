@@ -1,0 +1,90 @@
+{
+ "bundle": "anim03",
+ "texture": "88",
+ "note": "Man Question gia (01_03_03:945, nguoi choi KHONG chon duoc). TU DICH - khong co nguon san: 01_03_03 dong 927-969 chi co comment ;//, khong co [seladd] lan [select_monitor], nen ScenarioData khong mang ban dich nao. Ban Nhat: 'Miyabi ga teien de nete iru! / Dou suru?' + 3 lua chon. Ten rieng 'Miyabi' theo ScenarioData_vn (khong co ;//読み： cho 雅火); 庭園 -> 'khu vuon' theo ScenarioData_vn. Giu dung 3 dap an va thu tu. RECT: rect erase vung dap an cua rieng tam nay la [676,578,1190,952] (khong phai 700) vi dap an 3 'Thi tham 『Troi sang roi』' rong 530 px, muc trai cham x=682 — voi x0=700 thi 264 px chu moi roi NGOAI rect. x676 an toan: trong dai y578..952, pixel toi cuoi cung ben trai la hoa tiet cheo o x650..667, x668..699 sach hoan toan tren ca 6 tam, nen mask erase khong them mot pixel nao va anh ra y het. | Đáp án 3: 『Trời sáng rồi』 -> \"Trời sáng rồi\" (nháy kép), đồng bộ với anim03_85.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    420,
+    288,
+    1445,
+    482
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Miyabi đang ngủ trong khu vườn!\nBạn sẽ làm gì?",
+   "font": "B",
+   "size": 44,
+   "leading": 62,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 386,
+   "yref": "mid",
+   "max_width": 1010
+  },
+  {
+   "op": "erase",
+   "rect": [
+    676,
+    578,
+    1190,
+    952
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Ôm chầm lấy",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 649,
+   "yref": "mid",
+   "max_width": 700
+  },
+  {
+   "op": "text",
+   "text": "Hôn đánh thức",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 750,
+   "yref": "mid",
+   "max_width": 700
+  },
+  {
+   "op": "text",
+   "text": "Thì thầm \"Trời sáng rồi\"",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 850,
+   "yref": "mid",
+   "max_width": 700
+  }
+ ]
+}

@@ -1,0 +1,12 @@
+{
+  "bundle": "anim03",
+  "texture": "61",
+  "note": "Bảng Order/Details — lệnh 『戒が好きな人にキスをする』 (script 05_04_01 dòng 2491). Nguồn dịch: ScenarioData sID=121 text[163]/[164] 「戒の好きな人は…だから、戒が…にキスして」 -> 「Vì người Kai thích là …, nên Kai hãy hôn … đi.」. Tên riêng 戒 = Kai (TerminalProfileData id=5 ruby 'Kai Munakata').",
+  "ops": [
+    {"op": "erase", "rect": [700, 428, 1220, 492],
+     "detect": {"mode": "dark", "lum": 620}, "how": "interp_h", "grow": 3},
+    {"op": "text", "text": "Kai hôn người mình thích",
+     "font": "B", "size": 32, "color": "auto",
+     "align": "center", "x": 959.5, "y": 457.5, "yref": "mid", "max_width": 696}
+  ]
+}

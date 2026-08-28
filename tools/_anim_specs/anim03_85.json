@@ -1,0 +1,103 @@
+{
+ "bundle": "anim03",
+ "texture": "85",
+ "note": "Man Question (01_02). Cau hoi: ScenarioData sID75 text[1045], giu nguyen van TRU 第１ステージ: 'chang thu nhat' -> 'Stage 1' theo quyet dinh chot #2 (ScenarioData_vn dung 'Stage 1' 289 lan so voi 'chang thu nhat' 6 + 'Chang thu nhat' 2). Ngat 3 dong nhu ban Nhat (rong 723/778/719 px, khung 1010). Dap an: selText sID75 = nhan nut [seladd] 01_02:6690-6693, nguyen van, dung thu tu (bo muc thu 5 'Het gio' nhu ban Nhat). CAN DONG BO: text[1045] va [select_monitor] 01_02:6695 van con 'chang thu nhat'/'Giai doan 1'. | Cập nhật theo sheet (50) sd_075/75/txt/1045: đổi nháy đơn -> NHÁY KÉP quanh 'Truy tìm kho báu' và '5 triệu', và giữ 'Stage 1' (sheet 48 còn ghi 'chặng thứ nhất', sheet 50 đã sửa). BỎ dấu \" mồ côi ở cuối ô sheet: khi bỏ nháy mở bao cả câu, nháy đóng bị sót lại — mà chữ Nhật trên TRANH cũng không có 『』 bao ngoài (cặp đó là khung thoại, không thuộc câu hỏi). Bốn đáp án đã khớp sheet 50 sẵn (Bánh donut / Kẹo / Bánh quy / Macaron), không đổi.",
+ "ops": [
+  {
+   "op": "erase",
+   "rect": [
+    420,
+    288,
+    1445,
+    482
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Nhiệm vụ bất ngờ \"Truy tìm kho báu\"\ndiễn ra ở Stage 1, phần thưởng \"5 triệu\"\nkhông phải là tiền mặt, vậy nó là gì?",
+   "font": "B",
+   "size": 44,
+   "leading": 62,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 386,
+   "yref": "mid",
+   "max_width": 1010
+  },
+  {
+   "op": "erase",
+   "rect": [
+    700,
+    578,
+    1190,
+    952
+   ],
+   "detect": {
+    "mode": "dark",
+    "lum": 620
+   },
+   "how": "interp_h",
+   "grow": 3
+  },
+  {
+   "op": "text",
+   "text": "Bánh donut",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 614,
+   "yref": "mid",
+   "max_width": 700
+  },
+  {
+   "op": "text",
+   "text": "Kẹo",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 714,
+   "yref": "mid",
+   "max_width": 700
+  },
+  {
+   "op": "text",
+   "text": "Bánh quy",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 814,
+   "yref": "mid",
+   "max_width": 700
+  },
+  {
+   "op": "text",
+   "text": "Macaron",
+   "font": "B",
+   "size": 44,
+   "color": "auto",
+   "alpha": "auto",
+   "align": "center",
+   "x": 934,
+   "y": 914,
+   "yref": "mid",
+   "max_width": 700
+  }
+ ]
+}

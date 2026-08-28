@@ -1,0 +1,142 @@
+{
+  "bundle": "anim03",
+  "texture": "72",
+  "note": "GENEBARK chat - loạt tin nhân vật chính (tài khoản Suzuno) gửi Ran, ScenarioData target[74], script 07_05. NGUỒN DỊCH: ref/json_vn/GenebarkChatMainData.json charID=藍 groupIDs=5 speaker=player, idx141-145 - CHÉP NGUYÊN VĂN, đúng thứ tự (起きてる？/今から家行っていい？/いいよね/行くよ？/行くからね！！). Đây chính là đoạn chat mở lại được trong app GENEBARK CHAT nên chữ trên tranh khớp từng chữ. Tên tài khoản Suzuno @Sz_36iii (họ 涼乃 của nhân vật chính) giữ nguyên. Cảnh này không có overlay [ノベルモード2開始] nên không xung đột. Vòng 2: đã bỏ bản tự dịch của vòng 1; kiểm alpha lại trên nền tối - sạch.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        126,
+        618,
+        167
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Dậy chưa đấy?",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        239,
+        786,
+        281
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Giờ tôi qua nhà cậu được không?",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 260,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        353,
+        591,
+        395
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Được đúng không?",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 374,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        467,
+        584,
+        509
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tôi đi nhé?",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 488,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        581,
+        679,
+        623
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Tôi đi thật đấy nhé!!",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 602,
+      "yref": "mid",
+      "max_width": 1120
+    }
+  ]
+}

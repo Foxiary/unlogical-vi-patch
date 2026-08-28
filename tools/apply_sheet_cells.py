@@ -15,6 +15,7 @@ Ids come from the sheet's own ID column:
 
     76/txt/0011                      -> ScenarioData scenarioID 76, text[11]
     TerminalHomeAlertData/alert/id71 -> json bundle, that asset, field, entry id
+    DictionaryData/dic_body/id102    -> ditto, but DictionaryData keys on `no` (KEY_OF)
 
 Guards on every cell before it is written:
 
@@ -110,6 +111,7 @@ def read_sheet(path):
     """
     wb = load_workbook(path, read_only=True, data_only=True)
     out = {}
+    unknown = {}
     for ws in wb.worksheets:
         vcol, jcol = (3, 2) if ws.title.startswith("sd_") else (2, 1)
         for row in ws.iter_rows(values_only=True):
@@ -117,6 +119,16 @@ def read_sheet(path):
                 continue
             key = row[0].strip()
             if not (SD_ID.match(key) or DATA_ID.match(key)):
+                # KHÔNG bỏ im lặng. Một `continue` trần ở đây từng che **3003 hàng**
+                # của snapshot (42) mà không in ra một chữ nào: cả tab
+                # `GenebarkChatMainData` (2388 hàng), 449 hàng `sel`, 116 hàng `cmd`,
+                # 50 hàng `qa_title`. Sửa mấy ô đó trên sheet thì tool không hề thấy,
+                # nên chúng không bao giờ xuống game — và không có dấu hiệu gì.
+                # Xem tools/README.md "ID sheet mà tool không đọc".
+                if "/" in key:
+                    rec = unknown.setdefault(id_shape(key), [0, key, set()])
+                    rec[0] += 1
+                    rec[2].add(ws.title)
                 continue
             val = row[vcol] if len(row) > vcol and isinstance(row[vcol], str) else ""
             jp = row[jcol] if len(row) > jcol and isinstance(row[jcol], str) else ""
@@ -132,7 +144,34 @@ def read_sheet(path):
                 val = re.sub(r"[ \t　]*\n[ \t　]*", BS_N, val)
             out[key] = (val, jp)
     wb.close()
-    return out
+    return out, unknown
+
+
+def id_shape(key):
+    """Dạng chuẩn hoá của một ID để gộp báo cáo: số -> `N`, chữ ngoài ASCII -> `<c>`."""
+    return re.sub(r"[^\x00-\x7f]+", "<c>", re.sub(r"\d+", "N", key))
+
+
+def report_unknown(unknown, label):
+    """In TO TIẾNG những hàng có ID mà `read_sheet` không đọc được.
+
+    Chỉ báo, không chặn: vòng merge vẫn chạy như cũ cho các ô đọc được. Mục đích là
+    không bao giờ để lặp lại tình trạng "sheet sửa rồi mà game không đổi, không ai
+    biết vì sao".
+    """
+    if not unknown:
+        return
+    tot = sum(v[0] for v in unknown.values())
+    print("!! %s: %d hàng có ID mà tool KHÔNG đọc được (%d dạng)."
+          % (label, tot, len(unknown)))
+    print("   Sửa những ô này trên sheet cũng KHÔNG xuống được game — chưa có đường ghi.")
+    for sh in sorted(unknown, key=lambda k: (-unknown[k][0], k)):
+        n, ex, tabs = unknown[sh]
+        t = ", ".join(sorted(tabs)[:3]) + ("…" if len(tabs) > 3 else "")
+        print("   %6d  %-42s ví dụ: %s" % (n, sh, ex))
+        print("           tab: %s" % t)
+    print('   (xem tools/README.md "ID sheet mà tool không đọc")')
+    print()
 
 
 # Nhãn field trên sheet KHÔNG phải tên field thật, và khoá gốc cũng không luôn là `data`.
@@ -152,7 +191,17 @@ FIELD_MAP = {
     ("ShortStoryData", "ss_title"): ("list", "title"),
     ("TerminalRuleData", "rule_title"): ("data.items", "title"),
     ("TerminalHomeAlertData", "alert"): ("data", "alert"),
+    ("DictionaryData", "dic_title"): ("data", "title"),
+    ("DictionaryData", "dic_ruby"): ("data", "ruby"),
+    ("DictionaryData", "dic_body"): ("data", "text"),
 }
+
+# Khoá tra mục cũng không phải asset nào cũng là `id`. DictionaryData khoá bằng `no`
+# (80 mục, không có field `id` nào) — tra bằng `id` thì mọi hàng của tab từ điển báo
+# "không có id N", đúng lớp lỗi ẩn lâu như mấy nhãn field sai ở trên. Tab từ điển do
+# `tools\export_dictionary_sheet.py` sinh ra, vẫn dùng dạng id `…/id<no>` ở cột A cho
+# khớp `DATA_ID`; chỗ đổi là ở đây, không phải ở cột A.
+KEY_OF = {"DictionaryData": "no"}
 
 # `\n` dạng VĂN BẢN (U+005C U+006E) là cách các tab *Data khai báo ngắt dòng — asset thì
 # chỉ dùng U+000A. Snapshot (37) có 2 dấu như vậy ở note id1, khớp đúng 3 dòng của build;
@@ -170,7 +219,11 @@ def expand_breaks(s):
 
 
 def entries(dj, root):
-    """List các mục có `id`, theo đúng khoá gốc của từng asset."""
+    """List các mục của asset, theo đúng khoá gốc của từng asset.
+
+    Khoá *nhận dạng* mục thì xem `KEY_OF` — phần lớn asset dùng `id`, DictionaryData
+    dùng `no`.
+    """
     if root == "data.items":
         out = []
         for g in dj.get("data", []):
@@ -377,7 +430,10 @@ def main():
     print("sheet mới : %s" % new_f)
     print("sheet nền : %s" % base_f)
     print("lọc       : %s" % (MATCH or "(không lọc — mọi ô đã đổi)"))
-    new, base = read_sheet(new_f), read_sheet(base_f)
+    new, unknown_new = read_sheet(new_f)
+    base, _ = read_sheet(base_f)
+    print("ô đọc được: %d\n" % len(new))
+    report_unknown(unknown_new, "sheet mới")
 
     pat = re.compile(MATCH, re.I) if MATCH else None
     todo = []
@@ -427,10 +483,11 @@ def main():
             root, field = FIELD_MAP.get((asset, sfield), ("data", sfield))
             _, _, raw_j = load_text(JSONB, asset)
             dj = json.loads(raw_j.lstrip("﻿"))
-            ent = next((e for e in entries(dj, root) if e.get("id") == eid), None)
+            ekey = KEY_OF.get(asset, "id")
+            ent = next((e for e in entries(dj, root) if e.get(ekey) == eid), None)
             if ent is None:
-                print("! %s: không có id %d trong %s (khoá gốc %r)"
-                      % (key, eid, asset, root)); continue
+                print("! %s: không có %s %d trong %s (khoá gốc %r)"
+                      % (key, ekey, eid, asset, root)); continue
             # Tên field của sheet phải giải được ra field thật. Đọc `""` cho field không
             # tồn tại thì ô trông như "build trống" và bị báo sai là "cả hai bên đổi".
             if field not in ent:
@@ -653,7 +710,8 @@ def main():
             _, _, back = load_text(JSONB, asset)
             dj_back = json.loads(back.lstrip("﻿"))
             for a, field, eid, cur, val, root in [e for e in json_edits if e[0] == asset]:
-                ent = next(e for e in entries(dj_back, root) if e.get("id") == eid)
+                ent = next(e for e in entries(dj_back, root)
+                           if e.get(KEY_OF.get(asset, "id")) == eid)
                 assert field_get(ent, field) == val, "đọc lại %s id%d sai" % (asset, eid)
             print("  đọc lại: %s khớp" % asset)
 

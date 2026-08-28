@@ -1,0 +1,89 @@
+{
+  "bundle": "anim03",
+  "texture": "71",
+  "note": "GENEBARK chat - tin nhắn chia tay của Munakata Kai (ScenarioData target[9], script 00_00). NGUỒN DỊCH: ref/json_vn/GenebarkChatMainData.json charID=戒 groupIDs=2, idx129/130/131 - CHÉP NGUYÊN VĂN cả 3 tin (JP: ごめん / 付き合おうって言ったやつ。あれ、なかったことにさせてください 勝手だけど、今日限りで別れよう / 俺のことは忘れて。ごめんね). Chữ giống hệt bản dịch chính thức; chỉ chỗ NGẮT DÒNG lấy theo tranh gốc (3 câu = 3 dòng, ngắt ở dấu chấm) thay cho \n của json (json ngắt giữa mệnh đề cho widget hẹp hơn). Tên tài khoản Kai Munakata @k_munakata2150 giữ nguyên. Vòng 2: bỏ op erase dark lum=38 thừa (nó làm color/alpha 'auto' lấy nhầm nền, chữ dòng 2 ra a244); nay cả 3 dòng mực (255,255,255) a255, erase nội suy đủ 4 kênh nên không còn bóng ma alpha trên nền tối. LƯU Ý ĐIỀU PHỐI VIÊN: ScenarioData_vn target[9] khối [ノベルモード2開始] dịch chính 3 câu này KHÁC ('Xin lỗi em.' / 'Chuyện anh bảo chúng ta hẹn hò ấy. Hãy cứ coi như...' / 'Hãy quên anh đi. Xin lỗi em.') và hiện ĐÈ lên tranh này; cần sửa ScenarioData cho khớp GenebarkChatMainData.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        126,
+        556,
+        166
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Xin lỗi",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 146,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        239,
+        1026,
+        371
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Chuyện anh bảo mình quen nhau ấy.\nCoi như chưa có gì đi nhé.\nDù hơi ích kỷ nhưng mình chia tay từ hôm nay đi",
+      "font": "B",
+      "size": 33,
+      "leading": 45,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 305,
+      "yref": "mid",
+      "max_width": 1120
+    },
+    {
+      "op": "erase",
+      "rect": [
+        438,
+        441,
+        894,
+        482
+      ],
+      "detect": {
+        "mode": "light",
+        "lum": 420
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Hãy quên anh đi nhé. Anh xin lỗi.",
+      "font": "B",
+      "size": 33,
+      "color": "auto",
+      "align": "left",
+      "x": 444,
+      "y": 462,
+      "yref": "mid",
+      "max_width": 1120
+    }
+  ]
+}

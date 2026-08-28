@@ -1,0 +1,102 @@
+{
+  "bundle": "anim03",
+  "texture": "86",
+  "note": "Man Question (01_02). Cau hoi: ScenarioData sID75 text[1058], nguyen van TRU 第１ステージ: 'Chang thu nhat' -> 'Stage 1' theo quyet dinh chot #2 (bo luon chu C hoa giua cau von la loi cua text[1058]). Sau khi doi, ca cau vua MOT dong 924 px < khung 1010 nen ve 1 dong dung nhu ban Nhat (『第１ステージ』で敗北したのは何人？ 1 dong, rong 753 px, tam y=386). Dap an: selText sID75 = nhan nut [seladd] 01_02:6830-6833. CAN DONG BO: text[1058] va [select_monitor] 01_02:6835.",
+  "ops": [
+    {
+      "op": "erase",
+      "rect": [
+        420,
+        288,
+        1445,
+        482
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "Có bao nhiêu người đã thất bại trong Stage 1?",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 386,
+      "yref": "mid",
+      "max_width": 1010
+    },
+    {
+      "op": "erase",
+      "rect": [
+        700,
+        578,
+        1190,
+        952
+      ],
+      "detect": {
+        "mode": "dark",
+        "lum": 620
+      },
+      "how": "interp_h",
+      "grow": 3
+    },
+    {
+      "op": "text",
+      "text": "3 người",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 614,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "5 người",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 714,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "7 người",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 814,
+      "yref": "mid",
+      "max_width": 700
+    },
+    {
+      "op": "text",
+      "text": "8 người",
+      "font": "B",
+      "size": 44,
+      "color": "auto",
+      "alpha": "auto",
+      "align": "center",
+      "x": 934,
+      "y": 914,
+      "yref": "mid",
+      "max_width": 700
+    }
+  ]
+}
