@@ -3460,13 +3460,18 @@ thì ở trước chỗ rẽ nhánh. Luật đúng dùng cả hai chiều:
 
 Vế thứ hai bắt đúng cả 15 ô đó — không thể `[chat end]` một phiên chat chưa mở.
 
-### Năm chỗ đã sửa
+### Mười tên đã rút gọn
 
 | cũ | px | mới | px | n | chỗ |
 |---|---|---|---|---|---|
 | `ナレーション/Giọng từ màn hình ngoài phố` | 778 | `Giọng từ màn hình` | 494 | 1 | 117/0 |
 | `Người nước ngoài bí ẩn` | 620 | `Người nước ngoài` | 472 | 1 | 74/340 |
+| `ＪＥＣ職員Ａ/Đồng nghiệp của Yuri` | 587 | `Đồng nghiệp` | 343 | 2 | 120/29, 31 |
+| `Thanh niên đi đường` | 555 | `Người đi đường` | 408 | 2 | 120/21, 22 |
+| `ＪＥＣ職員Ａ/Người quen của Yuri` | 553 | `Người quen Yuri` | 436 | 5 | 116/11, 13, 19, 22, 24 |
+| `Sinh viên khoa khác` | 545 | `SV khoa khác` | 375 | 3 | 17/9, 13, 15 |
 | `Màn hình ngoài phố` | 530 | `Màn hình LED` | 376 | 2 | 84/128-129 |
+| `Munakata Kai＆Yuri` | 527 | `Kai＆Yuri` | 242 | 1 | 83/292 |
 | `Các người tham gia` | 525 | `Người tham gia` | 408 | 6 | 70/214… |
 | `Phụ nữ hàng xóm` | 473 | `Nữ hàng xóm` | 357 | 2 | 72/1106-1107 |
 
@@ -3476,25 +3481,53 @@ dẫn trailer phát ra *từ* màn hình) là hai chuỗi khác nhau trong bản
 `Giọng từ màn hình` 494 px chỉ dưới khung 6 px; thấy gãy trên máy thật thì hạ tiếp
 xuống `Giọng màn hình` (420 px).
 
-### Chưa quyết chữ — vẫn còn gãy
+**Ba chỗ mất sắc thái, cố ý đánh đổi lấy bề rộng.** Muốn lấy lại thì phải nghĩ chữ
+ngắn hơn, đừng chỉ nối lại chữ cũ:
 
-    Đồng nghiệp của Yuri  587 ×2  120/29,31        Sinh viên khoa khác  545 ×3  17/9,13,15
-    Thanh niên đi đường   555 ×2  120/21,22        Munakata Kai＆Yuri    527 ×1  83/292
-    Người quen của Yuri   553 ×5  116/11,13,19,22,24
+- `通行人の若者` (thanh niên) → `Người đi đường`: mất "trẻ", và gần trùng
+  `Người qua đường` (`通りすがりの人`, 461 px, ×4) vốn là một vai khác.
+- `ユーリの同僚` → `Đồng nghiệp`: mất "của Yuri". Cùng mạch còn `ユーリの仲間` →
+  `Đồng đội của Yuri` (485 px) giữ nguyên, nên hai vai vẫn phân biệt được.
+- `宗像 戒＆ユーリ` → `Kai＆Yuri`: bỏ họ. Các nameplate ghép khác đã dùng tên trơ
+  (`Yuri＆Kai＆Soichi`, `Tobari＆Awayuki`) nên đây lại là nhất quán hơn.
 
 ```powershell
 python tools\fix_nameplate_wrap.py [--apply]
 ```
 
-Đã chạy 30/08/2026, backup `_backup\scenario01.nameplatewrap`. 24 chỗ đổi (12
-`scriptText` + 12 `talkName`), `scriptText_Line` 269.210 dòng nguyên vẹn, `loadLine` /
-`selLine` không đổi. `check_scripts` 143/143, `check_chapterdata` 8/8,
-`check_layout_breaks` 210.972 → 210.972 ngắt dòng và 17.425 → 17.425 dòng thụt,
-`fix_adv_wrap` / `fix_ellipsis_break` / `fix_paren_balance` / `fix_novel_list_wrap` /
-`fix_terminal_term` đều PASS.
+Đã chạy 30/08/2026, backup `_backup\scenario01.nameplatewrap` (chụp trước đợt đầu, lùi
+được cả hai lượt). 50 chỗ đổi (25 `scriptText` + 25 `talkName`) qua hai lượt.
 
-`--check` là chốt chặn sau mỗi vòng merge sheet: nó soát **mọi** nameplate chứ không chỉ
-5 cái trong bảng, nên tên dài mới từ sheet cũng bị bắt.
+Sau khi ghi: **0 nameplate ADV vượt khung**, rộng nhất còn lại là `Himejima Kyosuke`
+495 px — đúng cái mốc "chơi 423 lần không gãy" đã dùng để suy ra khung, nên biên tự
+xác nhận lại. So với backup: `text`, `selText`, `scriptText_Line`, `voice`, `loadLine`,
+`selLine` **giống hệt từng mục** — chỉ hai trường nameplate đổi. `check_scripts`
+143/143, `check_chapterdata` 8/8, `check_layout_breaks` 222.966 → 222.966 ngắt dòng và
+17.425 → 17.425 dòng thụt, `fix_adv_wrap` / `fix_ellipsis_break` / `fix_paren_balance` /
+`fix_novel_list_wrap` / `fix_terminal_term` / `fix_center_caption_wrap` đều PASS.
+(`fix_jp_sentence_break` và `fix_profile_comment` FAIL sẵn từ trước, ở `text[]` và
+`TerminalProfileData` — hai chỗ tool này không chạm.)
+
+### Nameplate KHÔNG nằm trong sheet — không phải đẩy ngược lên upstream
+
+Tab `sd_*` để nameplate bản Nhật ở **cột B** làm chú thích (`【ＪＥＣ職員Ａ/ユーリの知人】`),
+**không có cột dịch kèm**; `read_sheet()` lại chỉ đọc cột C (Nhật) và D (Việt). Quét
+snapshot `(62)` cho cả 10 tên cũ: **0 ô**. Nên `talkName` chỉ sống trong build, merge
+không bao giờ trả lại tên dài, và 10 chỗ này không sinh nợ upstream như 48 ô của đợt
+Sekigawa.
+
+`--check` vẫn đáng chạy sau merge — nó soát **mọi** nameplate chứ không riêng bảng
+`RENAMES`, nên bắt được tên dài mới do người sửa thẳng trên build.
+
+### Một nameplate còn tiếng Nhật, và nó cũng không có trên sheet
+
+`3/18`, `4/18`, `5/18` giữ `【不知火の男Ａ/Shigeru】;【不知火の男Ａ】` — ô `;` thứ hai không có
+nửa hiển thị nên vẽ thẳng cái khoá `不知火の男Ａ` (288 px, không tràn). Bản Nhật cũng cùng
+dạng (`/茂】;【不知火の男Ａ】`), tức bản dịch chỉ làm nửa đầu.
+
+Không sửa được qua sheet: **9 scenario không có tab `sd_*` nào** — 0, 1, 2, 3, 4, 5, 7,
+8, 12 — và toàn bộ text của chúng còn tiếng Nhật (sID 7 riêng nó đã 1.235 ô). Đây là
+việc riêng, không thuộc phạm vi tool này.
 
 ## Chữ BACKLOG tràn ra đè lên mục kế tiếp (`fix_backlog_autosize.py`)
 
