@@ -72,6 +72,7 @@ APPLY = "--apply" in sys.argv
 # Soi ĐỨNG YÊN cả bảng cặp trên snapshot mới nhất, không phụ thuộc vòng này có ô nào
 # đổi hay không — xem `check_chat()`.
 CHECK_CHAT = "--check-chat" in sys.argv
+AUDIT = "--audit-sheet" in sys.argv
 
 
 def arg(name, default=None):
@@ -697,6 +698,126 @@ def check_chat(new_f):
                                                                            len(owner)))
 
 
+def build_values():
+    """{id sheet: giá trị đang có trong BUILD} cho mọi dạng id đọc được.
+
+    Dùng lại đúng các đường đọc của `main()`, chỉ khác là quét TẤT CẢ thay vì theo `todo`.
+    Chat Genebark đánh địa chỉ bằng CHỈ SỐ nên để dưới khoá riêng `__gbidx__<n>`.
+    """
+    out = {}
+    _, _, raw_s = load_text(SCENARIO, "ScenarioData")
+    data_s = json.loads(raw_s.lstrip("﻿"))
+    for t in data_s["target"]:
+        sid = t["scenarioID"]
+        for i, x in enumerate(t.get("text") or []):
+            out["%d/txt/%04d" % (sid, i)] = x
+        for n, a in enumerate(CMD_ARG.findall(t["scriptText"])):
+            out["%d/cmd/%04d" % (sid, n)] = a.replace(BS_N, "\n")
+        for j, raw in enumerate(t.get("selText") or []):
+            if not raw:
+                continue
+            try:
+                opts = json.loads(raw)["target"]
+            except Exception:
+                continue
+            for k, v in enumerate(opts):
+                out["%d/sel/%04d/%04d" % (sid, j, k)] = v
+
+    _, _, raw_q = load_text(JSONB, "Q&AData")
+    for g, grp in enumerate(json.loads(raw_q.lstrip("﻿"))["list"]):
+        for q, ttl in enumerate(grp.get("title") or []):
+            out["Q&AData/qa_title/g%d_q%d" % (g, q)] = ttl
+
+    _, _, raw_g = load_text(JSONB, "GenebarkChatMainData")
+    for n, r in enumerate(json.loads(raw_g.lstrip("﻿"))["data"]):
+        out["__gbidx__%d" % n] = r.get("content") or ""
+    return out
+
+
+AUDIT_BO = re.compile("[\\s\\u3000『』「」\"'()（）：:.,!?…-]+")
+
+
+def audit_sheet(new_f):
+    """So MỌI ô sheet với build, bất kể vòng này có gì đổi.
+
+    Vì sao phải có chế độ riêng: `main()` là phép so BA CHIỀU — nó chỉ hành động trên ô
+    có `new != base`. Ô mà SHEET ĐÚNG, BUILD SAI, nhưng sheet ĐỨNG YÊN thì không vòng
+    merge nào nhìn tới, mãi mãi. Hai đường dẫn tới trạng thái đó, cả hai đã xảy ra thật
+    (đo trên snapshot (63), 30/08/2026):
+
+    - ô từng đổi rồi bị chặn "CẢ HAI BÊN ĐỔI" mà không ai lấy; vòng sau sheet không đổi
+      nữa nên nó biến khỏi tầm nhìn — `89/cmd/0001`..`0003`;
+    - build bị sửa tay lệch khỏi sheet từ lâu, sheet chưa hề đổi suốt 58..63 —
+      `69/cmd/*`, `70/cmd/*`, `75/cmd/*`, `76/txt/0025`.
+
+    Lần chạy đầu tiên tìm ra **94 ô** như vậy, trong khi cách đếm-từ-khoá thủ công trước
+    đó chỉ thấy 12. Đó là lý do phải soi có hệ thống chứ không grep vài cụm.
+
+    KHÔNG tự áp. Trong 94 ô chắc chắn có ô mà BUILD mới đúng — bố cục ngắt dòng, bản sửa
+    sau merge, hoặc quyết định chỉ tồn tại ở build. Chế độ này chỉ phân loại để duyệt:
+
+        dấu câu        chỉ khác dấu/ngoặc/khoảng trắng
+        chữ            khác chữ nhưng còn nhận ra nhau (giống >= 60%)
+        câu khác hẳn   viết lại
+
+    Bỏ qua ô sheet TRỐNG (build giữ bản dịch là đúng) và 184 ô dẫn xuất Genebark
+    (`derived_sd_ids`, tab Genebark sở hữu — xem `--check-chat`).
+
+        python tools\\apply_sheet_cells.py --audit-sheet [--new=…]
+    """
+    print("sheet     : %s" % new_f)
+    sheet, _ = read_sheet(new_f)
+    build = build_values()
+    owner = derived_sd_ids()
+    gb_by_n = {}
+    for k in sheet:
+        m = GB_ID.match(k)
+        if m:
+            gb_by_n[k] = "__gbidx__" + m.group(1)
+
+    nhom = {"dấu câu": [], "chữ": [], "câu khác hẳn": []}
+    bo_trong = bo_dan_xuat = ngoai_build = 0
+    for key, (sv, jp) in sheet.items():
+        if key in owner:
+            bo_dan_xuat += 1
+            continue
+        bkey = gb_by_n.get(key, key)
+        if bkey not in build:
+            ngoai_build += 1
+            continue
+        if not sv.strip():
+            bo_trong += 1
+            continue
+        a, b = flat_cell(sv), flat_cell(build[bkey])
+        if a == b:
+            continue
+        if AUDIT_BO.sub("", a) == AUDIT_BO.sub("", b):
+            nhom["dấu câu"].append((key, b, a, jp))
+        elif difflib.SequenceMatcher(None, a, b).ratio() >= 0.6:
+            nhom["chữ"].append((key, b, a, jp))
+        else:
+            nhom["câu khác hẳn"].append((key, b, a, jp))
+
+    tong = sum(len(v) for v in nhom.values())
+    print("ô sheet đọc được  : %d" % len(sheet))
+    print("bỏ qua ô trống    : %d" % bo_trong)
+    print("bỏ qua ô dẫn xuất : %d" % bo_dan_xuat)
+    print("id không có ở build: %d" % ngoai_build)
+    print("\nÔ SHEET KHÁC BUILD: %d" % tong)
+    for ten in ("dấu câu", "chữ", "câu khác hẳn"):
+        rows = nhom[ten]
+        print("\n===== %s — %d ô =====" % (ten.upper(), len(rows)))
+        for key, b, a, jp in sorted(rows, key=lambda r: r[0]):
+            print("  %s" % key)
+            print("     build: %r" % b[:86])
+            print("     sheet: %r" % a[:86])
+    if tong:
+        print("\nDUYỆT rồi áp: --take-sheet=<id,id,…> --apply")
+        print("   (--take-sheet bỏ điều kiện 'build chưa ai sửa', vẫn qua đủ chốt còn lại)")
+        raise SystemExit(1)
+    print("\nPASS sheet và build nói cùng một câu ở mọi ô")
+
+
 def main():
     new_f, base_f = arg("new"), arg("base")
     if not new_f or not base_f:
@@ -704,6 +825,9 @@ def main():
         new_f, base_f = new_f or n, base_f or b
     if CHECK_CHAT:
         check_chat(new_f)
+        return
+    if AUDIT:
+        audit_sheet(new_f)
         return
     print("sheet mới : %s" % new_f)
     print("sheet nền : %s" % base_f)

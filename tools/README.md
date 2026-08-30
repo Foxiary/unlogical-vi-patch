@@ -3526,8 +3526,39 @@ nửa hiển thị nên vẽ thẳng cái khoá `不知火の男Ａ` (288 px, kh
 dạng (`/茂】;【不知火の男Ａ】`), tức bản dịch chỉ làm nửa đầu.
 
 Không sửa được qua sheet: **9 scenario không có tab `sd_*` nào** — 0, 1, 2, 3, 4, 5, 7,
-8, 12 — và toàn bộ text của chúng còn tiếng Nhật (sID 7 riêng nó đã 1.235 ô). Đây là
-việc riêng, không thuộc phạm vi tool này.
+8, 12 — và toàn bộ text của chúng còn tiếng Nhật (sID 7 riêng nó đã 1.235 ô). **Chúng
+là script test của nhà phát triển, không vào được trong game** — xem mục dưới. Không
+phải lỗ hổng dịch.
+
+## `scenarioID` 0–12 là script test, KHÔNG dịch
+
+`scenarioID` là **chỉ số vào `scenariolist.keys`** (TextAsset trong bundle `scenario01`,
+144 khoá). 13 khoá đầu đều là đồ test, nội dung thật bắt đầu từ chỉ số 13:
+
+| sID | keys[sID] | #text | nội dung |
+|---|---|---|---|
+| 0-2 | `01_test_live2d_01..03` | 37/48/8 | duyệt biểu cảm Live2D của `矢代` / `鳴神` / `朧` — `鳴神` và `朧` là nhân vật *Kamigami no Asobi*, không có trong UNLOGICAL |
+| 3-5 | `sample1..3` | 94 mỗi cái | văn bản mẫu của engine (`わたしたちは二十三区の黒鶴たちへ伝令に来た。`) |
+| 7 | `UL_Live2d_test_sample` | 1235 | 1.235 dòng toàn tên biểu cảm (`すまし`…) |
+| 8 | `UL_test` | 89 | **bảng kiểm QA gửi khách**: `スクリプトベース演出リスト…` / `こちらの演出やアニメーションで問題ないかご確認お願い致します` |
+| 12 | `UL_test_select` | 0 | thử lựa chọn, 5 lệnh nhảy, 0 ô text |
+
+`sd_013` = `07_01` — tab đầu tiên của sheet trùng đúng chỗ nội dung thật bắt đầu, tức
+upstream cũng cắt ở đây.
+
+Năm bằng chứng độc lập cho thấy không vào được:
+
+1. `ChapterData` — 43 mục, nguồn duy nhất của SECTION SELECT — không mục nào có `file`
+   là script test.
+2. `SceneLabelList`, `SceneReplayData`, `MapData`: **0/31** nhãn mà script test định
+   nghĩa (`*Live2D-01-00`…).
+3. Không script thật nào nhảy vào nhãn của script test (quét `*<nhãn>` trên cả 143).
+4. `global-metadata.dat`: **0** lần xuất hiện `ul_test` / `UL_test` / `ul_check` /
+   `01_test_live2d` / `sample1` — code cũng không gọi tên chúng.
+5. `scenariolist` còn 4 khoá **không có TextAsset nào**: `ul_check`, `ul_test2`,
+   `ul_test3`, `ul_test4` (chỉ số 6, 9, 10, 11) — danh sách này vốn là rác build.
+
+Nên đừng đưa 9 scenario đó lên sheet, và đừng tính chúng vào tiến độ dịch.
 
 ## Chữ BACKLOG tràn ra đè lên mục kế tiếp (`fix_backlog_autosize.py`)
 
