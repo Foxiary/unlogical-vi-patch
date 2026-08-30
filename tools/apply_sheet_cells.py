@@ -26,12 +26,26 @@ Guards on every cell before it is written:
   `sd_*` Vietnamese column is one flat line, so writing it verbatim flattens the
   layout (1 530 breaks were destroyed that way once).  difflib maps the old break
   positions onto the new wording.
+- an `sd_*` cell that merely **mirrors a Genebark chat message** is skipped, naming the
+  Genebark cell that owns it: writing it is futile, because `fix_chat_use_genebark.py
+  --apply` — the mandatory first step after every merge — copies the Genebark wording
+  straight back over it, silently.  184 pairs, recomputed every run from
+  `fix_chat_use_genebark.pairs()`; `--take-sheet` deliberately does not unlock them.
+  The pair count is asserted, because a stock tree that is *present but wrong* makes
+  `pairs()` quietly return fewer (measured: 93 against the translated tree) and the
+  guard would switch itself off without a word.
 
+`--check-chat` audits all 184 pairs on one snapshot regardless of what changed this
+round — the in-merge "SỬA NHẦM Ô" warning only fires the single round a cell moves,
+so without it a wrong-cell edit goes quiet forever once the snapshot becomes the base.
+
+    python tools\\apply_sheet_cells.py --check-chat
     python tools\\apply_sheet_cells.py --match mainframe
     python tools\\apply_sheet_cells.py --match mainframe --apply
     python tools\\apply_sheet_cells.py --new "…(23).xlsx" --base "…(22).xlsx" --match X
     python tools\apply_sheet_cells.py --take-sheet=71/txt/0064,80/txt/0170 --apply
 """
+import ast
 import difflib
 import glob
 import io
@@ -40,6 +54,7 @@ import os
 import re
 import shutil
 import sys
+import types
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -54,12 +69,30 @@ JSONB = os.path.join(ROOT, "romfs", "Data", "StreamingAssets", "json", "json")
 SNAPSHOTS = r"D:\Downloads\UNLOGICAL_v2*.xlsx"
 
 APPLY = "--apply" in sys.argv
+# Soi ĐỨNG YÊN cả bảng cặp trên snapshot mới nhất, không phụ thuộc vòng này có ô nào
+# đổi hay không — xem `check_chat()`.
+CHECK_CHAT = "--check-chat" in sys.argv
 
 
 def arg(name, default=None):
-    for a in sys.argv:
+    """Đọc `--ten=gia-tri`, và cả `--ten gia-tri` cách nhau bằng khoảng trắng.
+
+    Dạng cách nhau bằng khoảng trắng trước đây bị BỎ QUA KHÔNG MỘT LỜI: `--new` không
+    khớp tiền tố `--new=` nên `arg()` trả None, `main()` lặng lẽ rơi về `newest_two()`
+    và merge HAI SNAPSHOT MỚI NHẤT thay cho cặp vừa chỉ định — với `--apply` là ghi
+    nhầm hẳn một bộ ô. Chỉ hai dòng "sheet mới/sheet nền" ở đầu output tố cáo. Mà chính
+    docstring đầu file lại đang dạy đúng dạng đó (`--new "…(23).xlsx"`), nên đây là cái
+    bẫy tự kho dựng cho người dùng của nó. Lỗi có sẵn, không do đợt chốt chặn ô dẫn xuất.
+
+    Giá trị bắt đầu bằng `--` thì không ăn: `--match --apply` phải ra None chứ không
+    được nuốt mất cờ `--apply`.
+    """
+    for i, a in enumerate(sys.argv):
         if a.startswith("--%s=" % name):
             return a.split("=", 1)[1]
+        if (a == "--%s" % name and i + 1 < len(sys.argv)
+                and not sys.argv[i + 1].startswith("--")):
+            return sys.argv[i + 1]
     return default
 
 
@@ -69,9 +102,26 @@ MATCH = arg("match")
 # nào khớp build: vòng (32) export lại 18/08 làm 27 ô báo "cả hai bên đổi" mà 26 trong số
 # đó hai bên chỉ khác dấu nháy. Phải liệt kê id tường minh — không có chế độ "lấy tất".
 TAKE = {x.strip() for x in (arg("take-sheet") or "").split(",") if x.strip()}
+
 TAG = re.compile(r"\[[^\[\]\n]*\]")
 SD_ID = re.compile(r"^(\d+)/txt/(\d+)$")
 DATA_ID = re.compile(r"^([A-Za-z&]+Data)/([A-Za-z_]+)/id(\d+)$")
+# Chat Genebark: id KHÔNG mang khoá `id` mà mang **chỉ số tuyệt đối** trong `data[]`;
+# `gid` có thể là nhiều nhóm nối bằng `;` (`g23;24cユーリ_294`) nên đừng ăn một số.
+# Chỉ mở `chat`. `spk` là KHOÁ (`player` / `藍`), sheet để VN == JP — dịch là hỏng chat.
+GB_ID = re.compile(r"^GenebarkChatMainData/chat/g[\d;]+c.+?_(\d+)$")
+# Lựa chọn: `selText[idx]` là JSON LỒNG trong JSON — `{"target":[…]}` — nên phải parse
+# rồi ghi lại, không thay chuỗi thô được.
+SEL_ID = re.compile(r"^(\d+)/sel/(\d+)/(\d+)$")
+# Tiêu đề câu hỏi Q&A: `Q&AData.list[g].title[q]`, chuỗi trần.
+QA_ID = re.compile(r"^Q&AData/qa_title/g(\d+)_q(\d+)$")
+# Thông báo Terminal: `{sID}/cmd/{n}` = lệnh thứ n trong `scriptText` của scenario đó.
+# CHỈ đếm lệnh có NGOẶC KÉP `text="…"` — bên xuất sheet bỏ qua dạng không ngoặc, và bản
+# gốc có đúng một chỗ như thế (`71` @12609, `敗北者が確定しました…` chưa dịch). Tính cả nó
+# thì lệch chỉ số từ đó trở đi; chỉ đếm dạng có ngoặc thì khớp 116/116.
+CMD_ID = re.compile(r"^(\d+)/cmd/(\d+)$")
+_Q = chr(34)
+CMD_ARG = re.compile(r"\[(?:terinfo|geninfo|select_monitor)\b[^\]]*?text=" + _Q + r"([^" + _Q + r"]*)" + _Q)
 
 
 def backup_path(base):
@@ -118,7 +168,9 @@ def read_sheet(path):
             if not row or not isinstance(row[0], str):
                 continue
             key = row[0].strip()
-            if not (SD_ID.match(key) or DATA_ID.match(key)):
+            if not (SD_ID.match(key) or DATA_ID.match(key) or GB_ID.match(key)
+                    or SEL_ID.match(key) or QA_ID.match(key)
+                    or CMD_ID.match(key)):
                 # KHÔNG bỏ im lặng. Một `continue` trần ở đây từng che **3003 hàng**
                 # của snapshot (42) mà không in ra một chữ nào: cả tab
                 # `GenebarkChatMainData` (2388 hàng), 449 hàng `sel`, 116 hàng `cmd`,
@@ -145,6 +197,29 @@ def read_sheet(path):
             out[key] = (val, jp)
     wb.close()
     return out, unknown
+
+
+ALERT = "TerminalHomeAlertData/"
+# Hai bản Nhật cùng một câu nhưng gõ riêng cho hai chỗ hiện: bản alert có `：` đầu dòng
+# tên, bản terinfo không. Bỏ khoảng trắng / `　` / `：` trước khi so.
+NORM_JP = re.compile(r"[\s　：:]+")
+
+
+def norm_jp(s):
+    return NORM_JP.sub("", str(s).replace(BS_N, ""))
+
+
+# `cmd` và `TerminalHomeAlertData` là CẶP SINH ĐÔI: bản gốc 1.0.2 tự nó có hai chuỗi cho
+# cùng một sự việc — `[terinfo]` hiện đè lên cảnh lúc nó xảy ra, `alert` nằm trong nhật ký
+# app Terminal đọc lại sau. 30 cặp như vậy, khác nhau đúng dấu `：` và cách xuống dòng.
+#
+# Đã từng cho `cmd` DẪN XUẤT từ `alert` (vô điều kiện, rồi rút lại thành "chỉ điền ô
+# trống"). Bỏ hẳn từ snapshot (62): người dịch đã điền đủ cả 30 cặp nên không còn ô nào
+# để điền, và hai chỗ hiện khác nhau thì vốn được phép dùng câu khác nhau.
+#
+# Cái còn phải giữ là `norm_jp`: hai ô sinh đôi thường mang CÙNG bản dịch, mà bản Nhật
+# lại khác nhau — đúng dấu hiệu mà `duplicate_paste` đi tìm. Chuẩn hoá trước khi so thì
+# chúng thành một, và lưới không kêu oan nữa.
 
 
 def id_shape(key):
@@ -177,7 +252,7 @@ def report_unknown(unknown, label):
 # Nhãn field trên sheet KHÔNG phải tên field thật, và khoá gốc cũng không luôn là `data`.
 # Đo 18/08 trên snapshot (37): trong 11 nhãn sheet dùng chỉ `TerminalHomeAlertData/alert`
 # là khớp thẳng, `rule_body` có nhánh riêng, còn lại 262 hàng **không bao giờ áp được** —
-# 5 nhãn sai tên field, 4 nhãn sai vì `dj.get("data", dj)` không ra list có `id`.
+# 5 nhãn sai tên field và 257 hàng không có id tương ứng trong asset.
 # Lớp lỗi này ẩn được lâu vì tool chạy theo diff: một nhãn sai chỉ lộ ra ở vòng nào
 # đúng mấy hàng đó tình cờ đổi (vòng (39): 6/44 hàng note đổi -> 6 dòng "không có field").
 FIELD_MAP = {
@@ -299,7 +374,10 @@ def duplicate_paste(todo):
         by_val.setdefault(nv, []).append((key, jp, bv))
     bad = set()
     for nv, rows in by_val.items():
-        if len(rows) < 2 or len({jp for _, jp, _ in rows}) < 2:
+        # So bản Nhật ĐÃ CHUẨN HOÁ. Cặp `cmd`/`alert` sinh đôi chỉ khác dấu `：` và cách
+        # xuống dòng; để nguyên thì chúng đếm là "hai bản Nhật khác nhau" và lưới báo
+        # dán đè cho một việc hoàn toàn đúng (96/cmd/0001 với alert/id66).
+        if len(rows) < 2 or len({norm_jp(jp) for _, jp, _ in rows}) < 2:
             continue
         # Ô nào bị dán đè thì bản mới của nó KHÁC XA bản cũ của chính nó; ô lành chỉ
         # sửa nhẹ. Nhờ vậy không chặn oan ô lành trong cùng nhóm.
@@ -422,11 +500,211 @@ def guards(old, new):
     return bad
 
 
+
+# ------------------------------------------------------------------ ô dẫn xuất
+# Một tin nhắn chat Genebark nằm ở HAI asset, và sheet cho sửa CẢ HAI ô:
+#
+#     GenebarkChatMainData/chat/g1c戒_102   <- SỞ HỮU (app chat trong Genebark)
+#     86/txt/0395                           <- DẪN XUẤT (chiếu lại trong cảnh ADV)
+#
+# `tools\\fix_chat_use_genebark.py` chép Genebark -> ScenarioData cho 184 cặp, và
+# CLAUDE.md bắt chạy nó `--apply` **ngay đầu** đợt dựng lại bố cục sau mỗi lần merge.
+# Nên ghi ô `sd_*` dẫn xuất ở đây là ghi rồi mất: bước ngay sau lật lại nguyên văn bản
+# Genebark, KHÔNG một dòng cảnh báo. Đo 30/08 trên build hiện tại: 184/184 cặp đang
+# "đã giống" và trên sheet (62) cũng 0/184 cặp lệch chữ — bẫy đang ngủ, nó chỉ cắn vào
+# đúng lần đầu có người sửa ô `sd_*` trên sheet.
+_TOOL_MODS = {}
+
+
+def load_tool_module(name):
+    """Nạp một tool khác trong `tools/` như THƯ VIỆN — cắt hai tác dụng phụ cấp module.
+
+    `import fix_chat_use_genebark` thẳng là KHÔNG ĐƯỢC. Hai lý do, cả hai đã dính thật:
+
+    1. Nó gán `sys.stdout = io.TextIOWrapper(sys.stdout.buffer, …)` ở đầu file, y hệt
+       file này. Hai wrapper cùng bọc MỘT buffer; wrapper nào bị gom rác trước thì
+       `__del__` của nó ĐÓNG buffer chung, và mọi `print` sau đó ném
+       `ValueError: I/O operation on closed file`. Tệ hơn phần nhìn thấy: chữ còn nằm
+       trong đệm của wrapper kia mất hẳn, không để lại dấu vết. Đã tái hiện đúng lỗi
+       này ngay khi dựng bản vá (một script phụ vô tình bọc chồng, dòng
+       "read_sheet (62): … s" biến mất còn tiến trình thì chết ở `print`).
+    2. Nó gọi `main()` TRẦN ở cuối file — cả hai tool đều không có
+       `if __name__ == "__main__"`. `main()` đó đọc `APPLY = "--apply" in sys.argv`,
+       tức argv của TIẾN TRÌNH NÀY: chạy `apply_sheet_cells.py --match X --apply` sẽ
+       khiến fix_chat_use_genebark thấy `APPLY=True` và GHI THẲNG vào
+       `romfs\\…\\scenario01` (kèm backup) TRƯỚC khi merge kịp bắt đầu. Đã kiểm chứng:
+       nạp với argv có `--apply` cho `mod.APPLY is True`.
+
+    Nên: đọc mã nguồn, bỏ đúng hai loại lệnh đó khỏi AST cấp cao nhất, rồi exec phần
+    còn lại vào một namespace module riêng. File kia không phải sửa một chữ — nó là
+    file CLAUDE.md gọi trực tiếp trong quy trình bắt buộc, càng ít đụng càng tốt.
+
+    Lọc HẸP có chủ ý: chỉ cắt phép gán vào `sys.stdout`, và lệnh gọi trần tên đúng
+    `main`. Cắt rộng hơn (mọi `ast.Expr` là `Call`) sẽ nuốt luôn
+    `sys.path.insert(0, HERE)` và module hết chạy được.
+    """
+    if name in _TOOL_MODS:
+        return _TOOL_MODS[name]
+    path = os.path.join(HERE, name + ".py")
+    with open(path, encoding="utf-8") as f:
+        tree = ast.parse(f.read(), filename=path)
+    body = []
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+                isinstance(t, ast.Attribute) and t.attr == "stdout"
+                and isinstance(t.value, ast.Name) and t.value.id == "sys"
+                for t in node.targets):
+            continue                                    # bỏ bọc chồng stdout
+        if (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name)
+                and node.value.func.id == "main"):
+            continue                                    # bỏ lệnh chạy main()
+        body.append(node)
+    tree.body = body
+    mod = types.ModuleType(name)
+    mod.__file__ = path          # HERE/ROOT của module đó tính từ đây
+    keep = sys.stdout
+    exec(compile(tree, path, "exec"), mod.__dict__)
+    if sys.stdout is not keep:
+        # Bộ lọc trên đã hụt (ai đó viết `sys.stdout = …` theo kiểu khác). `detach()`
+        # trước khi trả lại, không thì wrapper mồ côi bị gom rác sẽ đóng buffer chung
+        # và giết mọi print về sau — đúng cái bẫy docstring vừa tả.
+        try:
+            sys.stdout.detach()
+        except Exception:
+            pass
+        sys.stdout = keep
+        print("!! %s vẫn bọc lại sys.stdout — đã gỡ, xem load_tool_module()" % name)
+    _TOOL_MODS[name] = mod
+    return mod
+
+
+# Số cặp `pairs()` ghép được trên bản gốc 1.0.2 — BẤT BIẾN, không phụ thuộc build
+# hiện tại lẫn sheet. Lệch là cây gốc sai, xem `derived_sd_ids()`.
+PAIRS_EXPECTED = 184
+_DERIVED = None
+
+
+def derived_sd_ids():
+    """{'86/txt/0395': 'GenebarkChatMainData/chat/g1c戒_102', …} — ô `sd_*` mà một ô
+    chat Genebark sở hữu.
+
+    TỰ TÍNH bằng chính `fix_chat_use_genebark.pairs()`, không nhúng danh sách cứng:
+    pairs() ghép 1:1 theo bản Nhật DUY NHẤT ở cả hai bên và đọc từ bản GỐC
+    `D:\\Downloads\\UNLOGICAL_v2` — nên kết quả cố định, không phụ thuộc build hiện tại
+    và không trôi theo từng đợt sửa. 184 cặp; khớp 184/184 với bảng đối chiếu dựng tay
+    (thiếu 0, thừa 0).
+
+    Nhãn ô Genebark dựng lại từ chính hàng của asset gốc: `g{groupIDs}c{charID}_{k}`,
+    đúng cột A của tab sheet — đối chiếu 184/184 nhãn, 0 lệch. Hai chỗ dễ sai:
+    `groupIDs` (số nhiều) là CHUỖI và có thể là nhiều nhóm nối bằng `;`
+    (`g23;24cユーリ_294`) nên đừng ép sang số; và phần tên là `charID`, KHÔNG phải
+    `speaker` — `speaker` mang `player`/tên người nói, `charID` mới là nhân vật của
+    đoạn chat.
+
+    NẠP LƯỜI + nhớ đệm: vòng merge nào không có ô `sd_*` nào đổi thì không mở bundle
+    nào. Đo: 0,21 s cho lần gọi đầu (nạp module 0,6 s đã cache sẵn vì UnityPy import
+    trước; mở bundle json 0,00 s + scenario01 gốc 0,10 s + json.loads 0,08 s), 0 s
+    cho các lần sau.
+
+    CỐ Ý CHẶN CẢ 184, không tái tạo bộ lọc của `fix_chat_use_genebark.main()` (nameplate
+    có `@`, bản Nhật không mở `「`, `guards(old, new, jp)`). Bộ lọc đó phụ thuộc NỘI DUNG
+    nên không đoán trước được, và hai tool cùng suy luận về một điều kiện động là nguồn
+    lỗi mới. Đo hiện tại: 184/184 qua cả hai chốt cấu trúc, nên chặn cả 184 là đúng.
+    """
+    global _DERIVED
+    if _DERIVED is None:
+        gb = load_tool_module("fix_chat_use_genebark")
+        _, _, raw_g = gb.load_text(os.path.join(gb.STOCK, "json", "json"),
+                                   "GenebarkChatMainData")
+        rows = json.loads(raw_g.lstrip("\ufeff"))["data"]
+        _DERIVED = {}
+        for k, sid, i, _jp in gb.pairs():
+            r = rows[k]
+            _DERIVED["%d/txt/%04d" % (sid, i)] = "GenebarkChatMainData/chat/g%sc%s_%d" % (
+                r.get("groupIDs") or "", r.get("charID") or "", k)
+        # Cây gốc THIẾU thì `load_text` đã ném SystemExit — ầm ĩ, tốt. Cây gốc CÓ MẶT
+        # mà NỘI DUNG SAI thì không ai kêu: `pairs()` chỉ ghép được ít cặp hơn và chốt
+        # chặn tự tắt bớt trong im lặng. Đo thật (30/08): trỏ STOCK sang cây ĐÃ DỊCH
+        # `romfs` cho **93** cặp chứ không phải 0 — tức 91 ô dẫn xuất lọt lưới, vòng
+        # merge ghi chúng, rồi `fix_chat_use_genebark --apply` lật lại nguyên văn: đúng
+        # cái bẫy vừa vá mở lại, lần này còn khó thấy hơn vì người dùng tin là đã có
+        # chốt. Nên: số cặp là BẤT BIẾN của bản gốc 1.0.2, lệch một cặp cũng dừng.
+        if len(_DERIVED) != PAIRS_EXPECTED:
+            n = len(_DERIVED)
+            _DERIVED = None
+            print("!! chốt chặn chat: ghép được %d cặp, bản gốc 1.0.2 phải ra %d."
+                  % (n, PAIRS_EXPECTED))
+            print("   Cây gốc có mặt nhưng nội dung không phải bản 1.0.2 chưa sửa:")
+            print("     %s" % gb.STOCK)
+            print("   Thường là đã chép đè bằng cây đã dịch, hoặc dump từ bản game khác.")
+            print("   Dựng lại cây gốc rồi chạy lại — ĐỪNG merge tiếp: chốt chặn ô chat")
+            print("   dẫn xuất đang hở %d ô." % (PAIRS_EXPECTED - n))
+            raise SystemExit("cây gốc sai — chốt chặn ô chat dẫn xuất không tin được")
+        print("chốt chặn chat: %d cặp ô dẫn xuất (tính từ bản gốc)" % len(_DERIVED))
+    return _DERIVED
+
+
+def flat_cell(s):
+    """Làm phẳng một ô sheet để SO CÂU CHỮ (không so bố cục).
+
+    `read_sheet` để hai tab khai ngắt dòng theo hai kiểu khác nhau: tab `sd_*` đã đổi
+    `\\n` thành khoảng trắng, tab *Data thì giữ lại dạng `\\n` VĂN BẢN. So nguyên văn
+    thì mọi cặp có xuống dòng đều báo "khác chữ" một cách vô nghĩa.
+    """
+    return re.sub(r"[\s\u3000]+", " ", (s or "").replace(BS_N, " ")).strip()
+
+
+def check_chat(new_f):
+    """Soi CẢ bảng cặp trên một snapshot, bất kể vòng này có ô nào đổi hay không.
+
+    Vì sao cần chế độ riêng: cảnh báo "SỬA NHẦM Ô" trong `main()` chỉ nổ ĐÚNG MỘT VÒNG.
+    `todo` chỉ gồm ô có `new != base`, nên vòng sau — khi snapshot vừa rồi đã thành sheet
+    NỀN — ô vẫn lệch y nguyên nhưng không còn "đã đổi", và không tool nào nhắc lại nữa.
+    Bản dịch nằm vĩnh viễn trên sheet mà không bao giờ lên màn hình. Đúng lớp lỗi memory
+    `unlogical-wrong-cell-audit` đã ghi: lưới dán đè chỉ thấy vòng hiện tại.
+
+    Ở đây so ô `sd_*` với ô Genebark SỞ HỮU nó, trên cùng một snapshot. Lệch = bản dịch
+    đã rơi vào ô dẫn xuất; game hiện bản Genebark nên chữ đó sẽ không bao giờ thấy được.
+
+        python tools\\apply_sheet_cells.py --check-chat
+    """
+    print("sheet      : %s" % new_f)
+    new, _ = read_sheet(new_f)
+    print("ô đọc được: %d" % len(new))
+    owner = derived_sd_ids()
+    miss, bad = [], []
+    for sd_key, gb_key in sorted(owner.items()):
+        sd, gb = new.get(sd_key), new.get(gb_key)
+        if sd is None or gb is None:
+            miss.append((sd_key, gb_key, sd is None))
+            continue
+        if flat_cell(sd[0]) != flat_cell(gb[0]):
+            bad.append((sd_key, gb_key, sd[0], gb[0]))
+    for sd_key, gb_key, sd_missing in miss:
+        print("  FAIL %-14s không thấy %s trên sheet"
+              % (sd_key, sd_key if sd_missing else gb_key))
+    for sd_key, gb_key, sv, gv in bad:
+        print("  FAIL %-14s lệch với %s" % (sd_key, gb_key.split("/")[-1]))
+        print("         sd_*     : %r" % flat_cell(sv)[:76])
+        print("         Genebark : %r" % flat_cell(gv)[:76])
+    if miss or bad:
+        print("\n%d/%d cặp lệch — game hiện bản Genebark, nên bản dịch ở ô sd_* KHÔNG"
+              " lên màn hình." % (len(miss) + len(bad), len(owner)))
+        print("   Chép bản dịch sang tab GenebarkChatMainData (ô sở hữu) rồi export lại.")
+        raise SystemExit(1)
+    print("PASS %d/%d cặp: ô sd_* và ô Genebark sở hữu nói cùng một câu" % (len(owner),
+                                                                           len(owner)))
+
+
 def main():
     new_f, base_f = arg("new"), arg("base")
     if not new_f or not base_f:
         n, b = newest_two()
         new_f, base_f = new_f or n, base_f or b
+    if CHECK_CHAT:
+        check_chat(new_f)
+        return
     print("sheet mới : %s" % new_f)
     print("sheet nền : %s" % base_f)
     print("lọc       : %s" % (MATCH or "(không lọc — mọi ô đã đổi)"))
@@ -434,6 +712,7 @@ def main():
     base, _ = read_sheet(base_f)
     print("ô đọc được: %d\n" % len(new))
     report_unknown(unknown_new, "sheet mới")
+
 
     pat = re.compile(MATCH, re.I) if MATCH else None
     todo = []
@@ -454,8 +733,73 @@ def main():
             print("   %-14s JP: %r" % (key, jp[:64].replace("\n", "⏎")))
         print("   -> bỏ qua những ô này; sửa trên sheet rồi chạy lại")
         todo = [t for t in todo if t[0] not in dup]
+
+    # Ô `sd_*` chỉ CHIẾU LẠI một tin nhắn chat mà bản Genebark sở hữu thì không ghi —
+    # xem `derived_sd_ids()`. Ba lựa chọn về CHỖ ĐẶT, và chỗ này là chỗ duy nhất đúng:
+    #
+    # - KHÔNG lọc trong `read_sheet()`: nó chạy cho cả `new` lẫn `base`, loại ở đó thì
+    #   cặp ô biến mất khỏi cả hai phía nên phép so ba chiều không sinh ra mục nào và
+    #   tool im lặng tuyệt đối — đổi một cái bẫy im lặng lấy một cái bẫy im lặng khác,
+    #   đúng lớp lỗi mà `report_unknown()` được dựng ra để chống. Còn làm hụt "ô đọc
+    #   được" đi 184 và rút 184 ô khỏi lưới `duplicate_paste`.
+    # - SAU `duplicate_paste`: ô dẫn xuất vẫn được đếm và vẫn đi qua lưới dán đè. Một
+    #   bản dịch dán nhầm vào ô chat vẫn đáng báo, kể cả khi ô đó sẽ không được ghi —
+    #   người dùng còn phải sửa nó trên sheet.
+    # - TRƯỚC `if not todo: return`: vòng nào chỉ toàn ô dẫn xuất thì thoát sớm, KHÔNG
+    #   mở scenario01 (7,8 MB nén / 13,9 MB JSON) lẫn bundle json.
+    #
+    # Và vì khối này nằm NGOÀI vòng lặp áp, `--take-sheet` không gỡ được nó — đúng ý:
+    # `--take-sheet` chỉ bỏ điều kiện "build chưa ai sửa", còn ô dẫn xuất thì ghi kiểu
+    # gì cũng bị lật lại, honour nó là nói dối người dùng.
+    if any(SD_ID.match(t[0]) for t in todo):
+        owner = derived_sd_ids()          # nạp lười: chỉ tính khi thật sự có ô sd_*
+        drop = [t for t in todo if t[0] in owner]
+        wrong = []
+        if drop:
+            print("\n%d ô sd_* là BẢN CHIẾU của chat Genebark — KHÔNG ghi:" % len(drop))
+            for key, _bv, nv, _jp in sorted(drop):
+                gb_key = owner[key]
+                print("   -  %-14s ô dẫn xuất — tab Genebark (%s) sở hữu, bỏ qua"
+                      % (key, gb_key.split("/")[-1]))
+                gb = new.get(gb_key)
+                if gb is None:
+                    wrong.append(key)
+                    print("      !! không thấy %s trên sheet — không đối chiếu được"
+                          % gb_key)
+                elif flat_cell(nv) != flat_cell(gb[0]):
+                    # Ô Genebark là ô game thật sự hiện. Sửa ở ô dẫn xuất mà không sửa
+                    # ô sở hữu = sửa nhầm chỗ: chữ mới sẽ không bao giờ lên màn hình.
+                    wrong.append(key)
+                    print("      !! SỬA NHẦM Ô — bản dịch mới KHÁC ô Genebark, mà game")
+                    print("         hiện bản Genebark, nên sửa này sẽ không thấy được")
+                    print("         sd_*     : %r" % flat_cell(nv)[:76])
+                    print("         Genebark : %r" % flat_cell(gb[0])[:76])
+            if wrong:
+                print("!! %d/%d ô trên là SỬA NHẦM Ô — chép bản dịch sang tab"
+                      " GenebarkChatMainData rồi chạy lại" % (len(wrong), len(drop)))
+            print("=> bỏ qua %d ô dẫn xuất. Sau merge vẫn phải chạy:" % len(drop))
+            print("   python tools\\fix_chat_use_genebark.py --apply")
+            todo = [t for t in todo if t[0] not in owner]
+
+    # Nhánh `rule_body` KHÔNG đi qua `todo` — nó map theo (id, trang) từ tab riêng —
+    # nên `rkeys` phải tính TRƯỚC khi quyết định thoát sớm, không thì một vòng chỉ sửa
+    # trang RULE bị bỏ qua HOÀN TOÀN: không ghi, không báo, và cả dòng tổng kết "áp
+    # được:" lẫn "CHẠY THỬ" cũng không in ra nên không có gì để người dùng thấy là
+    # thiếu. Vòng sau snapshot này thành sheet NỀN, `rn == rb`, khác biệt biến mất
+    # vĩnh viễn — đúng lớp "sheet sửa rồi mà game không đổi" mà `report_unknown()`
+    # được dựng ra để chống.
+    #
+    # Lỗi này CÓ SẴN từ trước chốt chặn ô dẫn xuất (đo: bản .bak cũng nuốt một vòng
+    # chỉ đổi rule_body), nhưng chốt chặn làm nó dễ trúng hơn hẳn — vòng nào mọi ô
+    # đổi đều là ô chat dẫn xuất cũng rút `todo` về rỗng, mà một vòng chỉ có 1-2 ô
+    # đổi là chuyện thường ở kho này.
+    #
+    # Giá: 2,2 s mở thêm hai workbook ở đúng nhánh thoát sớm (đo 30/08: 1,09 + 1,14 s).
+    # Nhánh không thoát sớm vốn đã trả khoản này, nên vòng merge thường không đổi.
+    rn, rb = read_rule_rows(new_f), read_rule_rows(base_f)
+    rkeys = [k for k in rn if k in rb and rn[k] != rb[k]]
     print()
-    if not todo:
+    if not todo and not rkeys:
         return
 
     env_s, d_s, raw_s = load_text(SCENARIO, "ScenarioData")
@@ -463,6 +807,12 @@ def main():
     sid_map = {t["scenarioID"]: ti for ti, t in enumerate(data_s["target"])}
     out_s, changed_s = raw_s, []
     json_edits = []
+    gb_data = None            # nạp lười, chỉ khi có ô chat Genebark
+    gb_edits = []
+    sel_edits = []
+    qa_edits = []
+    qa_list = None
+    cmd_edits = []
 
     for key, bv, nv, _jp in sorted(todo):
         m = SD_ID.match(key)
@@ -473,6 +823,57 @@ def main():
                 print("! %s: không có scenarioID %d" % (key, sid)); continue
             cur = data_s["target"][ti]["text"][idx]
             kind = "ScenarioData"
+        elif CMD_ID.match(key):
+            m = CMD_ID.match(key)
+            sid, cn = int(m.group(1)), int(m.group(2))
+            ti = sid_map.get(sid)
+            if ti is None:
+                print("! %s: không có scenarioID %d" % (key, sid)); continue
+            args = CMD_ARG.findall(data_s["target"][ti]["scriptText"])
+            if cn >= len(args):
+                print("! %s: scenario chỉ có %d lệnh có ngoặc" % (key, len(args))); continue
+            # Trong tham số lệnh, ngắt dòng là `\\n` dạng VĂN BẢN (2 ký tự) chứ không phải
+            # U+000A — cùng quy ước với các tab *Data. Phải mở ra trước, không thì
+            # `carry_breaks` không thấy ngắt nào để đắp lại và câu bị làm phẳng.
+            cur = args[cn].replace(BS_N, chr(10))
+            kind = "cmd"
+        elif SEL_ID.match(key):
+            m = SEL_ID.match(key)
+            sid, sidx, opt = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+            ti = sid_map.get(sid)
+            if ti is None:
+                print("! %s: không có scenarioID %d" % (key, sid)); continue
+            arr = data_s["target"][ti].get("selText") or []
+            if sidx >= len(arr) or not arr[sidx]:
+                print("! %s: selText[%d] trống" % (key, sidx)); continue
+            try:
+                opts = json.loads(arr[sidx])["target"]
+            except Exception as e:
+                print("! %s: selText[%d] không parse được (%s)" % (key, sidx, e)); continue
+            if opt >= len(opts):
+                print("! %s: chỉ có %d lựa chọn" % (key, len(opts))); continue
+            cur = opts[opt]
+            kind = "selText"
+        elif QA_ID.match(key):
+            m = QA_ID.match(key)
+            qg, qq = int(m.group(1)), int(m.group(2))
+            if qa_list is None:
+                _, _, raw_q = load_text(JSONB, "Q&AData")
+                qa_list = json.loads(raw_q.lstrip("﻿"))["list"]
+            if qg >= len(qa_list) or qq >= len(qa_list[qg].get("title") or []):
+                print("! %s: không có nhóm %d câu %d" % (key, qg, qq)); continue
+            cur = qa_list[qg]["title"][qq]
+            kind = "Q&AData"
+        elif GB_ID.match(key):
+            # Chat Genebark địa chỉ bằng CHỈ SỐ tuyệt đối trong data[], không bằng khoá id.
+            gn = int(GB_ID.match(key).group(1))
+            if gb_data is None:
+                _, _, raw_g = load_text(JSONB, "GenebarkChatMainData")
+                gb_data = json.loads(raw_g.lstrip("﻿"))["data"]
+            if gn >= len(gb_data):
+                print("! %s: data[] chỉ có %d mục" % (key, len(gb_data))); continue
+            cur = gb_data[gn].get("content") or ""
+            kind = "GenebarkChatMainData"
         elif RULE_ID.match(key):
             continue                     # xử lý riêng ở nhánh rule_body bên dưới
         else:
@@ -552,6 +953,14 @@ def main():
         print("      mới: %r" % val[:88].replace("\n", "⏎"))
         if kind == "ScenarioData":
             changed_s.append((ti, sid, idx, cur, val))
+        elif kind == "GenebarkChatMainData":
+            gb_edits.append((gn, cur, val))
+        elif kind == "cmd":
+            cmd_edits.append((ti, sid, cn, cur, val))
+        elif kind == "selText":
+            sel_edits.append((ti, sid, sidx, opt, cur, val))
+        elif kind == "Q&AData":
+            qa_edits.append((qg, qq, cur, val))
         else:
             json_edits.append((kind, field, eid, cur, val, root))
 
@@ -591,9 +1000,7 @@ def main():
                 out_s = out_s.replace(oj, nj)
 
     # ---- nhánh rule_body: map theo (id, trang), giữ khoảng trắng đầu dòng của build
-    rule_edits = []
-    rn, rb = read_rule_rows(new_f), read_rule_rows(base_f)
-    rkeys = [k for k in rn if k in rb and rn[k] != rb[k]]
+    rule_edits = []                      # rn / rb / rkeys đã tính trước phần thoát sớm
     if rkeys:
         _, _, raw_r = load_text(JSONB, "TerminalRuleData")
         tr = json.loads(raw_r.lstrip("﻿"))
@@ -643,15 +1050,95 @@ def main():
                 print("      %s" % l[:96])
             rule_edits.append((i, k, cur, val))
 
-    print("\náp được: %d ô ScenarioData, %d ô bundle json, %d trang rule_body"
-          % (len(changed_s), len(json_edits), len(rule_edits)))
+    print("\náp được: %d ô ScenarioData, %d lựa chọn, %d thông báo, "
+          "%d ô chat Genebark, %d tiêu đề Q&A, %d ô bundle json, %d trang rule_body"
+          % (len(changed_s), len(sel_edits), len(cmd_edits), len(gb_edits),
+             len(qa_edits), len(json_edits), len(rule_edits)))
+    # ---- Thông báo Terminal: [terinfo|geninfo|select_monitor] text="…"
+    if cmd_edits:
+        # Lệnh CHẠY từ script chương (game dùng `loadLine` trỏ vào đó); `scriptText` chỉ là
+        # bản sao. Nên phải sửa CẢ HAI, bỏ sót một bên là vòng đối chiếu sau lại thấy lệch
+        # — đúng bài học của `fix_stage_term.py`.
+        # `str.replace` thay MỌI chỗ, nên hai ô cùng scenario mà cùng chuỗi nguồn thì ô
+        # đầu đã sửa luôn phần của ô sau, và ô sau báo "không thấy chuỗi cũ"
+        # (116/cmd/2 với 116/cmd/3, cùng nguồn `…thua cuộc\\nArisawa Zadkiel`). Kết quả
+        # vẫn đúng NHƯNG chỉ vì hai ô tình cờ cùng bản dịch — khác nhau thì ô sau bị ô
+        # đầu ghi đè trong im lặng. Gộp theo (scenario, chuỗi nguồn), chốt bản dịch phải
+        # nhất quán, rồi thay một lần.
+        groups = {}
+        for ti, sid, cn, cur, val in cmd_edits:
+            groups.setdefault((ti, sid, cur), []).append((cn, val))
+        for (ti, sid, cur), rows in groups.items():
+            vals = {v for _cn, v in rows}
+            if len(vals) > 1:
+                raise SystemExit("cmd sID=%d: cùng chuỗi nguồn %r nhưng %d bản dịch "
+                                 "khác nhau (%s)" % (sid, cur[:40], len(vals),
+                                 ", ".join("cmd/%d" % c for c, _ in rows)))
+            cn, val = rows[0]
+            cur = cur.replace(chr(10), BS_N)
+            val = val.replace(chr(10), BS_N)
+            src = data_s["target"][ti]["scriptText"]
+            n_hit = src.count(_Q + cur + _Q)
+            if n_hit < 1:
+                print("! %d/cmd/%d: không thấy chuỗi cũ trong scriptText" % (sid, cn))
+                continue
+            if n_hit != len(rows):
+                print("   (sID=%d: chuỗi nguồn có %d chỗ, sheet khai %d ô — thay cả %d)"
+                      % (sid, n_hit, len(rows), n_hit))
+            enc_old = json.dumps(src, ensure_ascii=False)
+            enc_new = json.dumps(src.replace(_Q + cur + _Q, _Q + val + _Q), ensure_ascii=False)
+            if out_s.count(enc_old) != 1:
+                raise SystemExit("cmd sID=%d: scriptText khớp %d lần" % (sid, out_s.count(enc_old)))
+            out_s = out_s.replace(enc_old, enc_new)
+            data_s["target"][ti]["scriptText"] = src.replace(_Q + cur + _Q, _Q + val + _Q)
+        # …và trong 143 script chương: thay MỌI chỗ có cùng chuỗi nguồn. Chuỗi nguồn giống
+        # nhau thì bản dịch cũng phải giống nhau, nên thay hết là đúng chứ không phải ẩu.
+        chap_hits = 0
+        for o in env_s.objects:
+            if o.type.name != "TextAsset":
+                continue
+            dch = o.read()
+            if dch.m_Name == "ScenarioData":
+                continue
+            raw_c = dch.m_Script
+            raw_c = raw_c if isinstance(raw_c, str) else bytes(raw_c).decode("utf-8", "replace")
+            new_c = raw_c
+            for _ti, _sid, _cn, cur, val in cmd_edits:
+                new_c = new_c.replace(_Q + cur.replace(chr(10), BS_N) + _Q,
+                                      _Q + val.replace(chr(10), BS_N) + _Q)
+            if new_c != raw_c:
+                chap_hits += 1
+                dch.m_Script = new_c
+                dch.save()
+        print("   (%d script chương cũng được sửa theo)" % chap_hits)
+
+    # ---- ScenarioData.selText: JSON LỒNG trong JSON
+    if sel_edits:
+        # Vá theo CẢ chuỗi `selText[idx]` (một JSON `{"target":[…]}`), không theo từng
+        # lựa chọn: hai lựa chọn có thể trùng chữ nhau, thay theo chuỗi sẽ đụng cả hai.
+        for ti, sid, sidx in sorted({(a, b, c) for a, b, c, _o, _u, _v in sel_edits}):
+            cur_raw = data_s["target"][ti]["selText"][sidx]
+            doc = json.loads(cur_raw)
+            for a, b, c, opt, cu, val in sel_edits:
+                if (a, b, c) != (ti, sid, sidx):
+                    continue
+                assert doc["target"][opt] == cu, "selText[%d] lựa chọn %d không như đã đọc" % (sidx, opt)
+                doc["target"][opt] = val
+            new_raw = json.dumps(doc, ensure_ascii=False, separators=(",", ":"))
+            oj = json.dumps(cur_raw, ensure_ascii=False)
+            nj = json.dumps(new_raw, ensure_ascii=False)
+            if out_s.count(oj) != 1:
+                raise SystemExit("selText sID=%d [%d]: chuỗi cũ khớp %d lần"
+                                 % (sid, sidx, out_s.count(oj)))
+            out_s = out_s.replace(oj, nj)
+
     if not APPLY:
         print("\nCHẠY THỬ — thêm --apply để ghi")
         return
 
     tag = os.path.splitext(os.path.basename(new_f))[0].replace(" ", "")
     json_bak = [None]        # bundle json bị hai nhánh ghi, chỉ chụp backup một lần
-    if changed_s:
+    if changed_s or sel_edits or cmd_edits:
         bak = backup_path(os.path.join(ROOT, "_backup", "scenario01.%s" % tag))
         shutil.copy2(SCENARIO, bak); print("backup ->", bak)
         d_s.m_Script = ("﻿" if raw_s.startswith("﻿") else "") + out_s.lstrip("﻿")
@@ -664,6 +1151,11 @@ def main():
         for ti, sid, idx, cur, val in changed_s:
             assert rd["target"][ti]["text"][idx] == val, "đọc lại %s text[%d] sai" % (sid, idx)
             assert rd["target"][ti]["loadLine"] == data_s["target"][ti]["loadLine"]
+        for ti, sid, sidx, opt, cur, val in sel_edits:
+            got = json.loads(rd["target"][ti]["selText"][sidx])["target"][opt]
+            assert got == val, "đọc lại selText sID=%s [%d/%d] sai" % (sid, sidx, opt)
+        if sel_edits:
+            print("  đọc lại: %d lựa chọn khớp" % len(sel_edits))
         print("  đọc lại: %d ô khớp, loadLine nguyên vẹn" % len(changed_s))
 
     if rule_edits:
@@ -690,6 +1182,61 @@ def main():
                 "đọc lại rule_body id%d trang %d sai" % (i, k)
         print("  đọc lại: %d trang rule_body khớp" % len(rule_edits))
 
+    if qa_edits:
+        if json_bak[0] is None:
+            json_bak[0] = backup_path(os.path.join(ROOT, "_backup", "json.%s" % tag))
+            shutil.copy2(JSONB, json_bak[0]); print("backup ->", json_bak[0])
+        env_q, d_q, raw_q = load_text(JSONB, "Q&AData")
+        out_q = raw_q
+        for qg, qq, cur, val in qa_edits:
+            oj, nj = json.dumps(cur, ensure_ascii=False), json.dumps(val, ensure_ascii=False)
+            if out_q.count(oj) != 1:
+                raise SystemExit("Q&A g%d_q%d: chuỗi cũ khớp %d lần" % (qg, qq, out_q.count(oj)))
+            out_q = out_q.replace(oj, nj)
+        d_q.m_Script = ("\ufeff" if raw_q.startswith("\ufeff") else "") + out_q.lstrip("\ufeff")
+        d_q.save()
+        with open(JSONB, "wb") as f:
+            f.write(env_q.file.save(packer="lz4"))
+        print("đã ghi", JSONB, os.path.getsize(JSONB))
+        _, _, back_q = load_text(JSONB, "Q&AData")
+        lq = json.loads(back_q.lstrip("\ufeff"))["list"]
+        for qg, qq, cur, val in qa_edits:
+            assert lq[qg]["title"][qq] == val, "đọc lại Q&A g%d_q%d sai" % (qg, qq)
+        print("  đọc lại: %d tiêu đề Q&A khớp" % len(qa_edits))
+
+    if gb_edits:
+        # Chat Genebark: gán theo CHỈ SỐ rồi dump lại cả asset. Không thay theo chuỗi như
+        # nhánh *Data bên dưới, vì nội dung chat có câu trùng nhau (`OK`, `Ừ`…) nên
+        # `count(cũ) != 1` sẽ nổ oan. Chốt bù: so bản đã parse, chỉ đúng những chỉ số đã
+        # định mới được khác.
+        if json_bak[0] is None:
+            json_bak[0] = backup_path(os.path.join(ROOT, "_backup", "json.%s" % tag))
+            shutil.copy2(JSONB, json_bak[0]); print("backup ->", json_bak[0])
+        env_g, d_g, raw_g = load_text(JSONB, "GenebarkChatMainData")
+        doc_g = json.loads(raw_g.lstrip("\ufeff"))
+        before_g = [(e.get("content") or "") for e in doc_g["data"]]
+        spk_b = [e.get("speaker") for e in doc_g["data"]]
+        for gn, cur, val in gb_edits:
+            assert before_g[gn] == cur, "data[%d] không như đã đọc" % gn
+            doc_g["data"][gn]["content"] = val
+        bom_g = "\ufeff" if raw_g.startswith("\ufeff") else ""
+        d_g.m_Script = bom_g + json.dumps(doc_g, ensure_ascii=False, separators=(",", ":"))
+        d_g.save()
+        with open(JSONB, "wb") as f:
+            f.write(env_g.file.save(packer="lz4"))
+        print("đã ghi", JSONB, os.path.getsize(JSONB))
+        _, _, back_g = load_text(JSONB, "GenebarkChatMainData")
+        doc_b = json.loads(back_g.lstrip("\ufeff"))
+        after_g = [(e.get("content") or "") for e in doc_b["data"]]
+        assert len(after_g) == len(before_g), "số mục data[] đổi"
+        want = {gn: val for gn, _c, val in gb_edits}
+        for n, (a, b) in enumerate(zip(before_g, after_g)):
+            assert b == want.get(n, a), "data[%d] đổi ngoài dự kiến" % n
+        # `speaker` là KHOÁ — không được xê dịch một ly.
+        assert spk_b == [e.get("speaker") for e in doc_b["data"]], "cột speaker bị đổi"
+        print("  đọc lại: %d ô chat khớp, %d ô khác nguyên vẹn, speaker nguyên vẹn"
+              % (len(gb_edits), len(after_g) - len(gb_edits)))
+
     if json_edits:
         if json_bak[0] is None:
             json_bak[0] = backup_path(os.path.join(ROOT, "_backup", "json.%s" % tag))
@@ -697,10 +1244,25 @@ def main():
         for asset in sorted({e[0] for e in json_edits}):
             env_j, d_j, raw_j = load_text(JSONB, asset)
             out_j = raw_j
+            # Hai mục có thể trùng nhau CẢ bản Nhật lẫn bản Việt — `TerminalHomeAlertData`
+            # id17 và id18 là cùng một thông báo phát hai lần. Đòi "khớp đúng 1 lần" thì
+            # phép thay chết đứng ở đó. Gộp theo chuỗi nguồn: bao nhiêu ô sheet khai thì
+            # phải khớp đúng bấy nhiêu chỗ — vẫn chặn được việc thay nhầm sang mục khác.
+            jg = {}
             for a, field, eid, cur, val, root in [e for e in json_edits if e[0] == asset]:
-                oj, nj = (json.dumps(cur, ensure_ascii=False), json.dumps(val, ensure_ascii=False))
-                if out_j.count(oj) != 1:
-                    raise SystemExit("%s id%d: chuỗi cũ khớp %d lần" % (asset, eid, out_j.count(oj)))
+                jg.setdefault(cur, []).append((eid, val))
+            for cur, rows in jg.items():
+                vals = {v for _e, v in rows}
+                if len(vals) > 1:
+                    raise SystemExit("%s: cùng chuỗi nguồn %r nhưng %d bản dịch khác nhau "
+                                     "(id%s)" % (asset, cur[:40], len(vals),
+                                                 ", id".join(str(e) for e, _ in rows)))
+                oj = json.dumps(cur, ensure_ascii=False)
+                nj = json.dumps(rows[0][1], ensure_ascii=False)
+                n_hit = out_j.count(oj)
+                if n_hit != len(rows):
+                    raise SystemExit("%s id%s: chuỗi cũ khớp %d chỗ nhưng sheet khai %d ô"
+                                     % (asset, rows[0][0], n_hit, len(rows)))
                 out_j = out_j.replace(oj, nj)
             d_j.m_Script = ("﻿" if raw_j.startswith("﻿") else "") + out_j.lstrip("﻿")
             d_j.save()

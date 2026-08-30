@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Ngắt dòng cho asset chat Genebark — **theo dấu câu**, và không dòng nào quá lề.
+"""Ngắt dòng cho asset chat Genebark — **ngắt cứng CHỈ ở dấu câu**, phần thừa để engine.
 
 Widget: `ui_jp` › `genebark.prefab` › `GenebarkChatContentItem` (1388×166) ›
 `Message_TMP` rect **1210×80**, cỡ **32**, `characterSpacing` **5**,
@@ -22,7 +22,7 @@ phẩy (`, ; :`) chỉ dùng khi câu còn quá lề.** Gom tham lam tới sát 
 caption sẽ gộp mất những câu mà bản Nhật tách ra — đo được 346/1194 ô bị gộp. Xem bảng so
 ba luật trong docstring của `split_punct()`.
 
-## Lề phải phải bằng lề trái — và vì sao KHÔNG được nhờ TMP tự ngắt
+## Lề phải bằng lề trái — và giới hạn của việc nhờ TMP
 
 Yêu cầu 28/08/2026: *"lề phải nên giống lề trái, từ viền tới icon ảnh"*. Đo trên ảnh
 `_2026-08-28_13-17-14.png`, quy về canvas bằng tỉ lệ vạch ngăn (1283 px ảnh / 1388 prefab
@@ -44,9 +44,16 @@ hàng khi thêm ` đâu` (1342 px), nên `W ∈ [1269, 1342)`. Rộng hơn lề 
 nhờ TMP là chữ chạy quá mép panel — trên ảnh, dòng đó chạy tới x=1800 trong khi vạch ngăn
 dừng ở 1774.
 
-Nên bây giờ **không dòng nào được nhờ TMP**: sau dấu kết câu và dấu phẩy, còn quá lề thì
-`split_space_balanced()` ngắt ở khoảng trắng. Kết quả: dòng rộng nhất đúng 1205 px ⇒ mép
-phải 1382 ⇒ **lề phải 45 = lề trái 45**.
+Bản 28/08 vì thế thêm tầng ba: ngắt ở **khoảng trắng** cho những mệnh đề không có dấu
+câu nào. **Đã gỡ 30/08** theo yêu cầu người dùng — *"ngắt cứng chỉ còn ở dấu câu, phần
+thừa để engine"*. Ngắt ở khoảng trắng là ngắt **giữa mệnh đề**, tức đúng cái lỗi mà cả
+đợt này sinh ra để sửa; giữ nó là tự mâu thuẫn.
+
+Đánh đổi đã biết và đã chấp nhận: **79 dòng** (64 ở asset app, 15 ở ScenarioData) không
+còn dấu câu nào để cắt, nên TMP ngắt chúng ở bề rộng của nó và **chữ chạy quá lề phải
+12–136 px**. Muốn engine ngắt ĐÚNG lề thì phải **thu `Message_TMP` lại**, không phải ngắt
+cứng thêm — nhưng đo được bề rộng wrap thực tế là [1269, 1342) trong khi prefab ghi 1210,
+tức con số prefab đang bị `ChatItemUI` (script gắn trên hàng chat) ghi đè. Chưa thử thu.
 
 ## Số đo, và nó được hiệu chỉnh thế nào
 
@@ -70,15 +77,15 @@ nhà phát triển canh rất thoáng. Bản Việt trước khi sửa: **7 ô c
 - Chỉ đổi **space thành `\\n`**: assert bản làm phẳng trước và sau giống hệt nhau.
 - Không cắt bên trong `[...]` — tag được che trước khi tách rồi trả lại.
 - `[主人公]` đo theo **tên engine thật sự vẽ** (`Kanna`), không đo 5 ký tự của tag.
-- Sau khi ghi, đòi **mọi** dòng ≤ 1205 — không còn ngoại lệ nào. Bản đầu tha dòng
-  "không cắt được theo dấu câu"; nay không tha, vì TMP ngắt rộng hơn lề.
+- `--check` chỉ FAIL khi dòng quá lề mà **còn cắt được theo dấu câu**. Mệnh đề liền thì
+  liệt kê ra kèm mức quá lề, không tính là lỗi — đó là chủ ý.
 
 **Tự dò lại từ câu chữ hiện tại**, nên chạy lại được sau mỗi vòng merge (sheet làm phẳng
 sạch `\\n`). Không ghim theo chỉ số ô.
 
     python tools\\fix_chat_wrap.py            # chạy thử
     python tools\\fix_chat_wrap.py --apply
-    python tools\\fix_chat_wrap.py --check    # gate, còn dòng nào quá lề -> exit 1
+    python tools\\fix_chat_wrap.py --check    # gate, còn dòng CẮT ĐƯỢC mà quá lề -> exit 1
 """
 import collections
 import io
@@ -101,6 +108,8 @@ FONT_ASSET = "FOT-DNPShueiMGoStd-B SDF"
 CACHE = os.path.join(HERE, "_chat_advances.json")
 STOCK = r"D:\Downloads\UNLOGICAL_v2\Data\StreamingAssets\json\json"
 BACKUP = os.path.join(ROOT, "_backup", "json.chatwrap")
+SCENARIO = os.path.join(ROOT, "romfs", "Data", "StreamingAssets", "scenario", "scenario01")
+SC_BACKUP = os.path.join(ROOT, "_backup", "scenario01.chatwrap")
 
 APPLY = "--apply" in sys.argv
 CHECK = "--check" in sys.argv
@@ -108,10 +117,18 @@ CHECK = "--check" in sys.argv
 POINT_SIZE = 58.0
 FONT_SIZE = 32.0
 CHAR_SPACING = 5.0
-# Lề: đo trên ảnh chụp thật `_2026-08-28_13-17-14.png`, quy về canvas bằng tỉ lệ vạch
-# ngăn — mép trái panel 39, mép trái icon 84 (=> lề trái 45), mép trái chữ 177, mép phải
-# panel 1427. Lề phải bằng lề trái ⇒ chữ dừng ở 1427−45=1382 ⇒ bề rộng 1382−177 = 1205.
-LIMIT = 1205.0
+# Lề, chốt 30/08/2026. Yêu cầu: *"vạch phải giống bản Nhật gốc, không chấp nhận bất kì
+# thay đổi vị trí và độ dài vạch, chỉ tác động phần text box thôi"*.
+#
+# Nên KHÔNG thu `sizeDelta` (vạch `UnderLine` là con của rect, thu là vạch dịch — đo được
+# 318..1600 ở ô 1210 so với 268..1445 ở ô 900). Thay vào đó thu `m_margin.PHẢI = 45` trong
+# `ui_jp`: nó thu vùng vẽ chữ bên trong rect, rect không đổi nên vạch đứng yên tuyệt đối.
+# Xem tools\set_chat_box_width.py.
+#
+#   vùng chữ = 1210 − 45 = 1165 canvas
+#   model đo cao hơn TMP ~5% (kẹp A/B: W_model/box ∈ [1,049; 1,109))
+#   => LIMIT = 1165 × 1,049 ≈ 1222, làm tròn xuống cho chắc
+LIMIT = 1220.0
 
 # Tên engine thay vào `[主人公]`. **Không phải `環無`** như `adv_layout` dùng: ảnh chụp máy
 # thật cho thấy bản Việt hiện `Kanna`, và hai cái rộng khác nhau — `環無` 69,5 px so với
@@ -169,42 +186,6 @@ def flat(s):
     return re.sub(r"[ \t\u3000]*\n[ \t\u3000]*", " ", s or "").strip()
 
 
-def split_space_balanced(seg, W):
-    """Chốt chặn cuối: mệnh đề không có dấu câu nào mà vẫn quá lề thì ngắt ở **khoảng
-    trắng**, chọn chỗ **cân nhất** mà cả hai dòng đều trong lề.
-
-    Cân, không tham lam — khác luật dấu câu ở trên. Gom tham lam tới sát lề sinh ra đuôi
-    cụt: `data[89]` ra dòng hai chỉ **60 px** (`đấy`), `data[40]` ra `buổi đâu` 148 px.
-    Cân thì ra 643/586 và 678/654. Luật "ngắt theo dấu câu, không cân độ dài" áp cho việc
-    *chọn giữa dấu câu và cân*; ở đây không còn dấu câu nào để chọn, nên cân là đúng.
-
-    Mệnh đề rộng nhất trong asset là 1841 px < 2×1205, nên mọi ca đều chỉ cần hai dòng.
-    """
-    ws = seg.split(" ")
-    best = None
-    for i in range(1, len(ws)):
-        a, b = " ".join(ws[:i]), " ".join(ws[i:])
-        wa, wb = W(a), W(b)
-        if wa <= LIMIT and wb <= LIMIT:
-            d = abs(wa - wb)
-            if best is None or d < best[0]:
-                best = (d, a, b)
-    if best:
-        return [best[1], best[2]]
-    # Không chỗ nào chia đôi được (một từ dài hơn cả lề) -> tham lam, và báo ra.
-    out, cur = [], ""
-    for w in ws:
-        cand = (cur + " " + w) if cur else w
-        if cur and W(cand) > LIMIT:
-            out.append(cur)
-            cur = w
-        else:
-            cur = cand
-    if cur:
-        out.append(cur)
-    return out
-
-
 def split_punct(s):
     """**Dấu kết câu trước, dấu phẩy chỉ khi cần.** Mệnh đề quá dài thì để nguyên.
 
@@ -254,16 +235,13 @@ def split_punct(s):
                 cur = cand
         if cur:
             out.append(cur)
-    # Chốt chặn cuối: còn dòng nào quá lề thì ngắt ở khoảng trắng. Không nhờ TMP nữa —
-    # bề rộng wrap thực tế của TMP là [1269, 1342) canvas px, RỘNG HƠN lề 1205, nên để
-    # nó ngắt là chữ chạy quá lề phải. Xem docstring đầu file.
-    fin = []
-    for line in out:
-        if width(back(line)) <= LIMIT:
-            fin.append(line)
-        else:
-            fin.extend(split_space_balanced(line, lambda x: width(back(x))))
-    return [back(x) for x in fin]
+    # KHÔNG có tầng ba. Mệnh đề không còn dấu câu nào để cắt thì để nguyên — engine lo.
+    # Chốt 30/08/2026: ngắt cứng chỉ được đặt ở dấu câu; ngắt ở khoảng trắng là ngắt giữa
+    # mệnh đề, tức đúng cái lỗi mà cả đợt này sinh ra để sửa. Đánh đổi đã biết: 79 dòng
+    # như vậy sẽ do TMP ngắt ở bề rộng của nó ([1269, 1342) canvas px), tức quá lề 1205
+    # từ 12 đến 136 px. Muốn engine ngắt ĐÚNG lề thì phải thu `Message_TMP` lại, không
+    # phải ngắt cứng thêm — xem docstring đầu file.
+    return [back(x) for x in out]
 
 
 def unbreakable(line):
@@ -284,6 +262,133 @@ def load_asset(path, name="GenebarkChatMainData"):
                     raw = bytes(raw).decode("utf-8")
                 return env, d, raw
     raise SystemExit("không thấy %s trong %s" % (name, path))
+
+
+def do_scenario():
+    """Tin nh\u1eafn chat n\u1eb1m trong `ScenarioData` \u2014 ch\u1ed7 m\u00e0n CHAT th\u1eadt s\u1ef1 \u0111\u1ecdc.
+
+    **\u0110\u00e2y m\u1edbi l\u00e0 asset m\u00e0n h\u00ecnh v\u1ebd.** `GenebarkChatMainData` kh\u00f4ng ph\u1ea3i: ba d\u00f2ng \u0111\u1ea7u c\u1ee7a
+    \u1ea3nh `_2026-08-30_01-36-35.png` (`May qu\u00e1. T\u1ea7m m\u1ea5y gi\u1edd th\u00ec b\u00e0n \u0111\u01b0\u1ee3c nh\u1ec9?`, `H\u1eedm. \u0110\u1ec3
+    t\u00f4i h\u1ecdc xong\u2026`, `Ok. C\u1ed1 l\u00ean nha`) **kh\u00f4ng c\u00f3 trong** asset \u0111\u00f3, m\u00e0 n\u1eb1m li\u00ean ti\u1ebfp \u1edf
+    `ScenarioData` `68/txt/0123\u20130129`, \u0111\u00fang th\u1ee9 t\u1ef1 tr\u00ean m\u00e0n h\u00ecnh.
+
+    Nh\u1eadn di\u1ec7n \u00f4 chat b\u1eb1ng nameplate d\u1ea1ng t\u00e0i kho\u1ea3n (`talkName` c\u00f3 `@`) \u2014 289 \u00f4.
+
+    Ch\u00fang v\u1ebd \u1edf **widget chat**, kh\u00f4ng ph\u1ea3i \u00f4 tho\u1ea1i ADV. \u0110o 6 d\u00f2ng bi\u1ebft tr\u01b0\u1edbc ch\u1eef tr\u00ean
+    \u1ea3nh: model chat (ShueiMGo-B, c\u1ee1 32, spacing 5) kh\u1edbp t\u1ec9 l\u1ec7 **1,002**; model ADV
+    (NewRodin, c\u1ee1 42) l\u1ec7ch **1,595\u00d7**. N\u00ean `fix_adv_wrap.py` \u0111ang t\u00ednh 289 \u00f4 n\u00e0y b\u1eb1ng
+    sai font v\u00e0 sai c\u1ee1 \u2014 xem ghi ch\u00fa trong tools/README.md.
+    """
+    env, d, raw = load_asset(SCENARIO, "ScenarioData")
+    data = json.loads(raw.lstrip("\ufeff"))
+
+    todo, stat = [], collections.Counter()
+    for ti, e in enumerate(data["target"]):
+        tn = e.get("talkName") or []
+        tx = e.get("text") or []
+        for i, nm in enumerate(tn):
+            if not nm or "@" not in nm or i >= len(tx):
+                continue
+            old = tx[i] or ""
+            if not old.strip():
+                continue
+            stat["\u00f4 chat"] += 1
+            new = "\n".join(split_punct(flat(old)))
+            assert flat(new) == flat(old), "%s/txt/%d: ch\u1eef b\u1ecb \u0111\u1ed5i" % (e["scenarioID"], i)
+            if new == old:
+                stat["  \u0111\u00e3 \u0111\u00fang"] += 1
+                continue
+            todo.append((ti, e["scenarioID"], i, old, new))
+            stat["  s\u1ebd \u0111\u1ed5i"] += 1
+    for key in sorted(stat):
+        print("   %-34s %d" % (key, stat[key]))
+
+    if CHECK:
+        bad = [(e["scenarioID"], i, width(l), l)
+               for e in data["target"]
+               for i, nm in enumerate(e.get("talkName") or [])
+               if nm and "@" in nm and i < len(e.get("text") or [])
+               for l in ((e["text"][i] or "").split("\n"))
+               if l and width(l) > LIMIT]
+        still = [x for x in bad if not unbreakable(x[3])]
+        left = [x for x in bad if unbreakable(x[3])]
+        print("   d\u00f2ng chat ScenarioData qu\u00e1 l\u1ec1 %.0f px: %d \u2014 %d c\u00f2n c\u1eaft \u0111\u01b0\u1ee3c"
+              % (LIMIT, len(bad), len(still)))
+        if left:
+            ws = [w for _, _, w, _ in left]
+            print("      %d d\u00f2ng \u0111\u1ec3 engine ng\u1eaft, qu\u00e1 l\u1ec1 %.0f..%.0f px"
+                  % (len(left), min(ws) - LIMIT, max(ws) - LIMIT))
+        for sid, i, w, ln in sorted(still, key=lambda x: -x[2])[:6]:
+            print("      FAIL %s/txt/%04d  %.0f px  %r" % (sid, i, w, ln[:60]))
+        return len(still)
+
+    if not APPLY:
+        for ti, sid, i, old, new in todo[:4]:
+            print("\n-> %s/txt/%04d" % (sid, i))
+            print("   c\u0169 : %r" % old.replace("\n", "\u23ce")[:96])
+            print("   m\u1edbi: %r" % new.replace("\n", "\u23ce")[:96])
+        return len(todo)
+    if not todo:
+        return 0
+
+    out = raw
+    enc_a = lambda x: json.dumps(x, ensure_ascii=False, separators=(",", ":"))  # noqa: E731
+    enc_s = lambda x: json.dumps(x, ensure_ascii=False)                        # noqa: E731
+    # V\u00e1 theo C\u1ea2 M\u1ea2NG `text[]` nh\u01b0 `fix_chat_use_genebark.py`: c\u00f3 tin nh\u1eafn tr\u00f9ng nhau
+    # t\u1eebng ch\u1eef, thay theo chu\u1ed7i s\u1ebd \u0111\u1ee5ng c\u1ea3 hai.
+    for ti in sorted({t[0] for t in todo}):
+        arr_old = list(data["target"][ti]["text"])
+        arr_new = list(arr_old)
+        for t2, sid, i, old, new in [t for t in todo if t[0] == ti]:
+            assert arr_new[i] == old
+            arr_new[i] = new
+        oj, nj = enc_a(arr_old), enc_a(arr_new)
+        if out.count(oj) != 1:
+            raise SystemExit("m\u1ea3ng text[] target[%d] kh\u1edbp %d l\u1ea7n" % (ti, out.count(oj)))
+        out = out.replace(oj, nj)
+    mirrored = failed = 0
+    for ti in sorted({t[0] for t in todo}):
+        script = cur = data["target"][ti]["scriptText"]
+        for t2, sid, i, old, new in [t for t in todo if t[0] == ti]:
+            lines, ol = cur.split("\n"), old.split("\n")
+            hits = [k for k in range(len(lines) - len(ol) + 1) if lines[k:k + len(ol)] == ol]
+            if len(hits) == 1:
+                lines[hits[0]:hits[0] + len(ol)] = new.split("\n")
+                cur = "\n".join(lines)
+                mirrored += 1
+            else:
+                failed += 1
+        if cur != script:
+            oj, nj = enc_s(script), enc_s(cur)
+            if out.count(oj) != 1:
+                raise SystemExit("scriptText target[%d] kh\u1edbp %d l\u1ea7n" % (ti, out.count(oj)))
+            out = out.replace(oj, nj)
+    print("   scriptText: mirror %d, b\u1ecf %d" % (mirrored, failed))
+
+    bak = SC_BACKUP
+    n = 2
+    while os.path.exists(bak):
+        bak = "%s-%d" % (SC_BACKUP, n)
+        n += 1
+    shutil.copy2(SCENARIO, bak)
+    print("   backup ->", bak)
+    d.m_Script = ("\ufeff" if raw.startswith("\ufeff") else "") + out.lstrip("\ufeff")
+    d.save()
+    with open(SCENARIO, "wb") as f:
+        f.write(env.file.save(packer="lz4"))
+    print("   \u0111\u00e3 ghi", SCENARIO, os.path.getsize(SCENARIO))
+
+    _, _, back = load_asset(SCENARIO, "ScenarioData")
+    db = json.loads(back.lstrip("\ufeff"))
+    for ti, sid, i, old, new in todo:
+        assert db["target"][ti]["text"][i] == new, "\u0111\u1ecdc l\u1ea1i %s/txt/%d sai" % (sid, i)
+    for a, b in zip(data["target"], db["target"]):
+        for fld in ("text", "talkName", "selText", "scriptText_Line", "loadLine"):
+            x, y = a.get(fld), b.get(fld)
+            if isinstance(x, list) and len(x) != len(y):
+                raise SystemExit("sID %s %s: \u0111\u1ed9 d\u00e0i m\u1ea3ng \u0111\u1ed5i" % (a["scenarioID"], fld))
+    print("   \u0111\u1ecdc l\u1ea1i: %d \u00f4 kh\u1edbp, \u0111\u1ed9 d\u00e0i m\u1ecdi m\u1ea3ng kh\u00f4ng \u0111\u1ed5i" % len(todo))
+    return len(todo)
 
 
 def main():
@@ -328,7 +433,7 @@ def main():
     for key in sorted(stat):
         print("   %-42s %d" % (key, stat[key]))
     if left_over:
-        print("\n%d dòng vẫn vượt 1210 vì là một mệnh đề liền — TMP tự ngắt:" % len(left_over))
+        print("\n%d dòng để engine ngắt (mệnh đề liền, không còn dấu câu):" % len(left_over))
         for k, w, ln in sorted(left_over, key=lambda x: -x[1])[:8]:
             print("   data[%-5d] %.0f px  %r" % (k, w, ln[:72]))
 
@@ -337,19 +442,24 @@ def main():
         # dòng "không cắt được theo dấu câu" vì tính để TMP tự ngắt — nhưng bề rộng wrap
         # thực tế của TMP là [1269, 1342) canvas px, RỘNG HƠN lề 1205, nên tha là để chữ
         # chạy quá lề phải. Xem docstring đầu file.
-        bad = [(r_i, width(l), l)
-               for r_i, r in enumerate(data)
-               for l in (r.get("content") or "").split("\n")
-               if width(l) > LIMIT]
-        print("\ndòng vượt lề %.0f px: %d" % (LIMIT, len(bad)))
+        rows = [(r_i, width(l), l)
+                for r_i, r in enumerate(data)
+                for l in (r.get("content") or "").split("\n")
+                if l and width(l) > LIMIT]
+        bad = [x for x in rows if not unbreakable(x[2])]
+        left = [x for x in rows if unbreakable(x[2])]
+        print("\ndòng quá lề %.0f px: %d — trong đó %d còn cắt được theo dấu câu"
+              % (LIMIT, len(rows), len(bad)))
+        if left:
+            ws = [w for _, w, _ in left]
+            print("   %d dòng để engine ngắt (mệnh đề liền), quá lề %.0f..%.0f px"
+                  % (len(left), min(ws) - LIMIT, max(ws) - LIMIT))
         for k, w, ln in sorted(bad, key=lambda x: -x[1])[:8]:
-            one = " " not in ln.strip()
-            print("   FAIL data[%-5d] %.0f px  %s%r"
-                  % (k, w, "(một từ, không ngắt được) " if one else "", ln[:64]))
+            print("   FAIL data[%-5d] %.0f px  %r" % (k, w, ln[:64]))
         if bad:
             print("\nchạy `python tools\\fix_chat_wrap.py --apply`")
             raise SystemExit(1)
-        print("PASS không dòng nào quá lề")
+        print("PASS không dòng nào còn cắt được mà vẫn quá lề")
         return
 
     if not APPLY:
@@ -401,4 +511,24 @@ def main():
     print("đọc lại: %d ô khớp, tổng ngắt dòng %d" % (len(todo), nl))
 
 
-main()
+def run():
+    # Hai asset, cùng một luật và cùng số đo widget:
+    #   GenebarkChatMainData  -> app CHAT mở từ menu Genebark
+    #   ScenarioData.text[]   -> cảnh ADV vẽ giao diện chat trong lúc kể chuyện
+    # Chúng KHÔNG phải bản sao của nhau; ảnh 30/08 cho thấy app đã ngắt đúng trong khi
+    # cảnh ADV vẫn phẳng, vì bản đầu của tool chỉ ghi asset thứ nhất.
+    print("=== 1/2  GenebarkChatMainData (app CHAT) ===")
+    rc = main()
+    print("\n=== 2/2  ScenarioData (cảnh ADV vẽ giao diện chat) ===")
+    n = do_scenario()
+    if CHECK:
+        if n:
+            print("\nchạy `python tools\\fix_chat_wrap.py --apply`")
+            raise SystemExit(1)
+        print("PASS ScenarioData: không dòng chat nào quá lề")
+    elif not APPLY:
+        print("\n%d ô ScenarioData sẽ đổi. CHẠY THỬ — thêm --apply để ghi" % n)
+    return rc
+
+
+run()

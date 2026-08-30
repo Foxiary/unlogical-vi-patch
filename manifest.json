@@ -2,7 +2,7 @@
   {
     "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
     "bytes": 9259608,
-    "md5": "252d2da8501dd985a0598053892351b0",
+    "md5": "f192947c3b09ae19867b42e2cf96579a",
     "where": "repo"
   },
   {
@@ -49,8 +49,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/json/json",
-    "bytes": 113944,
-    "md5": "3827d2af46287510a3c7cb4a1094ad8d",
+    "bytes": 113797,
+    "md5": "d8586af7e0c9f83de5869dffab4f8491",
     "where": "repo"
   },
   {
@@ -61,8 +61,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8739145,
-    "md5": "cef3898316249e49070188bf87df3d4e",
+    "bytes": 8733489,
+    "md5": "8c73b32dc783a8b945a6dd8e094479d3",
     "where": "repo"
   },
   {
@@ -73,8 +73,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/ui/ui_jp",
-    "bytes": 51926999,
-    "md5": "edb03e44013f9480c3a84e38585f7c55",
+    "bytes": 51927032,
+    "md5": "8b4c5fa39c4885434051c66cc27bf245",
     "where": "repo"
   },
   {
@@ -139,8 +139,8 @@
   },
   {
     "path": "romfs/Data/sharedassets16.assets",
-    "bytes": 2142712,
-    "md5": "327a37dbd47682a22e89d3aa0e83dac1",
+    "bytes": 2122008,
+    "md5": "c9b0cd9aef3074031f6d2322757fd7af",
     "where": "repo"
   },
   {

@@ -576,6 +576,176 @@ viết regex chỉ ăn một số.
 merge vẫn chạy y như cũ cho các ô đọc được (đã đối chứng `(42)` vs `(41)`: vẫn đúng 4
 hàng `TerminalControlSkillData`, 0 ô áp).
 
+#### Đã mở đường ghi cho `cmd` — và cách pin được chỉ số (28/08/2026)
+
+`{sID}/cmd/{n}` = lệnh thứ `n` trong `scriptText` của scenario đó, trong ba lệnh
+`terinfo` / `geninfo` / `select_monitor`. Chỗ hóc là **đếm từ đâu**: đếm thô thì chỉ khớp
+109/116, lệch một vị trí và chỉ ở `sID 71`.
+
+> **Chốt: bên xuất sheet CHỈ ăn dạng có ngoặc kép `text="…"`.** Bản gốc có đúng một lệnh
+> viết **không ngoặc** — `71` @12609, `[terinfo text=敗北者が確定しました\n小住祥太…]` — và
+> sheet không có hàng cho nó. Đếm cả nó vào thì lệch chỉ số từ đó trở đi. Chỉ đếm dạng có
+> ngoặc: **116/116**, và tổng số lệnh có ngoặc trong bản gốc cũng đúng bằng 116 hàng `cmd`
+> của sheet.
+
+> Dấu vết dẫn tới chốt này: hai lệnh ở `71` @8716 và @12609 mang **cùng một chuỗi**, một
+> cái có ngoặc một cái không. Ba giả thuyết sai trước đó — "gộp trùng liền kề" (hỏng `68`,
+> nó có `New\u3000Chat` hai lần thật), "gộp trùng theo nội dung" (cũng hỏng `68`), và
+> "liệt kê từ script chương" (không khớp: một target là **một khối nhãn**, không phải cả
+> file).
+
+**Ghi vào CẢ HAI nơi.** Lệnh chạy từ script chương (game dùng `loadLine` trỏ vào đó),
+`scriptText` chỉ là bản sao. Nhánh ghi sửa `scriptText` theo chỉ số, rồi thay **mọi** chỗ
+có cùng chuỗi nguồn trong 143 script chương — chuỗi nguồn giống nhau thì bản dịch phải
+giống nhau. Bỏ sót một bên là vòng sau lại thấy lệch, đúng bài học của `fix_stage_term.py`.
+
+Vòng `(56)→(57)` là vòng đầu có `cmd`: 9 ô đổi, 2 ô build đã đúng sẵn, **7 ô rơi vào
+`CẢ HAI BÊN ĐỔI`** — upstream đang viết lại nhóm "người thua cuộc" (`Đã xác nhận` →
+`Đã xác định`, khớp build) nhưng đồng thời **gộp danh sách tên bằng `: ` + `, `** trong khi
+build giữ `\n` + `　` như bản Nhật. Đó là tranh chấp **bố cục**, mà luật của dự án là build
+sở hữu bố cục — nên đừng ép qua bằng `--take-sheet` trước khi **đo bề rộng khung terinfo**.
+Chưa ai đo widget đó.
+
+Sau khi mở nốt: **ô đọc được 40 262, hàng câm còn 1194** — đúng bằng `spk`, dạng duy nhất
+cố ý đóng.
+
+#### Đã mở đường ghi cho `sel` và `qa_title` (28/08/2026)
+
+```
+SEL_ID  {sID}/sel/{idx}/{opt}      -> ScenarioData.selText[idx], parse JSON rồi target[opt]
+QA_ID   Q&AData/qa_title/gN_qN     -> Q&AData.list[g].title[q]
+```
+
+Bản đồ chứng minh trước khi viết code, bằng cách đối chiếu **cột bản Nhật** của sheet với
+đúng vị trí trong bản gốc 1.0.2: `sel` **449/449**, `qa_title` **50/50**.
+
+> **`selText` là JSON LỒNG trong JSON.** Ô chứa nguyên chuỗi `{"target":[…]}`, nên phải
+> parse rồi ghi lại cả chuỗi, không thay chuỗi thô được. Và phải vá theo **cả ô**
+> `selText[idx]`, không theo từng lựa chọn — hai lựa chọn trong cùng một cụm có thể trùng
+> chữ nhau, thay theo chuỗi sẽ đụng cả hai. Cùng lớp lỗi với `text[]` của `70/txt/1216`.
+
+> **Khối ghi `selText` phải nằm TRƯỚC đoạn ghi `scenario01`.** Đặt sau thì `out_s` sửa
+> xong không ai ghi xuống — đã dính đúng lỗi này khi cài, phát hiện vì `sel` không bao
+> giờ xuất hiện trong phần đọc lại. Điều kiện ghi cũng phải là `changed_s or sel_edits`.
+
+Kết quả sau khi mở cả ba dạng:
+
+```
+ô đọc được   38 453  ->  40 146
+hàng câm      3 003  ->   1 310   (còn spk 1194 cố ý đóng, và cmd 116 đang kẹt)
+```
+
+Vòng `(54)→(56)` là vòng đầu chạy thật với đường mới: 42 ô `ScenarioData`, **1 lựa chọn**
+(`72/sel/0460/0001` — `Tôn trọng ý chí của Player` → `…quyết định của Player`), 9 ô chat
+Genebark, 0 tiêu đề Q&A. Snapshot `(57)` giống hệt `(56)` (cùng 41 611 id / 42 719 hàng /
+143 tab, 0 ô đổi) — chênh dung lượng chỉ là nhiễu khi xuất.
+
+#### Đã mở đường ghi cho `GenebarkChatMainData/chat` (28/08/2026)
+
+`GB_ID` nhận id dạng `GenebarkChatMainData/chat/g{gid}c{cid}_{N}`, `{N}` là **chỉ số
+tuyệt đối** trong `data[]` (`gid` có thể nhiều nhóm nối bằng `;`). Đọc được: **38 453 →
+39 647 ô**; hàng câm **3003 → 1809**.
+
+> **`spk` KHÔNG mở, cố ý.** Nó là khoá (`player` / `藍`), sheet để VN == JP — dịch là
+> hỏng chat. Nhánh ghi còn chốt lại lần nữa: so mảng `speaker` trước/sau, lệch một ly là
+> dừng.
+
+Nhánh ghi **gán theo chỉ số rồi dump lại cả asset**, không thay theo chuỗi như nhánh
+`*Data` — nội dung chat có câu trùng nhau (`OK`, `Ừ`…) nên `count(cũ) != 1` sẽ nổ oan.
+Bù lại bằng chốt mạnh hơn: so bản **đã parse** trước/sau, chỉ đúng những chỉ số đã định
+mới được khác, và số mục `data[]` không đổi.
+
+Đã thử khứ hồi có kiểm soát: đặt `data[28]` lùi về bản `(52)`, chạy merge `(52)→(53)`,
+ghi ra đúng bản `(53)`, đối chiếu lại **0 mục khác** so với trạng thái trước khi thử và
+`speaker` nguyên vẹn (backup `_backup\json.gbwritetest`).
+
+> **Hệ quả phải nói rõ: 184 ô `sd_*` có cặp 1:1 trở thành ô CHẾT.** Sửa ở đó cũng bị
+> `fix_chat_use_genebark` ghi đè. Nơi duy nhất để sửa chat của 184 câu ấy là tab
+> Genebark. 105 ô chat còn lại (không có cặp) thì vẫn do `sd_*` quyết.
+>
+> **Đã dạy `apply_sheet_cells` bỏ qua 184 ô đó (30/08/2026).** Nó tự tính lại bảng cặp
+> mỗi lần chạy bằng chính `fix_chat_use_genebark.pairs()` — không nhúng danh sách cứng —
+> rồi in ra ô Genebark sở hữu:
+>
+> ```
+> 2 ô sd_* là BẢN CHIẾU của chat Genebark — KHÔNG ghi:
+>    -  104/txt/0128   ô dẫn xuất — tab Genebark (g52c藍_630) sở hữu, bỏ qua
+> ```
+>
+> Ô nào có bản dịch **khác** ô Genebark tương ứng thì báo mức `!!` "SỬA NHẦM Ô" — đó là
+> dấu hiệu người dịch gõ vào ô dẫn xuất, chữ ấy sẽ không bao giờ lên màn hình.
+> `--take-sheet` **không** gỡ được chốt này: ô dẫn xuất thì ghi kiểu gì cũng bị
+> `fix_chat_use_genebark` lật lại, honour nó là nói dối người dùng. Bảng cặp nạp lười
+> nên vòng merge nào không đụng ô `sd_*` thì không tốn thêm giây nào (đo A/B trên
+> (62)/(61): 8,54 s so 8,30 s, lẫn trong nhiễu). Vòng CÓ kích hoạt chốt chặn
+> ((60)/(59)) tốn thêm 0,25 s; bảng cặp tính hết 0,21 s và chỉ tính một lần.
+>
+> **Nạp `pairs()` mà không kích hoạt bẫy stdout.** Không `import` thẳng được:
+> `fix_chat_use_genebark.py` gán `sys.stdout = io.TextIOWrapper(sys.stdout.buffer, …)`
+> ở đầu file **y hệt** `apply_sheet_cells.py`, nên hai wrapper cùng bọc MỘT buffer;
+> wrapper nào bị gom rác trước thì `__del__` đóng buffer chung và mọi `print` sau đó
+> ném `ValueError: I/O operation on closed file`. Tệ hơn phần nhìn thấy: chữ còn nằm
+> trong đệm của wrapper kia **mất hẳn không dấu vết** — triệu chứng thật là một dòng
+> biến mất rồi mới tới exception. Dính đúng lỗi này 4 lần khi dựng và khi soi lại.
+> Và nó còn gọi `main()` TRẦN ở cuối file (cả hai tool đều không có
+> `if __name__ == "__main__"`), mà `main()` đó đọc `APPLY = "--apply" in sys.argv`
+> — tức argv của tiến trình NÀY: `apply_sheet_cells.py --apply` sẽ khiến nó ghi thẳng
+> vào `romfs` trước khi merge kịp bắt đầu. Đã đo: nạp với argv có `--apply` cho
+> `mod.APPLY is True`. Nên `load_tool_module()` đọc mã, **cắt AST cấp cao nhất** đúng
+> hai loại lệnh đó (phép gán vào `sys.stdout`, lệnh gọi trần tên `main`) rồi exec
+> phần còn lại. Lọc hẹp có chủ ý — cắt mọi `ast.Expr` là `Call` sẽ nuốt luôn
+> `sys.path.insert(0, HERE)`. Có lưới an toàn: nếu bộ lọc hụt thì `detach()` wrapper
+> mồ côi rồi trả `sys.stdout` về, chứ không để nó gom rác và giết print về sau.
+>
+> **Số cặp là bất biến, và được chốt (`PAIRS_EXPECTED = 184`).** Cây gốc THIẾU thì
+> `load_text` đã dừng ầm ĩ; nhưng cây gốc **CÓ MẶT mà nội dung sai** thì `pairs()` chỉ
+> ghép được ít cặp hơn và chốt chặn **tự tắt bớt trong im lặng**. Đo thật: trỏ `STOCK`
+> sang cây đã dịch `romfs` cho **93** cặp chứ không phải 0 — 91 ô dẫn xuất lọt lưới,
+> merge ghi chúng, rồi `fix_chat_use_genebark --apply` lật lại: bẫy vừa vá mở lại,
+> lần này khó thấy hơn vì người dùng tin là đã có chốt. Nay lệch một cặp cũng dừng,
+> và số cặp được in ra mỗi lần chạy.
+>
+> **`--check-chat` — soi đứng yên, vì cảnh báo trong merge chỉ nổ MỘT vòng.** `todo`
+> chỉ gồm ô có `new != base`, nên vòng sau — khi snapshot vừa rồi đã thành sheet nền —
+> ô vẫn lệch y nguyên nhưng không còn "đã đổi" và không tool nào nhắc lại nữa; bản
+> dịch nằm vĩnh viễn trên sheet mà không bao giờ lên màn hình (đúng lớp lỗi memory
+> `unlogical-wrong-cell-audit`). `python tools\\apply_sheet_cells.py --check-chat` so cả
+> 184 cặp trên snapshot mới nhất bất kể vòng này có gì đổi, `PASS`/`FAIL` + rc=1.
+> Trạng thái 30/08 trên (62): **PASS 184/184**.
+>
+> **Chốt chặn hơi RỘNG, có chủ ý.** Chặn cả 184 cặp, không tái tạo ba tầng lọc của
+> `fix_chat_use_genebark.main()` (nameplate có `@`, bản Nhật không mở `「`, `guards`).
+> Nếu bản sửa từ sheet **thêm** tag ruby thì `guards` của tool kia nổ ("mất tag") và
+> nó sẽ bỏ qua ô đó, tức bản sửa lẽ ra sống sót — tái hiện được với
+> `[Kai'カイ]` ở `86/txt/0395`. Vẫn chọn chặn cả 184: điều kiện đó phụ thuộc nội dung
+> nên không đoán trước được, hai tool cùng suy luận về một điều kiện động là nguồn lỗi
+> mới, và cách sửa mà thông báo chỉ ra (chép sang ô Genebark) vẫn đúng — làm vậy còn
+> đồng bộ luôn cả app chat lẫn cảnh ADV. Đo: hôm nay 0/184 ô bị chặn oan vĩnh viễn.
+>
+> **Nhánh `rule_body` từng bị nuốt chung với chốt này — đã sửa.** `rule_body` không đi
+> qua `todo` (nó map theo (id, trang) từ tab riêng) mà lại nằm SAU `if not todo:
+> return`, nên một vòng mà mọi ô đổi đều là ô chat dẫn xuất sẽ thoát sớm và bỏ qua hẳn
+> bản sửa trang RULE — không ghi, không báo, đến cả dòng "áp được:" lẫn "CHẠY THỬ"
+> cũng không in nên không có gì để thấy là thiếu; vòng sau `rn == rb` và khác biệt mất
+> vĩnh viễn. **Lỗi này CÓ SẴN từ trước** — đo được: bản `.bak` cũng nuốt trọn một vòng
+> chỉ đổi `rule_body` — chốt chặn chỉ làm nó dễ trúng hơn hẳn, vì một vòng chỉ có 1–2
+> ô đổi là chuyện thường ở kho này. Nay `rn`/`rb`/`rkeys` tính TRƯỚC phần thoát sớm và
+> điều kiện là `if not todo and not rkeys`. Giá: 2,2 s mở thêm hai workbook ở đúng
+> nhánh thoát sớm (1,09 + 1,14 s); nhánh thường vốn đã trả khoản này.
+>
+> **`--new X` cách nhau bằng khoảng trắng nay chạy thật.** `arg()` cũ chỉ nhận tiền tố
+> `--ten=`, nên dạng cách nhau bằng khoảng trắng — **đúng dạng docstring đầu file đang
+> dạy** — bị bỏ qua không một lời và tool lặng lẽ rơi về `newest_two()`, merge hai
+> snapshot mới nhất thay cho cặp vừa chỉ định (với `--apply` là ghi nhầm hẳn một bộ
+> ô). Lỗi có sẵn, không do đợt chốt chặn. Giá trị bắt đầu bằng `--` thì không ăn, nên
+> `--match --apply` vẫn giữ nguyên cờ `--apply`.
+
+25 hàng lệch build đã xử 28/08/2026 theo chốt của người dùng ("sheet đúng hết"): ghi 24
+hàng theo sheet (`carry_breaks` đắp lại ngắt dòng, 0 ngắt nào mất), hàng thứ 25
+(`data[641]`) hoá ra **không lệch** — chênh đúng một dấu cách do phép làm phẳng sinh ra.
+Kết quả phụ: `-san` sạch hẳn (build 13+4 → 0), nhưng **`-chan` còn 11 chỗ** mà sheet cũng
+đang giữ.
+
 **Chưa mở đường ghi, và có lý do phải cẩn thận: sheet có chỗ CŨ HƠN build.** 17 hàng
 `cmd` sheet có mà build chưa có đều là bản cũ — chúng viết `Nagamori **Ai**` (chính lỗi
 mà `check_chapterdata.py` có một check riêng để chặn: 藍 = **Ran**) và gọi "người **thất
@@ -685,6 +855,34 @@ với backup và phân loại theo "có nằm trong tập ô mình sửa hay kh�
 sau sẽ báo "cả hai bên đổi" ở 177 ô (chặn, không âm thầm lật lại). Sửa hẳn thì phải dán chữ
 của tab Genebark sang cột D của các tab `sd_*` tương ứng — danh sách ở
 `D:\Downloads\Chat_lech_Genebark_vs_ADV.xlsx`, cột "chốt bên nào?" giờ đọc là "Genebark".
+
+**Còn tồn (2) — 47 ô chiếu NGOÀI bảng 184, và 42 trong số đó hai màn hình đang hiện chữ
+khác nhau ngay lúc này.** Đếm trên bản gốc: **231** ô ADV có bản Nhật trùng một tin nhắn
+Genebark, `pairs()` chỉ ghép được 184, còn **47** ô rơi ra vì bản Nhật KHÔNG duy nhất —
+ví dụ `106/txt/0156` (`明日、お時間いただけませんか？`) ứng với hai hàng chat `g53c奏壱_635`
+và `g54c奏壱_659`, không ghép 1:1 được. Phân loại đầy đủ trên 1194 hàng chat gốc: 184 vào
+`pairs()`, 230 trùng trong Genebark, 1 trùng trong ScenarioData, 779 không có trong
+ScenarioData.
+
+Không chặn 47 ô này ở `apply_sheet_cells` là **đúng**: ép mọi ô Genebark đổi chữ rồi chạy
+`fix_chat_use_genebark --report` cho đúng 184 ô sẽ ghi, "ghi mà không bị chặn" = rỗng —
+tool này không bao giờ chạm 47 ô kia. Nhưng lỗ hổng thì có thật và **chưa ai canh**: sửa ô
+`GenebarkChatMainData/chat/g53c奏壱_635` trên sheet thì merge ghi xuống bundle json (ô sở
+hữu, không cảnh báo gì), rồi `fix_chat_use_genebark --apply` **không** chép sang
+`106/txt/0156` vì cặp đã bị `pairs()` loại — app chat hiện câu mới, cảnh ADV giữ câu cũ, và
+không tool nào trong danh sách kiểm bắt được. 42 ô đang ở đúng trạng thái đó:
+
+```
+72/txt/1432   ADV='Xin được chào lại em, tôi là Yasaka Soichi. Dù'  chat='Chào em, tôi là Yasaka Soichi. Dù là ở đây hay'
+72/txt/1444   ADV='Đang ở đâu thế?'                                 chat='Cậu đang ở đâu đấy?'
+75/txt/0022   ADV='Cậu đăng xuất được chưa?'                        chat='Thoát game được chưa?'
+75/txt/0499   ADV='Anh có chút chuyện muốn thảo luận với em.'        chat='Anh có chút chuyện muốn bàn với em'
+```
+
+Đây là **nửa còn lại của cùng bài toán**, không phải lỗi của chốt chặn ô dẫn xuất (chốt đó
+phủ đúng phạm vi `fix_chat_use_genebark` đè). Ghép 1:1 không giải được — muốn xử thì phải
+ghép theo ngữ cảnh (thứ tự hàng chat trong nhóm, hoặc `groupIDs` ↔ scenarioID) rồi mới
+quyết được ô nào sở hữu ô nào.
 
 ### `scriptText_Line` sID 72 mất một dòng, nhưng `loadLine` đã được đánh số lại
 
@@ -1199,6 +1397,62 @@ rồi báo lỗi nếu còn dòng nào chạm art. Hiện **0/37.951**.
 > cỡ 28 thì vụn ra 6 dòng và **tràn chiều cao** — chọn cỡ trước, rồi ngắt theo giới
 > hạn ở cỡ đó.
 
+## Soi ô sheet mất dấu câu cuối (`check_sheet_end_punct.py`)
+
+`python tools\check_sheet_end_punct.py [--sheet=…] [--csv=…] [--chat]` — chỉ ĐỌC,
+không ghi. Bắt lớp lỗi của `90/txt/0433`: bản Nhật `「えっ」`, bản Việt `「Hả」` —
+câu kết thúc mà không có `.` / `?` / `!`.
+
+**Không so với bản Nhật, vì bản Nhật không phải tín hiệu.** Tiếng Nhật bỏ `。` trước
+`」` là quy ước của nó. Quy ước của bản dịch thì ngược lại, và đo được trên snapshot
+(53):
+
+| bản Nhật kết | bản Việt kết | số ô |
+|---|---|---|
+| `。！？` | có dấu | 22 740 |
+| `。！？` | **trần** | 3 |
+| trần | có dấu | 13 796 |
+| trần | **trần** | 1 336 |
+
+Tức trong 15 132 ô mà bản Nhật kết trần, **91,2% bản Việt vẫn thêm dấu**. Nên câu hỏi
+duy nhất là: chữ cuối ô tiếng Việt, sau khi gỡ tag và gỡ ngoặc đóng, có phải dấu kết
+câu không. Gỡ ngoặc đóng là bắt buộc — dấu câu nằm TRONG `」`, xét thẳng ký tự cuối
+thì mọi ô thoại đều "có dấu".
+
+**Chỉ soi `sd_*` hàng `N/txt/NNNN`.** Mọi field nhãn/tiêu đề kết trần 100% theo thiết
+kế — `dic_title` 80/80, `ss_title` 20/20, `rule_title` 21/21, `prof_name` 14/14,
+`skill_name` 10/10, `qa_title` 45/50, `alert` 84/86, `rule_body` 14/39 (mục tiêu vòng
+chơi, dạng gạch đầu dòng) — đưa vào là chôn 1 339 ô thật dưới ~2 500 ô nhiễu. Hàng
+`/cmd/` và `/sel/` cũng là nhãn UI (`New　Chat`, `Xác thực thành công`): 418 hàng,
+cùng lý do. Ngược lại các field THÂN bài sạch tuyệt đối — `dic_body` 0/80,
+`news_body` 0/61, `skill_desc` 0/10 — nên tiêu chí này không phải là suy đoán.
+
+Kết quả in ra chia bốn dạng, vì bốn dạng cần bốn cách xử:
+
+- **`thoại` 1 027 + `độc thoại` 139** — lỗi thật, sửa được hàng loạt.
+- **`SNS` 117** — người nói có `@handle`, tin nhắn trong kịch bản. Cùng nhóm với
+  `GenebarkChatMainData/chat` (489/1 194 ô kết trần, 41%): bỏ dấu chấm trong chat là
+  văn phong, người đọc quyết. `--chat` gộp thêm nhóm chat vào CSV.
+- **`dẫn truyện` 56** — phần lớn là **nhãn chứ không phải câu**: tiêu đề tin tức, tên
+  người trên tài liệu, `▽ Ngày thứ N`, `☆☆ Phần thưởng phá đảo ☆☆`. Xem bằng mắt.
+
+Phân bố theo chương cho thấy đây là **vệt theo đợt dịch, không phải rải đều**: đa số
+chương ở 0–2%, nhưng chín chương vọt lên — `sd_110` 40,8%, `sd_101` 40,6%, `sd_136`
+31,0%, `sd_105` 21,3%, `sd_102` 19,9%, `sd_095` 17,4%, `sd_103` 16,8%, `sd_119`
+15,4%, `sd_125` 13,9% — gom 978/1 339 ô.
+
+Bằng chứng cứng nhất là 36 ô có **cùng một câu tiếng Việt xuất hiện chỗ khác CÓ dấu**:
+`95/txt/0603` `「...Vâng」` với `70/txt/0796` `「...Vâng.」`; `101/txt/0275`
+`「...Này, Ran」` với `98/txt/0074` `「...Này, Ran.」`; `119/txt/0004` `「Kanna, bên
+này」` với `72/txt/1117` `「Kanna, bên này.」`.
+
+Build và sheet lệch nhau đúng **một** ô, nên đây không phải mất mát khi merge mà là
+bản dịch vốn thiếu: `69/txt/0048` build `「!? ... Cái,」` còn sheet `「!? ...Cái」`.
+
+> Cạm bẫy khi đọc danh sách: `TAG` gỡ cả `[主人公]`, nên `119/txt/0005`
+> `「[主人公], bên này」` hiện ra thành `「, bên này」` và trông như ô hỏng. Nó lành —
+> xem cột bản gốc trước khi kết luận.
+
 ## Dấu lửng nối dấu lửng thì ngắt dòng
 
 `python tools\fix_ellipsis_break.py [--apply] [--check]` — câu bỏ lửng mà câu sau
@@ -1495,6 +1749,144 @@ khi ghi nên không hỏng gì, nhưng đó là may.
 
 **Tự dò lại từ câu chữ hiện tại**, nên chạy lại được sau mỗi vòng merge; không ghim chỉ số ô.
 
+
+
+
+### Gỡ tầng ngắt-ở-khoảng-trắng — ngắt cứng chỉ còn ở dấu câu (30/08/2026)
+
+Chốt của người dùng: *"ngắt cứng chỉ còn ở dấu câu, phần thừa để engine"*.
+
+Tầng ba `split_space_balanced()` thêm hôm 28/08 để giữ lề đã bị **gỡ hẳn**. Lý do nó tự
+mâu thuẫn: ngắt ở khoảng trắng là ngắt **giữa mệnh đề** — đúng cái lỗi mà cả đợt này sinh
+ra để sửa. Giữ lề bằng cách tái phạm chính lỗi ấy thì không đáng.
+
+Kết quả sau khi gỡ (backup `_backup\json.chatwrap-5` 64 ô, `_backup\scenario01.chatwrap-2`
+15 ô):
+
+| | trước đợt đầu | sau khi gỡ tầng ba |
+|---|---|---|
+| chỗ ngắt sau **dấu kết câu** | 52 | **683 (80%)** |
+| chỗ ngắt sau **dấu phẩy** | 31 | **166 (20%)** |
+| chỗ ngắt **giữa mệnh đề** | **843 (91%)** | **0** |
+| tổng chỗ ngắt cứng | 926 | 849 |
+
+**Đánh đổi đã biết và đã chấp nhận:** 79 dòng (64 asset app + 15 ScenarioData) không còn
+dấu câu nào để cắt. TMP ngắt chúng ở bề rộng của nó, nên chữ chạy quá lề phải — mô phỏng
+ở hai đầu khoảng đã kẹp:
+
+| bề rộng TMP | dòng vẫn quá lề sau khi TMP ngắt | quá bao nhiêu |
+|---|---|---|
+| 1269 | 70 | 0–64 px |
+| 1342 | 79 | 12–136 px |
+
+`--check` nới theo: chỉ FAIL khi dòng quá lề mà **còn cắt được theo dấu câu**; mệnh đề
+liền thì liệt kê kèm mức quá lề chứ không tính là lỗi.
+
+> **Đường sửa triệt để là thu ô chữ, không phải ngắt cứng thêm.** Muốn engine ngắt đúng
+> lề thì hạ `Message_TMP` sizeDelta.x xuống 1205 — cùng cách session kia đã làm cho
+> BACKLOG (`BackMessage_TMP` 1210 → 872). **Chưa thử**, vì đo ra bề rộng wrap thực tế là
+> [1269, 1342) trong khi prefab ghi 1210, tức con số prefab đang bị ghi đè lúc chạy;
+> ứng viên là script `ChatItemUI` gắn trên `GenebarkChatContentItem` (soát rồi: hàng chat
+> **không** có `ContentSizeFitter` hay `LayoutGroup` nào). Kiểm bằng cách đổi số, tắt game
+> mở lại — LayeredFS chỉ đọc `ui_jp` lúc boot — rồi chạy `e2e\checks\measure_chat.py`.
+
+
+### CHỐT (30/08/2026): thu `m_margin`, không thu `sizeDelta` — và hai số đo cũ bị bác
+
+Yêu cầu cuối: *"vạch phải giống bản Nhật gốc, không chấp nhận bất kì thay đổi vị trí và
+độ dài vạch, chỉ tác động phần text box thôi"*. Đã xác nhận trên máy thật.
+
+**`UnderLine` là CON của `Message_TMP`.** Thu `sizeDelta` là vạch dịch — đo được:
+
+| sizeDelta.x | vạch ngăn (px ảnh) | dài |
+|---|---|---|
+| 1210 | 318..1600 | 1283 |
+| 900 | 268..1445 | 1178 |
+
+Hai mép dịch **không bằng nhau** (+50 / +155) và độ dài đổi 105 px, dù `UnderLine` khai
+cứng 1388 — `ChatItemUI` bố trí lại cả hàng. Nên đường `sizeDelta` bị loại hẳn.
+
+**Đường đúng là `m_margin`** — nó thu vùng vẽ chữ *bên trong* rect, RectTransform không
+đổi nên vạch đứng yên tuyệt đối. Kiểm sau khi ghi, giống stock từng số:
+
+```
+Message_TMP  size (1210, 80)  pos (177, -61)      = stock
+UnderLine    size (1388, 4)   pos (-88, -19)      = stock
+m_margin     (0, 0, PHẢI 45, 0)                   <- chỉ đây đổi
+```
+
+`python tools\set_chat_box_width.py --margin=45 --apply` (`--restore` về stock).
+
+**Số 45 lấy từ ảnh stock `_2026-08-30_14-35-09.png`:** vạch kết thúc x=1600, chữ chạm
+x=1623 ⇒ **lố 23 px**. Vùng chữ 1210 canvas vẽ ra 1178 px ⇒ tỉ lệ **0,9736**. Cộng khoảng
+hở ⇒ margin 45 ⇒ vùng chữ 1165 canvas ⇒ chữ dừng ở 1579, **trong vạch 21 px**.
+
+> **Dùng tỉ lệ của chính thứ đang chỉnh.** Ba mốc cho ba tỉ lệ khác nhau — vạch ngăn
+> 0,9244 (1283/1388), mép chữ 0,9736 (1178/1210), icon ảnh thật ~0,91 (62/68). Chúng đá
+> nhau vì `ChatItemUI` vẽ vạch và icon không theo kích thước khai báo. Chỉ tỉ lệ đo từ
+> **vùng chữ** mới dùng được cho việc chỉnh vùng chữ.
+
+#### Hai kết luận cũ của tôi bị bác
+
+- ~~"bề rộng wrap thực tế của TMP không phải 1210, mà [1269, 1342)"~~ — **sai**. TMP ngắt
+  đúng ở bề rộng vùng chữ; **model trong `fix_chat_wrap.py` đo cao hơn TMP ~5%**. Kẹp từ
+  cặp A/B: `W_model/box ∈ [1,049; 1,109)`. Chứng cứ dứt điểm: mực chữ trải 1178 px ảnh cho
+  vùng 1210 canvas — đúng bằng khung, không tràn.
+- ~~"`ChatItemUI` ghi đè bề rộng nên thu prefab vô nghĩa"~~ — **sai**. Probe ô 900 làm ngắt
+  dòng dịch vào rõ rệt, tức prefab **có** được tôn trọng. `ChatItemUI` có đụng bố cục
+  *hàng* (vạch, icon), nhưng không ghi đè bề rộng vùng chữ.
+
+#### `LIMIT` phải đi theo margin
+
+`LIMIT = (1210 − margin) × 1,049` — nhân hệ số thấp nhất của khoảng đã kẹp cho chắc. Với
+margin 45: `1165 × 1,049 ≈ 1222`, đặt **1220**. Cao hơn thì ngắt cứng dài hơn khung và TMP
+ngắt lại giữa mệnh đề; thấp hơn thì ngắt cứng chặt hơn cần thiết.
+
+Kết quả cuối: **873 chỗ ngắt cứng, 0 chỗ giữa mệnh đề**; 73 dòng mệnh đề-liền để engine
+ngắt. Backup `_backup\ui_jp.chatboxwidth-5`, `json.chatwrap-7`, `scenario01.chatwrap-4`.
+
+### Hai MÀN HÌNH, hai asset — và cái tôi sửa đầu tiên là cái ít người thấy hơn
+
+Phát hiện 30/08/2026 từ hai ảnh chụp cách nhau 4 phút.
+
+| màn hình | asset | ảnh |
+|---|---|---|
+| **app CHAT** mở từ menu Genebark | `GenebarkChatMainData.data[].content` | `_2026-08-30_01-40-43.png` — ngắt **đúng** |
+| **cảnh ADV** vẽ giao diện chat trong lúc kể chuyện | `ScenarioData.text[]`, ô có `talkName` chứa `@` | `_2026-08-30_01-36-35.png` — **phẳng** |
+
+Bản đầu của `fix_chat_wrap.py` chỉ ghi asset thứ nhất, nên người chơi đọc truyện vẫn thấy
+dòng chạy dài rồi TMP tự ngắt giữa câu.
+
+**Cách chứng minh màn ADV đọc `ScenarioData`:** ba dòng đầu ảnh 01:36 —
+`May quá. Tầm mấy giờ thì bàn được nhỉ?`, `Hửm. Để tôi học xong…`, `Ok. Cố lên nha` —
+**không có trong `GenebarkChatMainData`**, mà nằm liên tiếp ở `68/txt/0123–0129`, đúng
+thứ tự trên màn hình.
+
+**Và chúng vẽ ở widget CHAT chứ không phải ô thoại ADV.** Đo 6 dòng biết trước chữ trên
+chính ảnh đó, quy về canvas:
+
+| model | tỉ lệ model/đo |
+|---|---|
+| chat — `FOT-DNPShueiMGoStd-B`, cỡ 32, spacing 5 | **1,002** |
+| ô thoại ADV — `FOT-NewRodinProN-DB`, cỡ 42 | 1,595 |
+
+> **Đã vá `fix_adv_wrap.py` (30/08/2026):** `adv_messages()` trước đó gom cả 289 ô chat
+> này và đo bằng font + cỡ của ô thoại ADV — **rộng gấp ~1,6 lần thực tế**. `--check` vẫn
+> PASS, nhưng chỉ vì các dòng ấy tình cờ đủ ngắn; một ô chạm cap là `--apply` ngắt lại
+> bằng số đo sai. Nay `adv_messages()` bỏ qua ô có `talkName` chứa `@`:
+> **37.951 → 37.662 tin nhắn**, đúng 289 ô. Soát cả 8 dạng nameplate có `@`
+> (`【Suzuno@Sz_36iii】` 97, `【Unknown@73w35vq】` 46, `【RAN@ran_n_rea4】` 41,
+> `【Kai Munakata@k_munakata2150】` 37, `【yasaka@eggsand_yaa】` 37, `【YURI@yyy58302199】` 14,
+> `【M@6avbjie_w】` 9, `【Shiori@S_hi0ri_kxoxo】` 8) — **tất cả đều là tên tài khoản**, không
+> ô nào bị loại oan. `fix_jp_sentence_break.py` đã có sẵn đúng chốt này từ 27/08.
+
+Kết quả (backup `_backup\scenario01.chatwrap`): **139/289 ô đổi**, 150 ô vốn đã đúng,
+`scriptText` mirror 111 / bỏ 28. Cùng đợt chạy lại asset app: 2 ô đổi
+(`_backup\json.chatwrap-4`) — sheet merge vòng (62) ngày 29/08 làm phẳng lại chúng, đúng
+lý do tool tự dò lại từ câu chữ hiện tại thay vì ghim chỉ số ô.
+
+Kiểm sau khi ghi: `check_scripts` 143/143, `check_chapterdata` 8/8, `fix_adv_wrap --check`
+0 dòng chạm hoạ tiết, và cả hai asset `--check` **0 dòng quá lề**.
 
 ### Lề phải = lề trái, và bề rộng wrap THỰC TẾ của TMP không phải 1210
 
@@ -2543,7 +2935,80 @@ lấp đúng bề ngang đó thay vì để trống một mảng bên phải.
 Đã soát hết 75 sprite của `sharedassets6` (kể cả 4 nền 1620×840): ngoài ba nhãn
 trên, không còn chữ Nhật nào ở màn này.
 
+## Tên màn: `Stage N`, và cụm thông báo `Cập nhật quy tắc`
+
+`python tools\fix_stage_term.py [--apply|--check]` — người dùng chốt 28/08/2026 **ưu tiên
+sheet**: sheet viết `Cập nhật quy tắc: Stage 1`, build viết `Cập nhật luật: Giai đoạn 1`.
+"Ưu tiên sheet" nói bên nào thắng, **không nói phạm vi** — nên vẫn đếm chữ chính văn theo
+đúng luật của dự án, và số đo ra cùng một câu trả lời:
+
+```
+chữ VẼ RA (ScenarioData.text[], 39 574 ô)      bundle json (UI)
+    'Stage <số/EX>'       307                      'Stage <số>'      26
+    'Giai đoạn <số/EX>'     5   <- lạc lõng         'Giai đoạn <số>'   0
+```
+
+> **Hai cái bẫy, và đây mới là phần khó của việc này.** `giai đoạn` viết thường (36 lần)
+> là văn xuôi — "giai đoạn chuẩn bị", "giai đoạn này" — nên mẫu phải neo vào **chữ số hoặc
+> `EX`** ngay sau, không neo vào từ. Và `luật` trên chữ vẽ ra 89 lần **gần như toàn là từ
+> thường**: `luật chơi` 18, `quy luật` 12, `kỷ luật` 6, `pháp luật` 3. Thay đại trà là hỏng
+> văn. Chỉ đổi đúng cụm thông báo cố định, và chỉ **bên trong `[terinfo text="…"]`**.
+
+Đã chạy 28/08/2026 (backup `_backup\scenario01.stageterm`): 11 asset, **42 chỗ**
+`Giai đoạn <số>` → `Stage <số>` và **34 chỗ** `Cập nhật/Bổ sung luật` → `quy tắc`, ở cả
+`ScenarioData` lẫn 10 script chương. Sau khi vá: `Stage <số>` 312 / `Giai đoạn <số>` **0**,
+còn `giai đoạn` thường vẫn đúng 36 và bốn cụm `luật` từ thường không suy suyển.
+
+### Lỗi dữ liệu tìm được cùng đợt: marker `[terinfo] ` lọt vào chữ hiển thị
+
+Sáu chuỗi trong `ScenarioData.scriptText` mang dạng:
+
+```
+[terinfo text="[terinfo] Cập nhật luật chơi: Stage 2"]
+[terinfo text="[terinfo] Đã có thể tiến hành bỏ phiếu kẻ thủ ác"]
+[terinfo text="[terinfo] Hệ thống máy chủ đã bị xóa bỏ"]                …
+```
+
+Bản gốc 1.0.2 có **0** lần `[terinfo] `, build có **6** — tức do một đợt dịch làm ra. Nguồn:
+sheet để tên lệnh ở một cột riêng (70 ô mang đúng giá trị `[terinfo]`, id dạng `N/cmd/N`),
+một pass kéo ô đã nối cột lệnh vào cột chữ. Đã dọn cùng đợt, backup
+`_backup\scenario01.terinfoleak`; chốt trước khi ghi: mọi chỗ `[terinfo] ` phải nằm ngay
+sau `text="`, và diff trên JSON đã parse chỉ được có đúng hai phép đổi.
+
+> **Còn tồn, cần người quyết.** Bộ `terinfo` vẫn tự mâu thuẫn ở chỗ khác: `Đã xác định
+> người thua cuộc` (56) ↔ `Đã xác nhận` (sheet) ↔ `Người thất bại:` (5); `Cập nhật kỹ năng`
+> (17) ↔ `Cập nhật Skill` (1); `Đăng ký hồ sơ：` dùng dấu hai chấm **toàn rộng**; và
+> `敗北者が確定` còn 43 lần chưa dịch. Không gộp vào đợt này vì sheet không phủ hết, và
+> sửa 56 chuỗi theo một dòng sheet là quá tay.
+
 ## Nhãn `選択肢` của dòng lựa chọn trong BACKLOG
+
+> ### Đính chính 28/08/2026 — sửa prefab KHÔNG đủ, chữ đến từ literal IL2CPP
+>
+> Mục dưới đây kết luận `Log_Base_SELECT` không có người nói nên "chuỗi trong prefab
+> chính là chữ chạy trên máy". **Sai.** Ảnh chụp máy thật của bản release v1.2.6 vẫn hiện
+> `選択肢`, dù `ui_jp` trong đúng file zip đó đã mang `Choice` (đối chiếu CRC từng file
+> giữa zip và bản làm việc: khớp). Code ghi đè nốt cả ô này.
+>
+> Chuỗi thật là literal IL2CPP **#15084 `選択肢`** (9 byte) → `Choice` (6 byte, vừa ô,
+> ghi tại chỗ), vá 28/08/2026 bằng `fix_sound_tab_name.py`, backup
+> `_backup\global-metadata.dat.presoundnames`. Bằng chứng độc lập có sẵn từ trước mà lúc
+> đó không ai nối lại: file save ghi `m_saveText = 選択肢` — chuỗi đó do game sinh ra lúc
+> bấm save, tức phải đến từ code chứ không từ prefab.
+>
+> Đổi được vì **cả bên ghi lẫn bên đọc dùng chung literal này**: `ADVManager$$SetSelectButton*`
+> và `$$SelectBackLogAdd` ghi nó vào mục backlog, `BackLog$$TextUpdate`,
+> `BackLog_NovelScroll$$TextUpdate`, `BackLog$$PlayVoice` đọc lại — một literal đổi thì
+> hai vế cùng đổi. (`_backup\global-metadata.dat.prelitterm8` là bản sao trùng nội dung
+> của cùng mốc lùi đó, sinh ra từ một lượt thử trước; giữ lại, không dùng tới.)
+>
+> Bản vá prefab để nguyên: nó chỉ là placeholder, để `Choice` cho khỏi lệch.
+>
+> **Bài học, lặp lại lần thứ hai trong ngày** (xem "Nhãn route trên thẻ SAVE/LOAD"): dữ
+> liệu đã dịch mà màn hình vẫn ra tiếng Nhật thì **đừng sửa lại chỗ vốn đã đúng** — tìm
+> literal. Và cách rẻ nhất để biết prefab có phải nguồn thật hay không là hỏi *"chuỗi này
+> có bao giờ bị ghi ra chỗ khác không?"*: nếu nó nằm trong file save thì nó đến từ code.
+
 
 Màn BACKLOG dựng mỗi dòng từ một template có sẵn trong `ui_jp`, container
 `assets/assetbundleresources/ui/ローカライズ/jp/adv/backlog/backlog_scrollview.prefab`,
@@ -2589,6 +3054,59 @@ trong atlas) đã dịch `選択肢` thành "choices".
 
 `Log_Base_SELECT` không có bản trùng ở `sharedassets*` hay `resources.assets`
 (grep `Log_Base_SELECT` / `BackName_TMP` ra 0) — chỉ vá `ui_jp` là đủ.
+
+> ### Đính chính 29/08/2026 — `Choice` **có** rớt xuống dòng hai
+>
+> Ảnh chụp máy thật `_2026-08-29_15-46-37.png`: nhãn hiện thành `Choic` / `e`. Câu kết
+> luận ngay bên trên — *"nhãn phải là một từ, không có chỗ ngắt, thì mới chắc chắn không
+> rơi xuống dòng hai"* — là **sai**. Khi một từ đã dài hơn bề ngang ô, TMP không còn chỗ
+> ngắt hợp lệ nào nên nó ngắt **giữa từ**, từng ký tự một; đúng một từ không cứu được gì.
+> `overflowMode = Overflow` cũng không: Overflow chỉ cho khối chữ tràn *xuống dưới* sau
+> khi đã ngắt, chứ không tắt ngắt. Chỉ `m_TextWrappingMode = 0` (NoWrap) mới cho chữ chạy
+> ngang ra ngoài ô.
+>
+> Câu *"`Suzuno Kanna` ≈ 250 px trong đúng ô 120 px ấy, ảnh chụp máy thật cho thấy vẫn một
+> dòng"* cũng đọc nhầm ảnh: tên một dòng trong ảnh là của `Log_Base`, mà ô của `Log_Base`
+> rộng **1010 px** chứ không phải 120.
+>
+> Sửa (`fix_backlog_select_label.py`, backup `_backup\ui_jp.prebacklogselectrect`):
+>
+> | | trước | sau |
+> |---|---|---|
+> | `m_SizeDelta.x` | 120 | **240** — đủ cho cả nhãn hai từ (`Lựa chọn` 185.8 px) |
+> | `m_TextWrappingMode` | 1 | **0** (NoWrap) |
+>
+> Nới ô không chạm ai: `pivot.x = 0` + canh trái nên mép trái ghim, chỉ mép phải đẩy ra;
+> đo từ prefab, nhãn ở `x = -821` còn mép phải `BasePanel` (1220 px, `x = -280`) ở `+330`
+> ⇒ còn **1151 px** trống. Ba anh em `log` / `Image` / `Voice` của template SELECT đều
+> `m_IsActive = False`, mà `BackName_TMP` là con của chính `Log_Base_SELECT` (nơi gắn
+> `EventTriggerButton`), nên ô chữ tuy `m_RaycastTarget = 1` cũng không cướp click của ai.
+>
+> **Hai template chat KHÔNG dính lỗi này — code tự nới ô lúc chạy.** Đã kiểm hai lần trên
+> máy thật, không tên nào rớt dòng dù `BackName_TMP` của `Log_Base_Chat` /
+> `Log_Base_Chat_Select` cũng khai 120×50, cỡ 33, `m_TextWrappingMode = 1`.
+>
+> | ảnh | tên | mực chữ | `@id` bắt đầu | ⇒ bề ngang ô thật |
+> |---|---|---|---|---|
+> | `_2026-08-29_22-49-21.png` | `Suzuno` | x 231→345 (114 px) | x 369 | ≈ **118** |
+> | `_2026-08-29_22-59-16.png` | `Kai Munakata` | x 233→452 (**219 px**, một dòng) | x 475 | ≈ **224** |
+>
+> Chốt bằng `BackNameID_TMP`: trong hai template chat nó là **con của `BackName_TMP`**, neo
+> vào **mép phải** cha (`anchorMin.x = 1`, pivot 0, offset 20). Nếu ô cha đứng yên ở 120 px
+> thì `@id` phải luôn bắt đầu ở `trái + 140` — đo được 138 với `Suzuno` **nhưng 244 với
+> `Kai Munakata`**. Tức ô cha nở theo chữ: 118 và 224 px, khớp bề rộng advance của chính hai
+> tên (123,7 và 236,5 px, model nhỉnh hơn ~5%). Vậy 120 px trong prefab chỉ là số lúc dựng;
+> lúc chạy code đặt lại theo preferred width, nên tên dài cỡ nào cũng một dòng.
+>
+> **Vì sao `Log_Base_SELECT` thì rớt.** Nó không có `BackNameID_TMP`, và nhãn của nó là
+> chuỗi cố định code ghi thẳng — không đi qua nhánh đo-rồi-nới đó, nên 120 px là số thật và
+> `Choice` (138,6 px) bị ngắt giữa từ. Hai chỗ nhìn giống nhau nhưng đi hai đường code khác
+> nhau; đừng suy từ chỗ này sang chỗ kia.
+>
+> **Bài học của cả mục này:** số đo tĩnh trong prefab chỉ là giả thuyết. Hai kết luận sai
+> liên tiếp ở đây — "một từ thì không thể rớt dòng" (sai vì TMP ngắt giữa từ) và "năm tên
+> chat sẽ tràn ô 120" (sai vì dùng nhầm font NewRodin cho ô dùng DNPShueiMGo, rồi sai tiếp
+> vì ô đó không cố định) — đều chỉ vỡ ra khi chụp ảnh máy thật. Cứ nghi ngờ thì chụp.
 
 ## Thẻ THE END — tiêu đề ending vẫn còn tiếng Nhật
 
@@ -2755,3 +3273,545 @@ hiệu điển hình của việc làm phẳng kênh alpha lúc lưu. `anim02_2`
 Lưu ý: PNG xuất ra là kết quả *chính xác* của spec, còn ảnh đọc ngược từ bundle sẽ
 lệch tới ~18/255 một kênh vì texture nén ASTC — đừng lấy ảnh trích từ bundle làm
 mốc so sánh.
+
+## Tên nhân vật ở dòng INFO tab SOUND (`fix_sound_tab_name.py`)
+
+Tab SOUND có 21 thanh trượt. Nhãn thanh trượt lấy từ `ConfigVolumeData.label` —
+dữ liệu, đã La-tinh hoá từ lâu (`Miyabi`, `Hotaru`, `Kyosuke`…). Nhưng **dòng
+INFO ở đáy màn hình** thì không: `Config.InfoTextInit()` (RVA `0x19BC090`) dựng
+nó bằng
+
+```
+String.Concat(<literal tên tiếng Nhật>, GetSystemText(76))
+```
+
+đúng 16 lần. `SystemTextID 76` (`CONFIG_COMMON_SET_VOICE_VOLUME`) đã dịch, nên
+màn hình ra `光希's volume settings` — nhãn thì Latin, dòng INFO ngay dưới lại
+tiếng Nhật. Ghi chú phát hành v1.2.5 nói "bốn tên còn sót"; thật ra là **16**.
+
+### Chỉ vá được 1 trong 16
+
+Trình biên dịch C# gộp chuỗi giống nhau thành **một** mục literal, nên literal
+`蛍` mà `InfoTextInit` dùng cũng chính là literal `ADVManager` dùng. Xref trên
+bản dump Il2CppDumper:
+
+| literal | ai dùng |
+|---|---|
+| `恭介` | `Config$$InfoTextInit` — **chỉ một chỗ** |
+| `蛍` `栞` `光希` | + `ADVManager$$CutInPositionOffset`, `$$DigitalAnimationIdAdjust`, `Config$$.cctor` |
+| `雅火` `戒` `藍` | + thêm `$$GetNameColor` / `DebugManager$$TextUpdate` |
+
+Hai hàm `ADVManager` là `switch` trên chuỗi (`ComputeStringHash` + hàng loạt
+`String.op_Equality`). Chúng nhận `chara` **lấy thẳng từ tag lệnh trong kịch
+bản** — `[蛍 出 1111 M すまし slot=0]` — và tag lệnh thì không bao giờ được dịch
+(quy tắc `[...]`). Đo trên build: tag sprite của cả 20 tên **giống bản gốc từng
+byte**. Nên vế bên kia phép so mãi mãi là tiếng Nhật; đổi literal = phép so trượt.
+
+`恭介` an toàn vì nhân vật đó không có sprite riêng — anh ta dùng sprite của
+`伊槻` (tình tiết cải trang). ScenarioData có **0** tag `[恭介 …]`.
+
+### Bài học `涼乃`, và phép chốt sinh ra từ nó
+
+Một bản trước đổi literal #15053 `涼乃` → `Suzuno`. `涼乃` là **họ của nhân vật
+chính** (hiện trên nameplate, nên đổi là đúng) — nhưng nó **đồng thời** là khoá
+sprite của chính cô: ScenarioData còn **495** tag `[涼乃 …]`. Từ đó
+`CutInPositionOffset` và `DigitalAnimationIdAdjust` không còn nhận ra nhân vật
+chính, rơi về nhánh mặc định. Hỏng lặng lẽ, không phép kiểm nào bắt được.
+
+Đó là bản vá literal **duy nhất** từng đụng vào một khoá lệnh còn sống. Mọi bản
+khác đều chọn biến thể có `・` (`戒・`, `藍・`, `雅火・`, `奏壱・`, `ユーリ・`) — 0 tag,
+nên vô hại. `環無` → `Kanna` cũng 0 tag.
+
+Nên script tự nạp ScenarioData và **từ chối vá nếu còn tag lệnh nào lấy chuỗi đó
+làm khoá**. Ba tên `蛍` / `栞` / `光希` nằm sẵn trong danh sách `REFUSED` kèm số tag,
+để lần sau khỏi phải điều tra lại.
+
+### Chỗ ghi
+
+`恭介` chiếm 6 byte, `Kyosuke` cần 7, và ô kề (`#15029 戒`) xếp khít — 0 byte dư.
+Nhưng bảng literal là cặp `(length, dataIndex)` nên chuỗi mới ghi ở **đâu cũng
+được**. Script dựng lại bản đồ byte từ cả 15.224 mục, tìm ra **33 byte mồ côi
+trong 8 khoảng** (lớn nhất 16 byte @372.165 — phần dư của bản vá
+`ターミナルを開いてください` → `Vui lòng mở Terminal`), rồi cấp phát từ khoảng vừa nhất.
+Chuỗi nào vừa ô cũ thì ghi tại chỗ, khỏi tiêu chỗ trống.
+
+```powershell
+python tools\fix_sound_tab_name.py [--apply]
+```
+
+Đã chạy 28/08/2026, backup `_backup\global-metadata.dat.presoundnames`. Vá 2
+literal: `#15028 恭介` → `Kyosuke` (dời sang @372.165), `#15084 選択肢` → `Choice`
+(tại chỗ). Kiểm sau khi ghi: kích thước file không đổi, **26 byte đổi, 0 chỗ
+khác**, 15.224 literal giải mã UTF-8 sạch, 0 mục tràn khối.
+
+**Còn tồn:** 15 tên kia. Muốn chữa phải cấp cho `InfoTextInit` literal riêng —
+tức vá nhị phân `main` rồi dựng lại `.ips`, không phải vá metadata. Rủi ro thật:
+slot literal được nạp theo danh sách usage của từng hàm, trỏ sang slot ngoài
+danh sách thì có thể null lúc chạy. Chưa làm.
+
+## Nameplate hỏng khoá và tên nhân vật chính bị viết cứng (`fix_nameplate_key.py`)
+
+`ScenarioData` giữ mỗi nameplate ở **ba** trường:
+
+| trường | vai |
+|---|---|
+| `scriptText_Line` | bản THÔ, khớp từng byte với bản gốc — không bao giờ sửa |
+| `scriptText` | bản dịch |
+| `talkName` | bản dịch, một ô cho mỗi tin nhắn |
+
+Cách soát: so nửa khoá của `【khoá/hiển thị】` giữa build và bản gốc **theo từng vị
+trí**. 673 chỗ lệch, 39 kiểu — phần lớn là bản dịch cố ý cho nhân vật phụ
+(`看護師` → `Y tá`), vô hại vì chỉ 6 khoá được `ADVManager$$GetNameColor` đọc
+(`宗像 戒`, `永守 藍`, `弥坂 奏壱`, `神楽 侑莉`, `雅火`, `ユーリ`). Sáu chỗ còn lại là lỗi:
+
+| hỏng | đúng | n | vì sao |
+|---|---|---|---|
+| `【Phía Đông堂 伊槻/姫嶋 恭介】` | `【東堂 伊槻/Himejima Kyosuke】` | 60 | `東` bị pass thay chữ đổi thành "Phía Đông" *giữa khoá*; 423 chỗ cùng loại đã đúng |
+| `【Miyabi/瑠璃】` | `【雅火/Ruri】` | 3 | ngược đời: nửa KHOÁ bị La-tinh hoá, nửa HIỂN THỊ còn tiếng Nhật. `雅火` là khoá màu tên |
+| `【Quán cà phêの店員】` | `【NV quán café】` | 1 | `カフェ` bị đổi giữa chuỗi, bỏ lại `の店員`; 25 chỗ cùng loại đã đúng |
+| `【Kanna＆Kai】` | `【player＆Kai】` | 14 | token `player` bị viết cứng thành tên mặc định |
+| `【Kai＆Kanna】` | `【Kai＆player】` | 4 | nt |
+| `【Kanna＆Ran】` | `【player＆Ran】` | 4 | nt |
+
+Ba dòng cuối là đúng thứ CLAUDE.md cấm: ai đặt tên khác `Kanna` sẽ thấy sai tên,
+mà một lượt chơi bằng tên mặc định thì trông hoàn hảo nên không lộ. `player` là
+literal mà `ADVManager$$CharaNameConvert` / `$$ShowCharaNameUpdate` /
+`$$GetNameColor` thay thế, và bản gốc cũng ghép `【player＆戒】` y như vậy — giữ
+token trong chuỗi ghép là đúng.
+
+Ba dòng đầu chỉ hỏng ở `scriptText`; ba dòng `player` hỏng ở cả `scriptText` lẫn
+`talkName`. Sau khi sửa, hai trường dịch khớp số với nhau ở cả sáu (423/423,
+3/3, 13/13, 7/7, 2/2, 2/2) — đó là dấu hiệu tốt nhất cho biết đã đúng.
+
+`json.dumps(..., separators=(",",":"))` tái tạo `ScenarioData` **khớp nguyên
+văn** bản gốc, nên chỉ 86 chỗ đó đổi và kiểm chứng được. Không chỗ nào đổi số
+dòng, nên `loadLine` / `selLine` vẫn trỏ đúng (script tự kiểm lại cả hai).
+
+```powershell
+python tools\fix_nameplate_key.py [--apply]
+```
+
+Đã chạy 28/08/2026, backup `_backup\scenario01.nameplatekey`. Sau khi ghi: **0
+chuỗi lẫn nửa Nhật nửa Việt** còn lại trong nameplate, `scriptText_Line` khớp bản
+gốc, 269.210 dòng thô nguyên vẹn.
+
+## Nameplate ADV dài quá khung, xuống 2 hàng (`fix_nameplate_wrap.py`)
+
+Ảnh máy thật `_2026-08-30_03-17-51.png`: `【ＪＥＣ職員Ａ/Người quen của Yuri】` vẽ thành
+**hai hàng** — `Người quen của` ở trên, `Yuri` ở dưới, đổ ra ngoài ô nameplate và đè
+lên tranh nền.
+
+### Khung và vì sao nó không co chữ
+
+`level10` pid 650 / 699 (`Message(Normal|Highest)/Name`), rect **500 × 70**. `level10`
+không có type tree nên đọc bằng cách dump byte thô của MonoBehaviour — các trường TMP
+nằm đúng thứ tự serialize:
+
+| offset | trường | giá trị |
+|---|---|---|
+| 308 | `m_fontSize` | 42 |
+| 320 | `m_enableAutoSizing` | **0** |
+| 348 | `m_characterSpacing` | 5.5 |
+| 356 | `m_lineSpacing` | 0 |
+| 372 | `m_enableWordWrapping` | **1** |
+| 380 | `m_overflowMode` | 0 (Overflow) |
+
+Auto-size TẮT + word-wrap BẬT + overflow tràn = tên dài **không bao giờ bị hạ cỡ chữ**,
+nó xuống hàng rồi đổ ra ngoài. Khác hẳn ô ADV (`fix_adv_wrap`) vốn co chữ 42→28. Hai
+object này byte khớp `UNLOGICAL_v2` — mod chưa từng đụng, đây là hành vi sẵn có.
+
+### Cỡ chữ phải đo từ ảnh, con số trong scene sai
+
+Game chỉnh lại nameplate lúc chạy: đo trên ảnh ra **~47,5 px** chứ không phải 42, và
+gốc chữ nằm ở x=62 trong khi rect nói 87. Nên mô hình hiệu chuẩn thẳng từ ảnh — dò
+(cỡ chữ, characterSpacing, gốc) khớp vị trí trái của 12 glyph `Người quen của`:
+
+    bề rộng(px) = tổng(advance_glyph × 47.5/58 + 0.44)      rms 0,6 px, lệch nhiều nhất 1,2 px
+    bước dòng   = 47.5 × 116/58 = 95 px                     (đúng 95 px đo được giữa 2 hàng)
+
+Cùng phép dò đó áp lên dòng ADV trong chính ảnh ra 42,5 px / gốc 307,1 — khớp
+`m_fontSize` 42 và mép rect 308, nên phép dò là đúng, chỉ riêng nameplate bị game
+chỉnh. Lưu ý `adv_layout.CHAR_SPACING = 5.3` là **đơn vị font**, không phải px.
+
+Khung suy ra từ ba mốc, không phải đoán:
+
+| chuỗi | px | thực tế |
+|---|---|---|
+| `Người quen của Yuri` | 553 | gãy (ảnh) |
+| `Himejima Kyosuke` | 495 | không gãy, ×423 ô, chơi nhiều lần |
+| `Người quen của ` | 442 | vừa (ảnh) |
+
+→ khung ∈ [495, 553), tức đúng **500** của rect.
+
+### Nameplate trong `[chat]` dùng widget khác — ĐỪNG tính chung
+
+289 ô nameplate dạng tài khoản (`【Kai Munakata@k_munakata2150】` 893 px,
+`yasaka@eggsand_yaa` 589, `YURI@yyy58302199` 584, `Shiori@S_hi0ri_kxoxo` 573,
+`Unknown@73w35vq` 561) nằm trong khối `[chat start] … [chat end]` và vẽ bằng widget chat
+Genebark — khung rộng hơn nhiều, cỡ chữ nhỏ hơn (xem đo 742 px ở mục Sekigawa). Chơi
+thật **không cái nào gãy**; lần soát đầu tôi báo nhầm chúng là "gãy sẵn từ bản gốc".
+
+Máy quét trạng thái theo dòng bỏ sót 15 ô (`107/269–279`, `106/167–168`): chúng nằm
+trong **nhánh lựa chọn** mà `[next target=*SOU-03-12-02]` nhảy vào, còn `[chat start]`
+thì ở trước chỗ rẽ nhánh. Luật đúng dùng cả hai chiều:
+
+    trong chat = (lệnh [chat …] gần nhất phía TRƯỚC là start/restart)
+              hoặc (lệnh [chat …] gần nhất phía SAU là end/stop)
+
+Vế thứ hai bắt đúng cả 15 ô đó — không thể `[chat end]` một phiên chat chưa mở.
+
+### Năm chỗ đã sửa
+
+| cũ | px | mới | px | n | chỗ |
+|---|---|---|---|---|---|
+| `ナレーション/Giọng từ màn hình ngoài phố` | 778 | `Giọng từ màn hình` | 494 | 1 | 117/0 |
+| `Người nước ngoài bí ẩn` | 620 | `Người nước ngoài` | 472 | 1 | 74/340 |
+| `Màn hình ngoài phố` | 530 | `Màn hình LED` | 376 | 2 | 84/128-129 |
+| `Các người tham gia` | 525 | `Người tham gia` | 408 | 6 | 70/214… |
+| `Phụ nữ hàng xóm` | 473 | `Nữ hàng xóm` | 357 | 2 | 72/1106-1107 |
+
+`街頭ビジョン` (84, chính màn hình phát bản tin) và `ナレーション/街頭ビジョンの声` (117, lời
+dẫn trailer phát ra *từ* màn hình) là hai chuỗi khác nhau trong bản Nhật — giữ cặp
+`X` / `Giọng ... X`. `Phụ nữ hàng xóm` 473 px vốn chưa gãy, rút cho có biên.
+`Giọng từ màn hình` 494 px chỉ dưới khung 6 px; thấy gãy trên máy thật thì hạ tiếp
+xuống `Giọng màn hình` (420 px).
+
+### Chưa quyết chữ — vẫn còn gãy
+
+    Đồng nghiệp của Yuri  587 ×2  120/29,31        Sinh viên khoa khác  545 ×3  17/9,13,15
+    Thanh niên đi đường   555 ×2  120/21,22        Munakata Kai＆Yuri    527 ×1  83/292
+    Người quen của Yuri   553 ×5  116/11,13,19,22,24
+
+```powershell
+python tools\fix_nameplate_wrap.py [--apply]
+```
+
+Đã chạy 30/08/2026, backup `_backup\scenario01.nameplatewrap`. 24 chỗ đổi (12
+`scriptText` + 12 `talkName`), `scriptText_Line` 269.210 dòng nguyên vẹn, `loadLine` /
+`selLine` không đổi. `check_scripts` 143/143, `check_chapterdata` 8/8,
+`check_layout_breaks` 210.972 → 210.972 ngắt dòng và 17.425 → 17.425 dòng thụt,
+`fix_adv_wrap` / `fix_ellipsis_break` / `fix_paren_balance` / `fix_novel_list_wrap` /
+`fix_terminal_term` đều PASS.
+
+`--check` là chốt chặn sau mỗi vòng merge sheet: nó soát **mọi** nameplate chứ không chỉ
+5 cái trong bảng, nên tên dài mới từ sheet cũng bị bắt.
+
+## Chữ BACKLOG tràn ra đè lên mục kế tiếp (`fix_backlog_autosize.py`)
+
+Ảnh máy thật `_2026-08-29_15-46-29.png`: một tin nhắn **3 dòng cứng** của ADV nở
+thành **5 dòng** trong BACKLOG — hai từ `là` / `lại` rơi mồ côi cuối dòng, và
+dòng cuối `Ran.` vẽ đè lên tên `Suzuno Kanna` của mục bên dưới.
+
+BACKLOG đọc **đúng chuỗi `ScenarioData.text[]`** mà ADV đọc, kể cả ngắt dòng
+cứng. Khung thì khác hẳn:
+
+|            | ADV                   | BACKLOG `Log_Base`        |
+|------------|-----------------------|---------------------------|
+| bề rộng    | 1280                  | **1210**                  |
+| cỡ chữ     | 42, **tự thu tới 28** | 42, **`autoSize = 0`**    |
+| chiều cao  | khung co theo cỡ chữ  | hàng **1556×336 cố định**, `VerticalLayoutGroup.childControlHeight = 0` |
+| tràn       | —                     | `overflowMode = Overflow` → **không cắt, vẽ đè hàng dưới** |
+
+Hẹp hơn 70 px nên dòng vốn đã vừa ADV bị ngắt lại; không tự thu chữ nên không có
+gì bù. Bản Nhật không lộ vì nó ngắt cứng sẵn cho vừa — 66.543 dòng cứng, chỉ
+**54 tin nhắn (0,14%)** vượt 3 dòng. Bản Việt vượt **4.323 (10,9%)**, dài nhất 8
+dòng.
+
+**Bỏ ngắt dòng cứng không cứu được:** đo thử thì chỉ còn 3.185 (8,05%) — gỡ được
+26%. Vì 64% số ca tràn **vốn không có ngắt cứng nào**, chúng chỉ là câu dài. Mà
+sửa `text[]` thì đổi luôn ADV. Nên đường đó bị loại ở cả hai đầu.
+
+### Chỗ trống vốn đã có sẵn
+
+Ô `BackMessage_TMP` khai `1210×50` nhưng thật ra đang vẽ tràn ra ngoài ô đó —
+`overflowMode = Overflow` che chuyện ấy, nên con số 50 là hư cấu. Chỗ thật:
+
+```
+mép trên chữ  y = +45          (ô 50 px, pivot dọc 0,50, pos y = +20)
+đáy hàng      y = -168         (Log_Base 1556×336)
+              ---------
+              213 px
+```
+
+Đo lại trên ảnh máy thật: từ mép trên mực dòng 1 (y=479) xuống đáy khung trắng
+(y=706) là **227 px** — mô hình chặt hơn thực tế 14 px, giữ 213 cho an toàn.
+Bề rộng thì khớp 1:1: dòng dài nhất trong ảnh đo được **1205 px mực** trong khung
+1210. Bước dòng đo giữa hai dòng đầy = **66,5 px**, mô hình tính 67,2.
+
+Bản vá chỉ **khai đúng** phần chỗ chữ vốn đã chiếm rồi bật tự thu chữ như ADV.
+Pivot dọc 0,50 nên phải dời tâm xuống để giữ nguyên mép trên: `y = top − h/2`.
+
+| template | rect cũ | rect mới | tự thu | tràn trước → sau |
+|---|---|---|---|---|
+| `Log_Base` | 1210×50 @(−781, +20) | **1210×213 @(−781, −61,5)** | 42→28 | 4.323 (10,92%) → **0** |
+| `Log_Base_Chat` | 1210×50 @(−720, −9) | **1210×184 @(−720, −76)** | 40→26 | 101 (8,46%) → **0** |
+
+89% tin nhắn ADV và 92% tin nhắn chat vẫn hiển thị nguyên cỡ chữ cũ; chỉ câu dài
+mới nhỏ lại. Sàn 28 của `Log_Base` lấy cho khớp sàn khung ADV; ô chat cần 27 mới
+sạch nên để 26, chừa biên cho sai số ~1% của mô hình.
+
+`Log_Base_Chat_Select` và `Log_Base_SELECT` khai sẵn 1220×280 — đủ chỗ, không đụng.
+
+```powershell
+python tools\fix_backlog_autosize.py            # đo, so trước/sau
+python tools\fix_backlog_autosize.py --check    # thoát 1 nếu chưa vá
+python tools\fix_backlog_autosize.py --apply
+```
+
+Đã chạy 29/08/2026, backup `_backup\ui_jp.prebacklogautosize`. Kiểm sau khi ghi:
+7.937 object (không đổi), **đúng 4 object đổi nội dung** — 2 `RectTransform` +
+2 `MonoBehaviour` nhắm tới; **707 Sprite / 122 Texture2D / 23 Material giống hệt
+từng byte**, tức không dính bẫy tight-mesh của lần vá atlas.
+
+Không đụng một chữ nào của bản dịch: `ScenarioData`, `GenebarkChatMainData` và
+khung ADV giữ nguyên tuyệt đối.
+
+
+## BACKLOG ngắt dòng khác ADV (`fix_backlog_adv_scale.py`)
+
+Phần còn lại của mục trên. Bản vá `fix_backlog_autosize.py` chống *tràn đè hàng
+dưới*; nó cố ý không đụng chuyện **ngắt lại**. Ảnh máy thật
+`_2026-08-29_23-12-50.png`, hàng `Áo đen`, cho thấy phần còn lại đó:
+
+```
+Đã hết 30 phút. Thời gian thảo luận kết thúc
+tại
+đây.
+```
+
+Đo mực dòng 1 trên ảnh: x 169 → 1301 = **1133 px**. Thêm ` tại` là **1213 px**, ô
+backlog rộng **1210** ⇒ hụt **3 px** nên `tại` rơi xuống, còn `đây.` vốn là ngắt
+cứng của bản dịch nên thành dòng ba.
+
+### Cùng font, chỉ khác bề rộng khung
+
+| | khung nguồn | BACKLOG |
+|---|---|---|
+| `Log_Base` ← ADV `Message/Text` | 1280×186, cỡ 42 | 1210×213, cỡ 42 |
+| `Log_Base_Chat` ← `genebark` `Message_TMP` | 1210×80, cỡ **32**, `charSpacing` **5** | 1210×184, cỡ **40**, `charSpacing` **8.5** |
+
+Asset khai hai font khác nhau (`iroha21popura` cho backlog, `adv_layout` ghi
+`NewRodinProN-DB` cho ADV) nhưng **trên màn hình chữ Việt là một font**. Bằng
+chứng, đo tỉ lệ bất biến theo cỡ chữ `bề ngang "Se" / cao chữ "S"`:
+
+```
+ADV      _2026-08-29_15-47-23.png  "Sekigawa"   1,765
+BACKLOG  _2026-08-29_23-14-19.png  "Selector"   1,759     lệch 0,3%
+```
+
+Cả hai font asset đều **Dynamic** nên glyph chữ Việt nạp lúc chạy từ cùng một font
+dự phòng — `level10` không có type tree nên không đọc thẳng được font của ADV, và
+đây là cách kiểm rẻ nhất. (Một bản nháp của mục này từng kết luận hai font khác
+nhau, lệch bề ngang 12,7%, dựa vào bảng advance của hai file font — sai, vì bảng
+đó không phải thứ máy đang vẽ.)
+
+Hệ quả: chỉ bề rộng khung là khác, nên tiêu chí thành phép chia.
+
+### Con số
+
+`42 × 1210/1280 = 39,7` ⇒ lấy **39,5**. Mọi dòng vừa khung ADV chắc chắn vừa khung
+backlog vì `39,5/42 × 1280 = 1204 px < 1210`, dư 6 px biên.
+
+Ca trong ảnh: dòng `「Đã hết 30 phút. …kết thúc tại` ở cỡ 42 đo được **1213 px**
+(quá ô 1210 đúng 3 px ⇒ rớt chữ), ở 39,5 còn **1141 px**. Trên toàn bộ
+`ScenarioData` có **1.437 tin nhắn** mang dòng lọt khoảng 1210–1280 px — đúng nhóm
+bị backlog ngắt lại.
+
+### Chat: backlog vẽ to hơn màn chat 25% — CHỐT GIỮ NGUYÊN 40
+
+> **Quyết định 30/08/2026.** Bản vá cỡ 32 đã ghi rồi **hoàn tác**; người dùng chốt giữ
+> nguyên cỡ 40 của nhà phát triển, chấp nhận **45/457 dòng** chat trong backlog ngắt khác
+> màn chat. `fix_backlog_adv_scale.py` nay ghim ô chat ở 40 / 40 / 8,5 để không ai vá lại
+> nhầm. Số đo dưới đây giữ lại làm căn cứ nếu sau này muốn xét lại:
+> cỡ 40 → 45 dòng gãy · 38 → 32 · 36 → 20 · 34 → 12 · 32 → 0.
+>
+> Hai hướng thay thế đã loại: **áp cỡ 40 cho cả màn chat** làm 72/457 dòng gãy ngay ở màn
+> đọc chính và ô chữ cao 80 px chỉ chứa nổi 1,4 dòng ở cỡ 40 (tràn khung); **nới ô backlog**
+> bất khả vì dòng rộng nhất ở cỡ 40 là 1502 px trong khi ô chỉ nới tới ~1210 là đụng nhãn
+> `CHAT` dọc. Còn "làm TMP riêng cho backlog" thì vốn đã riêng sẵn: `BackMessage_TMP` của
+> `Log_Base_Chat` là object khác hẳn `Message_TMP` của màn chat, chỉ chung font asset.
+
+Cùng bề rộng ô 1210, nên chỉ cần vẽ đúng cỡ của khung chat. Trước bản vá nó vẽ
+cỡ 40 trong khi màn chat vẽ cỡ 32 — đo chiều cao chữ hoa trên hai ảnh thật:
+
+```
+BACKLOG  _2026-08-29_22-49-21.png  chữ "A"  cao 30 px
+CHAT     _2026-08-28_13-17-14.png  chữ "K"  cao 24 px      tỉ lệ 1,250 = 40/32
+```
+
+Nên cùng một câu mà hai màn ngắt dòng khác chỗ. Trong **289 tin nhắn chat của
+`ScenarioData`**, số tin có dòng vượt ô 1210: **90/289 ở cỡ 40** so với **50/289 ở
+cỡ 32**. 50 tin kia dài thật, màn chat cũng ngắt — nhưng nay ngắt đúng cùng chỗ.
+Ví dụ `Sợ bị hack lắm nên cậu cứ sao lưu dữ liệu cho chắc ăn nhé`: 1240 px ở cỡ 40
+(rớt chữ) → 992 px ở cỡ 32 (một dòng, y màn chat).
+
+> **Đính chính nguồn dữ liệu.** Bản đầu của mục này đo `GenebarkChatMainData` (1194
+> tin của app Genebark) và ghi "301/1194 → 0". Sai tập: dòng chat trong BACKLOG đến
+> từ các khối `[chat start]` của `ScenarioData`, không phải timeline của app — kiểm
+> bằng chính file save (`m_backLogData.name = "Suzuno@Sz_36iii"`, text khớp
+> `ScenarioData`). Widget hiển thị thì đúng là một: `genebark.prefab` ›
+> `Message_TMP` 1210×80, cỡ 32, spacing 5.
+
+`characterSpacing` 8,5 → 5,0 đi kèm cho khớp khung chat. Đo mực dòng `Anh đã liên
+lạc được với Himejima chưa ạ?` trong ảnh backlog: **899 px**, model ở 40/spacing-5
+cho 910 px còn ở 40/spacing-8,5 cho 1007 px ⇒ máy vốn đã vẽ như spacing 5; đổi số
+này chỉ để asset khớp thực tế.
+
+```
+Log_Base       m_fontSize 42 -> 39.5   m_fontSizeMax 42 -> 39.5   sàn 28 giữ
+Log_Base_Chat  m_fontSize 40 -> 32     m_fontSizeMax 40 -> 32     charSpacing 8.5 -> 5.0
+```
+
+`m_enableAutoSizing = 1` nghĩa là TMP lấy **cỡ lớn nhất còn vừa khung**, nên phải
+hạ `m_fontSizeMax` cùng lúc — chỉ đổi `m_fontSize` thì nó phóng về cũ ngay.
+
+### Vì sao KHÔNG đụng chiều cao ô
+
+Bản đầu của tool thu ô `Log_Base` còn `186 × 0,945 = 176` px cho "khớp tỉ lệ ADV",
+đã ghi rồi lùi lại. Vô ích: chiều cao không quyết định chỗ ngắt dòng, chỉ quyết
+định khi nào TMP thu chữ. Kiểm trên
+39.574 tin nhắn: cả 213 lẫn 176 đều ra 0 tin tràn và **cùng 1.169 tin (3,0%) phải
+thu chữ** — khác nhau chỉ ở chỗ ô 176 thu sâu tới ~30 còn ô 213 dừng ở ~36,5. Giữ
+**213** của `fix_backlog_autosize.py`: chữ to hơn, và hình học chỉ do một tool
+nắm.
+
+```powershell
+python tools\fix_backlog_adv_scale.py            # đo, so trước/sau
+python tools\fix_backlog_adv_scale.py --check    # thoát 1 nếu chưa vá
+python tools\fix_backlog_adv_scale.py --apply
+```
+
+Đã chạy 29/08/2026, backup `_backup\ui_jp.prebacklogadvscale`. So với bản
+`fix_backlog_autosize`: **đúng 2 MonoBehaviour đổi**, rect y nguyên vẹn, và bản vá
+`Choice` (ô 240 px + NoWrap) còn nguyên.
+
+> **Hai tool giẫm chân nhau.** `fix_backlog_autosize.py --apply` dựng số từ
+> `TARGETS` của chính nó nên sẽ ghi lại cỡ 42/40 và **xoá bản vá này**. Thứ tự
+> đúng: chạy nó trước, rồi mới `fix_backlog_adv_scale.py --apply`. `--check` của
+> nó từ nay báo "CHƯA VÁ" vì cỡ chữ không còn khớp hằng số của nó — bình thường,
+> đừng chạy `--apply` để "chữa".
+
+## Màn PASSWORD thủng chữ (`fix_password_mesh.py`)
+
+Ảnh chụp 06/08/2026 cho thấy dòng nhắc của popup PASSWORD ở màn Title hiện ra là
+
+```
+×N Ⱶ ÁY | HẬP N IT KHẨU          (đúng ra: XIN HÃY NHẬP MẬT KHẨU)
+```
+
+Không phải lỗi font, không phải chuỗi sai: **tranh đúng, lưới sai**. Toàn bộ màn
+này là art trong atlas `sactx-0-1024x2048-ASTC 4x4-PassWord-289d7772` của
+`sharedassets16.assets`; bản mod đã vẽ lại tiếng Việt (01/08/2026) nhưng để nguyên
+tight-mesh ôm sát nét chữ Nhật gốc, nên nét mới nằm ngoài đường viền cũ bị xén.
+Đúng bẫy của màn ARCHIVE và MUSIC.
+
+Năm sprite bị xén, tổng **40.743 px nét**:
+
+| sprite | nội dung | đỉnh | px mất |
+|---|---|---|---|
+| `UL_pass_b_frame_acce` | 3 dòng báo xác thực **thất bại** | 159 | 27.407 |
+| `UL_pass_c_frame_acce` | 3 dòng báo xác thực **thành công** | 154 | 6.373 |
+| `UL_pass_c_frame_acce2` | thành công + không có quyền | 152 | 3.405 |
+| `UL_pass_a_frame_moji` | dòng nhắc `パスワードを入力してください` | 108 | 2.290 |
+| `UL_pass_b_frame_acce2` | thất bại, bản 2 dòng | 128 | 1.268 |
+
+`UL_pass_a_button_ok` (Ⓐ 決定 → XÁC NHẬN) và 4 sprite khung chỉ có 4–68 đỉnh phủ
+kín ô nên không sao — trong ảnh chụp nút vẫn hiện đủ chữ, chính chỗ đó làm tưởng
+lỗi nằm ở font.
+
+```powershell
+python tools\fix_password_mesh.py            # soi + xuất PNG mô phỏng game vẽ ra
+python tools\fix_password_mesh.py --check    # thoát 1 nếu còn sprite bị xén
+python tools\fix_password_mesh.py --apply
+```
+
+Đã chạy 30/08/2026, backup `_backup\sharedassets16.assets.premeshfix`. Script
+**không đụng texture** — 2.097.152 byte ASTC giữ nguyên từng byte, 10/10 sprite
+crop ra ảnh y hệt, chỉ `m_RD` của 5 sprite đổi thành quad 4 đỉnh. File 2.142.712 →
+2.122.008 byte.
+
+> **Cách tìm ra màn này nhanh hơn nhiều.** Danh sách scene nằm ngay trong
+> `globalgamemanagers` — grep `Assets/Scene/*.unity` ra 25 đường dẫn, thứ tự đúng
+> bằng `level0..level24`. `Title` là **level16** ⇒ `sharedassets16.assets`, mà file
+> đó chỉ có 13 object và tên sprite là `UL_pass_*`. Trước khi biết mẹo đó đã quét
+> hết `ui_jp` (2.422 object), `resources.assets`, `global-metadata.dat` và mọi
+> bundle `StreamingAssets` mà không ra chuỗi nào — vì làm gì có chuỗi.
+
+> **Mô phỏng được đúng cái game vẽ, không cần chạy game.** Rasterise `m_IndexBuffer`
+> lên toạ độ pixel của ô (`x*p2u + m_Rect.w*pivot.x − textureRectOffset.x`) rồi nhân
+> vào alpha: ảnh ra khớp ảnh chụp Ryujinx từng nét. `Sprite.image` của UnityPy
+> **không** đi qua mesh nên nhìn vẫn lành lặn — đừng dùng nó để nghiệm thu.
+> `audit()` chạy trên bản gốc 1.0.2 cho 0 px mất ở cả 10 sprite: đó là mốc đối chứng.
+
+## Dòng "đang kiểm tra quyền truy cập" sai thì (`fix_password_access_line.py`)
+
+Thẻ báo xác thực **thành công** (`UL_pass_c_frame_acce`) dịch lệch nghĩa một dòng:
+
+```
+JP    アクセス権を確認しました。          (đã xác nhận xong)
+cũ    ĐANG KIỂM TRA QUYỀN TRUY CẬP…      (đang diễn ra)
+mới   ĐÃ XÁC NHẬN QUYỀN TRUY CẬP.
+```
+
+Hai dòng còn lại của thẻ dịch đúng, và `UL_pass_c_frame_acce2` (「アクセス権があり
+ません。」→ BẠN KHÔNG CÓ QUYỀN TRUY CẬP) cũng đúng — chỉ một dòng này sai.
+
+### Font vẽ tranh mod KHÔNG có trên máy — nên cắt dán, đừng render
+
+Quét 383 font (`C:\Windows\Fonts`, font người dùng, 7 font `Font` nhúng trong bundle)
+chống lại chữ `TRUY` và bốn chữ cái rời `N Q G C`: IoU cao nhất **0,78** và **0,76**.
+Khớp thật thì phải > 0,95, nên không font nào trong số đó là font đã dùng. Đặc điểm
+để nhận: gần đơn cách — bước chữ **21 px** (riêng `M` 28, `I` và `.` khoảng 7), chữ
+`A` **đỉnh phẳng**, `Q` đuôi thẳng, họ vuông kiểu Eurostile/Microgramma.
+
+Vậy nên script không vẽ chữ mới mà **cắt chính nét chữ đã có trong cùng tấm tranh**
+rồi xếp lại. Cả ba dòng của thẻ cộng lại đủ mọi chữ cần, trừ đúng một dấu ngã.
+
+| cụm | nguồn | x |
+|---|---|---|
+| `ĐA` | dòng 2, `ĐANG` | 117–159 |
+| `XÁC` | dòng 1 | 115–175 |
+| `NHẬN` | dòng 1 | 191–272 |
+| `QUYỀN` | dòng 2 | 378–476 |
+| `TRUY` | dòng 2 | 491–572 |
+| `CẬP.` | dòng 2, `CẬP…` cắt tới **dấu chấm đầu tiên** của dấu ba chấm | 588–655 |
+
+Dấu ngã lấy từ `UL_pass_a_frame_moji` (`XIN HÃY…`) — cùng font nhưng cao chữ hoa 22 px
+thay vì 27, nên phải phóng 27/22.
+
+### Ba số đo phải lấy đúng, nếu không lòi đuôi
+
+- **Lề cắt phải của `ĐA` chỉ được 1 px.** `N` của `ĐANG` bắt đầu ngay ở x=162 trong khi
+  `A` kết thúc ở 159. Lấy lề 6 px như các cụm khác thì cạnh trái chữ `N` đi theo, và
+  dòng hiện ra là `ĐÃI XÁC NHẬN…`. Các cụm khác cách nhau 14–16 px nên lề 6 px an toàn.
+- **Khe giữa hai từ 15 hay 16 px là tuỳ cặp chữ**, không phải một hằng số: đo trên cả
+  ba dòng gốc thì `N→T` và `M→T` ra 15, còn `C→N`, `A→Q`, `Y→C` ra 16. Script khai
+  đúng cặp mình dùng.
+- **Dải xoá y 198–252.** Đúng hai hàng 198 và 252 có alpha < 8 trên toàn chiều ngang;
+  script assert điều đó trước khi xoá, vì lệch một hàng là cụt dấu của dòng 1 hoặc 3.
+
+Tâm dòng x=393 (đo được ở cả ba dòng gốc), đỉnh chữ hoa y=216, dòng 1 phải dời xuống
+54 px khi dán sang chỗ dòng 2. Bề ngang mực 553 → 514 px.
+
+### Phóng chữ thì phải tách hai lớp
+
+Alpha của atlas này **không phải** mặt nạ chữ: nó là **chữ trắng + viền đen**, béo gấp
+đôi. Mực nhìn thấy là `RGB × alpha` (nền trong suốt lại có RGB **trắng**, do alpha
+bleed). Cho nên:
+
+- soi bố cục thì đo trên `RGB × alpha`, đừng đo trên alpha (đo nhầm thì cao chữ hoa ra
+  33 px thay vì 27, và các chữ trong một từ "dính" vào nhau);
+- phóng dấu ngã thì phóng **riêng** lớp mực và lớp alpha, mỗi lớp kéo tương phản quanh
+  0,5 (hệ số 3,0) cho mép co lại còn ~1 px, rồi dựng lại `RGB = mực / alpha`. Phóng
+  thẳng RGBA bằng Lanczos cho ra dấu ngã nhoè hẳn so với dấu sắc bên cạnh.
+
+```powershell
+python tools\fix_password_access_line.py            # xuất PNG so trước/sau
+python tools\fix_password_access_line.py --check    # thoát 1 nếu chưa vá
+python tools\fix_password_access_line.py --apply
+```
+
+Đã chạy 30/08/2026, backup `_backup\sharedassets16.assets.preaccessline`. Ghi texture
+nên atlas bị mã hoá ASTC lại một lượt: chín sprite không sửa đo được **PSNR 64,7–89,7 dB**
+(một cái `inf` vì không đổi byte nào) — script in bảng này sau mỗi lần `--apply`, coi
+như biên nhận.

@@ -261,14 +261,35 @@ def novel_flags(t):
 
 
 def adv_messages(data):
-    """(ti, sid, j) cho tin nhắn vẽ ở ô thoại ADV — bỏ chế độ novel."""
+    """(ti, sid, j) cho tin nhắn vẽ ở ô thoại ADV — bỏ chế độ novel **và bỏ tin chat**.
+
+    Chốt `@` thêm 30/08/2026. Tin nhắn chat có bảng tên dạng tài khoản
+    (`【Kai Munakata@k_munakata2150】`) **không vẽ ở ô thoại ADV** mà ở widget chat của
+    `genebark.prefab` — cảnh ADV dựng lại giao diện chat trong lúc kể chuyện. Hai widget
+    khác cả font lẫn cỡ, nên đo chúng bằng số đo của ô thoại là sai hẳn:
+
+    | model | tỉ lệ model/đo trên ảnh `_2026-08-30_01-36-35.png` |
+    |---|---|
+    | chat — `FOT-DNPShueiMGoStd-B`, cỡ 32, spacing 5 | **1,002** |
+    | ô thoại ADV — `FOT-NewRodinProN-DB`, cỡ 42 (tool này) | **1,595** |
+
+    Tức tool này tính 289 ô chat **rộng gấp ~1,6 lần thực tế**. Trước khi có chốt, `--check`
+    vẫn PASS — nhưng chỉ vì các dòng ấy tình cờ đủ ngắn, không phải vì đúng; một ô chạm cap
+    là `--apply` ngắt lại bằng số đo sai.
+
+    Chủ sở hữu của mấy ô đó là `tools\\fix_chat_wrap.py` (luật dấu câu + lề 1205 px của
+    widget chat). `tools\\fix_jp_sentence_break.py` đã có sẵn đúng chốt này.
+    """
     out = []
     for ti, t in enumerate(data["target"]):
         flags, LL, SL = novel_flags(t), t["loadLine"], t["scriptText_Line"]
+        names = t.get("talkName") or []
         for j, s in enumerate(t["text"]):
             if not s.strip():
                 continue
             if j < len(LL) and LL[j] < len(SL) and flags[LL[j]]:
+                continue
+            if j < len(names) and "@" in (names[j] or ""):
                 continue
             out.append((ti, t["scenarioID"], j))
     return out
