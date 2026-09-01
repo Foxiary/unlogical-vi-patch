@@ -37,6 +37,7 @@ IPS = "exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips"
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
 BUILD = "--build" in sys.argv or "--publish" in sys.argv
+REDO = "--redo" in sys.argv        # ghi đè một bản ĐÃ phát hành
 PUBLISH = "--publish" in sys.argv
 NOTES_FILE = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--notes-file=")), None)
 if not args or not re.fullmatch(r"v\d+\.\d+(\.\d+)?", args[0]):
@@ -91,8 +92,16 @@ def check():
 
     tags = git("tag", "--list").split()
     print("  tag đã có: %s" % ", ".join(tags))
+    if VER in tags and not REDO:
+        raise SystemExit("tag %s đã tồn tại (thêm --redo nếu CỐ Ý ghi đè bản đã phát hành)"
+                         % VER)
     if VER in tags:
-        raise SystemExit("tag %s đã tồn tại" % VER)
+        # GHI ĐÈ một bản đã phát hành. Chỉ dùng khi người dùng chốt rõ; mặc định là sai
+        # vì ai tải trước đó sẽ có bản khác hẳn mà tên tag không đổi, không cách nào
+        # phân biệt. Người quyết định, không phải script.
+        print("  !! --redo: tag %s ĐÃ PHÁT HÀNH, sẽ ghi đè" % VER)
+        print("     tag đang trỏ %s, sẽ chuyển sang %s"
+              % (git("rev-parse", "--short", VER), git("rev-parse", "--short", "HEAD")))
 
     readme = open(os.path.join(CLONE, "README.md"), encoding="utf-8").read()
     want = "unlogical-vi-patch-%s-romfs.zip" % VER
