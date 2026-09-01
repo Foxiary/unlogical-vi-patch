@@ -65,6 +65,23 @@ corrections that only a real capture could give: the ADV box **does not draw `�
 the model reproduces only with the brackets excluded), and accumulating word widths
 one at a time silently drops the space's own characterSpacing (~4.5 px per word).
 
+### `characterSpacing` is a percentage of `fontSize`, so it ports across sizes
+
+Because the term is `characterSpacing × fontSize/100`, the field **is** the spacing
+expressed as a percent of the font size. Two components at different `m_fontSize` read
+as equally tight at the same value, so copying one screen's spacing onto another needs
+no conversion — write the same number.
+
+The three TERMINAL tabs shipped inconsistent: RULE draws its body at **−9.8** while
+HOME's Information list and CONTROL's Request / Caption boxes sat at **0**, all of them
+in the same font (`FOT-iroha21popuraStdN-R`, pointSize 58). Measured on real captures
+via the word `Stage`, which occurs on both screens — left edge of `S` to left edge of
+`e`, four steps: HOME **77 px** at font 31, RULE **69 px** at font 33. RULE's font is
+6.45% larger and its word is still 7 px narrower; the model predicts
+`77 × 33/31 − 4 × 9.8 × 0.33 = 69.03`. `tools/fix_terminal_char_spacing.py` brings the
+nine HOME / CONTROL components to −9.8 and skips the two `Infomation_Mask` components,
+whose parent is `m_IsActive = False`.
+
 ### Wrap to the *pixel* budget, not a character count
 
 The chapter synopses were wrapped at 18 characters — matching the Japanese,

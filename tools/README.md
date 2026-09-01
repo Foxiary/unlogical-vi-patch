@@ -3910,3 +3910,55 @@ danh sách `id` không đổi, và số mục đổi chữ phải đúng bằng 
 Ghi xong đọc lại từ đĩa.
 
     python tools\fix_item_name_case.py [--apply|--check]
+
+## Ba tab TERMINAL giãn chữ khác nhau (`fix_terminal_char_spacing.py`)
+
+`python tools\fix_terminal_char_spacing.py [--apply|--check]` — đặt
+`m_characterSpacing = −9.8` cho **9** ô chữ trong `ui_jp`, lấy tab RULE làm chuẩn.
+
+Ảnh chụp máy thật `_2026-09-02_00-42-11.png` (HOME), `_..._00-44-48.png` (RULE),
+`_..._00-45-17.png` (CONTROL): cả ba tab cùng vẽ bằng `FOT-iroha21popuraStdN-R`
+(pointSize 58, pid -7493831502989913688) mà thân bài HOME và CONTROL rời rạc hơn
+RULE rõ rệt. Bản gốc để lệch nhau:
+
+| tab                         | component                                  |    cs | cỡ chữ | giãn thực |
+|-----------------------------|--------------------------------------------|-------|--------|-----------|
+| RULE — thân bài             | `Terminal_Rule_Item/Text (TMP)`            | −9,80 |     33 | −3,23 px  |
+| RULE — ruy-băng tiêu đề     | `RuleText/TitleText/Text (TMP)`            | −8,00 |     33 | −2,64 px  |
+| HOME — list Information     | `Terminal_Home_Item/Text (TMP)` ×7         |  0,00 |     31 |  0,00 px  |
+| CONTROL — Request / Caption | `Request_Mask` / `Caption_Mask`             |  0,00 |     31 |  0,00 px  |
+
+### `cs` chính là phần trăm cỡ chữ, nên khỏi quy đổi
+
+Vì số hạng là `cs × fontSize/100` (xem `docs/02`), trị số `cs` đã là khoảng giãn
+tính theo phần trăm cỡ chữ. Hai ô khác cỡ chữ mà cùng `cs` thì **chặt như nhau
+theo tỉ lệ** — bê nguyên −9,8 sang cỡ 31 là đúng, không phải đổi thành −10,4 để
+khớp px. Ở cỡ 31 ra −3,04 px mỗi khoảng.
+
+### Đo trên ảnh, không suy luận
+
+Lấy chữ `Stage` có mặt ở cả hai màn (không dấu, không dấu câu), đo cạnh trái từng
+chữ cái — tức 4 bước chữ từ mép trái `S` sang mép trái `e`:
+
+```
+HOME  (fs 31, cs 0)    S→t 22  t→a 16  a→g 19  g→e 20   tổng 77   bề rộng mực 92
+RULE  (fs 33, cs −9,8) S→t 20  t→a 13  a→g 18  g→e 18   tổng 69   bề rộng mực 85
+```
+
+Mô hình dự đoán RULE `77 × 33/31 − 4 × 9,8 × 0,33 = 69,03`, đo được **69**. Font
+RULE to hơn 6,45% mà chữ vẫn hẹp hơn 7 px — toàn bộ là do −9,8.
+
+### Hai ô cố tình bỏ qua
+
+`Infomation_Mask/InfoText (TMP)` (cs 0) và `... InfoText (TMP) _old` (cs 2,2) đều
+nằm dưới `Infomation_Mask` có `m_IsActive = False`, không vẽ ra màn nào.
+
+Chỉ sửa `characterSpacing`; bề rộng khung, cỡ chữ, `wrap` và auto-size giữ nguyên.
+Chặt hơn thì dòng chỉ ngắn lại nên không có nguy cơ tràn: 7 ô HOME `autoSize = 0`
+khung căng theo cha, 2 ô CONTROL `autoSize = 1` khoảng [18, 31] nên càng dễ giữ
+cỡ 31.
+
+Diff nhị phân so với `_backup\ui_jp.precharspacing`: **đúng 9 object đổi**, cả 9
+là MonoBehaviour và giữ nguyên độ dài byte (740/740, 724, 536 — chỉ thay một
+float tại chỗ); 7937 object, bảng loại object không đổi. `manifest.json` cập nhật
+cùng lượt: 51 927 032 → 51 927 076 byte.

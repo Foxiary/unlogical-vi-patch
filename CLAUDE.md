@@ -75,7 +75,7 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 |---|---|---|
 | `StreamingAssets/scenario/scenario01` | 8.7 | 23 of 145 TextAssets: `ScenarioData` (story) + 22 chapter scripts (tag arguments) |
 | `StreamingAssets/json/json` | 0.1 | 16 of 36 TextAssets — Terminal / Dictionary / Genebark tables |
-| `StreamingAssets/ui/ui_jp` | 51.9 | 5 fonts · 3 TMP components (`NewsText01/02`, `NoteText01`) · backlog + section key sprites · `g` and `Section` atlases |
+| `StreamingAssets/ui/ui_jp` | 51.9 | 5 fonts · 29 TMP components (auto-sizing on `NewsText01/02`, `NoteText01` and the backlog rows; `characterSpacing` on the 10 Q&A buttons and the 9 TERMINAL HOME / CONTROL text boxes) · backlog + section key sprites · `g` and `Section` atlases |
 | `StreamingAssets/scene/scene_jp` | 4.2 | Name-Entry atlas · 1 font |
 | `StreamingAssets/anim/anim01` | 28.3 | **font only** (`FOT-NewRodinProN-M`) — no animation data |
 | `StreamingAssets/movie/movie_jp_02` | 104.6 | the `prologue` clip, replaced wholesale — see below |
