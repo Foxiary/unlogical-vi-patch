@@ -137,7 +137,10 @@ LIMIT = 1220.0
 # đã ghi không phải làm lại.
 # LƯU Ý: người chơi tự đặt tên được, tên dài hơn `Kanna` sẽ nới các dòng này ra thêm —
 # 1146 px chừa được 59 px, tức khoảng 3 ký tự Latin nữa.
-DEFAULT_PLAYER_NAME = "Kanna"
+# Cận trên, không phải tên mặc định: ô nhập tên cho tối đa 6 ký tự Latin và `W`
+# là glyph rộng nhất, nên `WWWWWW` mới là bề rộng xấu nhất một dòng có thể đạt.
+from adv_layout import PLAYER_MEASURE   # noqa: E402
+DEFAULT_PLAYER_NAME = PLAYER_MEASURE
 
 TAG = re.compile(r"\[[^\[\]\n]*\]")
 # Dấu câu + khoảng trắng.  Đòi có khoảng trắng phía sau nên `16h`, `1.5` không bị tách.
@@ -217,6 +220,36 @@ def split_punct(s):
     def back(x):
         return re.sub(MASK + r"(\d+)" + MASK, lambda m: tags[int(m.group(1))], x)
 
+    # DẤU LỬNG MỞ ĐẦU TIN NHẮN ĐỨNG RIÊNG MỘT DÒNG — chốt 02/09/2026, cố ý NGƯỢC với
+    # bản Nhật. Đừng lật lại chỉ vì đếm được số liệu bên dưới; nó đã được đếm rồi.
+    #
+    #     ô chat bản Nhật mở đầu `…` rồi XUỐNG DÒNG :  0
+    #     ô chat bản Nhật mở đầu `…` rồi viết liền  : 21
+    #
+    # Bản Nhật viết dính 21/21, nhưng đây là widget CHAT: nhắn tin thì dấu lửng mở
+    # đầu là một nhịp riêng, gõ xong mới gõ tiếp. Cách canh dòng của bản Nhật chỉ là
+    # canh cho vừa khung của họ — 843/926 chỗ ngắt của bản Việt cũ (bắt chước cách đó)
+    # nằm GIỮA mệnh đề, xem đầu file.
+    #
+    # Luật này từng bị gỡ ra rồi đặt lại ba lần. Lần cuối gỡ là vì nó chỉ áp được cho
+    # asset chat, còn ô ADV dẫn xuất thì `fix_chat_use_genebark` ghi phẳng nên hai màn
+    # hiện khác nhau. Nay `fix_chat_wrap --only=adv` đã nằm trong chuỗi sau merge và
+    # `fix_jp_sentence_break.unplan()` đã bị bỏ, nên cả hai màn cùng nhận luật này —
+    # 231/231 ô ADV dẫn xuất khớp từng dòng với ô Genebark.
+    #
+    # `SENT` không tự làm được: nó đòi có khoảng TRẮNG sau dấu câu, mà `...Xong rồi
+    # nhé` thì không có. Nên tách tay ở đây.
+    #
+    # Lookahead phải loại CẢ dấu chấm. `(?=\S)` cho phép regex lùi lại để thoả điều
+    # kiện: `............ Em` khớp 11 chấm rồi thấy chấm thứ 12 cũng là `\S` — ra
+    # `...........⏎.⏎Em`. Đòi ký tự sau không phải chấm thì cụm dấu lửng lấy trọn, và
+    # ô vốn đã có khoảng trắng sau dấu lửng thì để `SENT` lo.
+    dau_lung = ""
+    m_lung = re.match(r"^([.…]{2,})(?=[^\s.…])", masked)
+    if m_lung:
+        dau_lung = m_lung.group(1)
+        masked = masked[len(dau_lung):]
+
     out = []
     for sent in SENT.split(masked):
         if not sent:
@@ -235,13 +268,51 @@ def split_punct(s):
                 cur = cand
         if cur:
             out.append(cur)
+    # DẤU LỬNG MỞ ĐẦU TIN NHẮN GIỮ NGUYÊN MỘT DÒNG RIÊNG — chốt 02/09/2026, và cố ý
+    # NGƯỢC với dữ liệu bản Nhật. Đừng "sửa" lại nếu chỉ dựa vào mấy con số dưới đây.
+    #
+    # `SENT` cắt sau `...`, nên `......Xin lỗi em…` ra hai dòng, dòng đầu chỉ có dấu
+    # lửng. Có 7 ô như vậy. Đo bản gốc thì thấy nó không giống người Nhật viết:
+    #
+    #     ô chat bản Nhật mở đầu `…` rồi XUỐNG DÒNG :  0
+    #     ô chat bản Nhật mở đầu `…` rồi viết liền  : 21
+    #
+    # Tôi đã nhập chúng lại một lần theo con số đó. **Người dùng bác bỏ**: nhắn tin thì
+    # người ta gõ `...` rồi xuống dòng thật, một nhịp riêng, chứ không viết liền. Đây là
+    # widget CHAT chứ không phải khung thoại — văn phong tin nhắn thắng cách canh dòng
+    # của bản Nhật, vốn chỉ là canh cho vừa khung của họ (843/926 chỗ ngắt của bản cũ
+    # nằm giữa mệnh đề, xem đầu file).
+    #
+    # Hệ quả phải chịu: `_641` trên sheet ghi liền nên `--audit-sheet` sẽ thấy lệch —
+    # đã có chốt "bỏ qua ô chỉ khác NGẮT DÒNG" bên `apply_sheet_cells.py` nuốt đúng
+    # trường hợp đó.
+    #
     # KHÔNG có tầng ba. Mệnh đề không còn dấu câu nào để cắt thì để nguyên — engine lo.
     # Chốt 30/08/2026: ngắt cứng chỉ được đặt ở dấu câu; ngắt ở khoảng trắng là ngắt giữa
     # mệnh đề, tức đúng cái lỗi mà cả đợt này sinh ra để sửa. Đánh đổi đã biết: 79 dòng
     # như vậy sẽ do TMP ngắt ở bề rộng của nó ([1269, 1342) canvas px), tức quá lề 1205
     # từ 12 đến 136 px. Muốn engine ngắt ĐÚNG lề thì phải thu `Message_TMP` lại, không
     # phải ngắt cứng thêm — xem docstring đầu file.
+    if dau_lung:
+        out.insert(0, dau_lung)
     return [back(x) for x in out]
+
+
+def cung_chu(a, b):
+    """Hai chuỗi CHỈ khác nhau ở chỗ đặt ngắt dòng / khoảng trắng?
+
+    `flat()` đổi `
+` thành khoảng TRẮNG, hợp lý khi ngắt dòng thay chỗ một space có
+    sẵn — nhưng luật "dấu lửng mở đầu không phải một câu" GỠ ngắt mà không trả lại
+    space (`......
+Xin lỗi` -> `......Xin lỗi`, đúng quy ước: 6271/6323 chỗ dấu lửng
+    đầu dòng trong build viết liền, không space). So bằng `flat()` thì phép gỡ đó bị
+    chốt "chữ bị đổi" chặn lại.
+
+    Tool này chỉ xê dịch khoảng trắng, không bao giờ thêm bớt ký tự khác, nên bỏ HẾT
+    khoảng trắng hai bên rồi so là đủ chặt cho chốt này.
+    """
+    return re.sub(r"[\s　]+", "", a or "") == re.sub(r"[\s　]+", "", b or "")
 
 
 def unbreakable(line):
@@ -294,7 +365,7 @@ def do_scenario():
                 continue
             stat["\u00f4 chat"] += 1
             new = "\n".join(split_punct(flat(old)))
-            assert flat(new) == flat(old), "%s/txt/%d: ch\u1eef b\u1ecb \u0111\u1ed5i" % (e["scenarioID"], i)
+            assert cung_chu(new, old), "%s/txt/%d: ch\u1eef b\u1ecb \u0111\u1ed5i" % (e["scenarioID"], i)
             if new == old:
                 stat["  \u0111\u00e3 \u0111\u00fang"] += 1
                 continue
@@ -416,7 +487,7 @@ def main():
         if not old.strip():
             continue
         new = "\n".join(split_punct(flat(old)))
-        assert flat(new) == flat(old), "data[%d]: chữ bị đổi" % k
+        assert cung_chu(new, old), "data[%d]: chữ bị đổi" % k
         for ln in new.split("\n"):
             if width(ln) > LIMIT:
                 stat["dòng còn vượt (mệnh đề không cắt được)"] += 1
@@ -517,10 +588,25 @@ def run():
     #   ScenarioData.text[]   -> cảnh ADV vẽ giao diện chat trong lúc kể chuyện
     # Chúng KHÔNG phải bản sao của nhau; ảnh 30/08 cho thấy app đã ngắt đúng trong khi
     # cảnh ADV vẫn phẳng, vì bản đầu của tool chỉ ghi asset thứ nhất.
-    print("=== 1/2  GenebarkChatMainData (app CHAT) ===")
-    rc = main()
-    print("\n=== 2/2  ScenarioData (cảnh ADV vẽ giao diện chat) ===")
-    n = do_scenario()
+    #
+    # `--only=chat` / `--only=adv` chạy riêng một vế. Cần đến nó vì nhánh ADV đang
+    # ĐÁNH NHAU với `fix_jp_sentence_break.unplan()`: tool kia trả ô chat ADV về phẳng
+    # (chốt "ô chat do fix_chat_use_genebark sở hữu"), tool này ngắt lại — cùng 47/48 ô,
+    # vòng nào chạy sau thì thắng. Chưa ai chốt bên nào đúng, nên đừng chạy cả hai vế
+    # theo quán tính; xem mục tương ứng trong tools/README.md.
+    only = ""
+    for a in sys.argv:
+        if a.startswith("--only="):
+            only = a.split("=", 1)[1]
+    rc, n = 0, 0
+    if only in ("", "chat"):
+        print("=== 1/2  GenebarkChatMainData (app CHAT) ===")
+        rc = main()
+    if only in ("", "adv"):
+        print("\n=== 2/2  ScenarioData (cảnh ADV vẽ giao diện chat) ===")
+        n = do_scenario()
+    elif only == "chat":
+        return rc
     if CHECK:
         if n:
             print("\nchạy `python tools\\fix_chat_wrap.py --apply`")

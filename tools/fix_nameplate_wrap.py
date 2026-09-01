@@ -72,6 +72,34 @@ lấy lại thì phải nghĩ chữ ngắn hơn, đừng chỉ nối lại chữ
 - `宗像 戒＆ユーリ` → `Kai＆Yuri`, bỏ họ. Các nameplate ghép khác đã dùng tên trơ
   (`Yuri＆Kai＆Soichi`, `Tobari＆Awayuki`) nên đây lại là nhất quán hơn.
 
+## Nameplate nhân vật chính: HỌ + TÊN là mặc định bắt buộc
+
+`【player】` vẽ họ + tên như bản Nhật (`涼乃環無` → `Suzuno Kanna`) và **phải giữ
+như vậy**. Chỉ khi chuỗi đó không vừa khung 500 px mới được đổi sang
+`【player_firstname】` để bỏ họ — đó là ngoại lệ vì tràn, không phải một cách viết
+thay thế được chọn tuỳ ý.
+
+Hiện có đúng ba chỗ dùng ngoại lệ, đều là plate ghép hai người:
+
+    【player＆Kai】   522 px  →  【player_firstname＆Kai】   302 px
+    【Kai＆player】   522 px  →  【Kai＆player_firstname】   302 px
+    【player＆Ran】   545 px  →  【player_firstname＆Ran】   325 px
+
+`Suzuno Kanna` một mình đã 390 px nên phần còn lại chỉ được 110, mà `＆Kai` cần
+132 — đổi dấu nối cũng không cứu được (`&` 516, `+` 505, `, ` 503).
+
+Luật này được canh **hai chiều**:
+
+- `RENAMES` ép ba chỗ trên phải ở dạng đã đổi; merge sheet trả về `player` thì
+  `--check` báo "chờ đổi" và `--apply` sửa lại.
+- `surname_required()` bắt chiều ngược: plate nào dùng `player_firstname` mà dựng
+  lại bằng `player` vẫn vừa khung thì là bỏ họ vô cớ, `--check` trả 1.
+
+9.802 plate `【player】` còn lại giữ nguyên họ + tên: 390/500 px, và ngân sách cho
+phần tên là 280,3 px nên mọi tên 6 ký tự thật đều lọt (`WILLOW` 226,3 rộng nhất
+thử được). Cận trên `Suzuno WWWWWW` 519 px chỉ được **báo**, không chặn — xem
+`worst_only()`.
+
     python tools\\fix_nameplate_wrap.py            # chạy thử / --check
     python tools\\fix_nameplate_wrap.py --apply
 """
@@ -114,11 +142,40 @@ RENAMES = [
     ("Người quen của Yuri",         "Người quen Yuri",   5, 5),
     ("Sinh viên khoa khác",         "SV khoa khác",      3, 3),
     ("Munakata Kai＆Yuri",           "Kai＆Yuri",          1, 1),
+    # Họ + tên không vừa khung 500 dù rút cách nào — `Suzuno Kanna` một mình đã
+    # 390 px, phần còn lại chỉ được 110 mà `＆Kai` cần 132 (đổi ＆→& còn 516,
+    # →+ còn 505, →", " còn 503). Nên bỏ họ, giữ tên: `player_firstname`.
+    ("player＆Kai",                  "player_firstname＆Kai", 7, 7),
+    ("Kai＆player",                  "Kai＆player_firstname", 2, 2),
+    ("player＆Ran",                  "player_firstname＆Ran", 2, 2),
 ]
 FIELDS = ("scriptText", "talkName")     # scriptText_Line là bản thô, KHÔNG đụng
 
 CHAT = re.compile(r"\[chat (start|restart|stop|end)\]")
-PLAYER_NAME = "Kanna"                   # chỉ để ước lượng bề rộng của token player
+# `【player】` vẽ HỌ + TÊN, không phải mỗi tên: ảnh máy thật trong
+# `fix_backlog_autosize` / `fix_backlog_select_label` đọc ra `Suzuno Kanna`.
+# Đo bằng `Kanna` (170,6 px) là bỏ mất cả họ, 219,7 px.
+#
+# Tên lại do người chơi đặt, tối đa 6 ký tự Latin, nên có hai mốc, dùng vào hai việc:
+#
+#     Suzuno Kanna    390,3 px  vừa   <- mặc định; CHẶN gate, vì đây là cái chắc chắn
+#                                        xảy ra với người chơi không đổi tên
+#     Suzuno WWWWWW   518,7 px  GÃY   <- cận trên; chỉ BÁO. Ngân sách cho phần tên là
+#                                        500 − 219,7 = 280,3 px và mọi tên 6 ký tự thật
+#                                        đều lọt (`WILLOW` 226,3 là rộng nhất thử được);
+#                                        chỉ tên toàn chữ rộng mới chạm. Bề rộng đó do
+#                                        người chơi gõ, không sửa được ở phía dữ liệu.
+PLAYER_NAME = adv_layout.PLAYER_SURNAME + " " + adv_layout.DEFAULT_PLAYER_NAME
+PLAYER_NAME_WORST = adv_layout.PLAYER_FULL_MEASURE
+
+# Khoá nameplate thứ hai: `【player_firstname】` vẽ MỖI TÊN RIÊNG, bỏ họ.
+# Bằng chứng: literal `player_firstname` / `player_lastname` nằm ngay cạnh
+# `player` trong `global-metadata.dat`, và `resources.assets` có đúng một
+# `【player_firstname】` đứng ở vị trí nameplate trong một script của tổ viết.
+# Dùng cho những plate mà họ + tên không vừa khung — xem bảng RENAMES.
+GIVEN_KEY = "player_firstname"
+PLAYER_GIVEN = adv_layout.DEFAULT_PLAYER_NAME
+PLAYER_GIVEN_WORST = adv_layout.PLAYER_MEASURE
 
 
 def width(s):
@@ -127,10 +184,15 @@ def width(s):
     return sum(adv_layout.glyph_advance(c) * sc + NAME_CS for c in s)
 
 
-def shown(tag):
-    """Nửa được VẼ của 【khoá/hiển thị】; không có '/' thì vẽ cả chuỗi."""
+def shown(tag, player=PLAYER_NAME, given=PLAYER_GIVEN):
+    """Nửa được VẼ của 【khoá/hiển thị】; không có '/' thì vẽ cả chuỗi.
+
+    `player_firstname` phải thay TRƯỚC `player`: nó chứa `player` làm tiền tố,
+    thay ngược thứ tự thì ra `Suzuno Kanna_firstname`.
+    """
     inner = tag.strip("【】")
-    return (inner.split("/", 1)[1] if "/" in inner else inner).replace("player", PLAYER_NAME)
+    disp = inner.split("/", 1)[1] if "/" in inner else inner
+    return disp.replace(GIVEN_KEY, given).replace("player", player)
 
 
 def in_chat(lines, line_no):
@@ -181,7 +243,12 @@ def count(doc, needle):
 
 
 def audit(doc):
-    """{nửa hiển thị: [số ô ADV, số ô chat, [chỗ…]]} cho mọi nameplate."""
+    """{tag thô 【…】: [số ô ADV, số ô chat, [chỗ…]]} cho mọi nameplate.
+
+    Khoá là tag THÔ chứ không phải chuỗi đã render: cùng một tag phải nhận dạng
+    được qua nhiều mốc tên khác nhau, nếu không `worst_only` sẽ báo trùng lại
+    đúng những tag mà `report` vừa chặn.
+    """
     out = {}
     for target in doc["target"]:
         sid = target["scenarioID"]
@@ -195,28 +262,79 @@ def audit(doc):
                 part = part.strip()
                 if not part.startswith("【"):
                     continue
-                rec = out.setdefault(shown(part), [0, 0, []])
+                rec = out.setdefault(part, [0, 0, []])
                 rec[1 if chat else 0] += 1
                 if not chat and len(rec[2]) < 6:
                     rec[2].append("%d/%d" % (sid, i))
     return out
 
 
-def report(doc, title):
+def surname_required(doc):
+    """Luật: nameplate PHẢI là họ + tên như bản Nhật, chỉ bỏ họ khi tràn khung.
+
+    Guard chiều ngược của `RENAMES`: bắt những plate đã đổi sang
+    `player_firstname` mà đáng ra không cần — nếu dựng lại bằng `player` (họ +
+    tên) vẫn vừa 500 px thì đó là bỏ họ vô cớ, phải trả về. Không có guard này
+    thì `RENAMES` chỉ ép được một chiều: thêm bao nhiêu chỗ bỏ họ cũng lọt.
+    """
+    bad = []
+    for tag, v in audit(doc).items():
+        if GIVEN_KEY not in tag or not v[0]:
+            continue
+        full = tag.replace(GIVEN_KEY, "player")
+        w = width(shown(full))
+        if w <= NAME_BOX:
+            bad.append((w, tag, v))
+    if bad:
+        print("")
+        print("  BỎ HỌ VÔ CỚ — họ + tên vẫn vừa khung %.0f px, phải trả về `player`:"
+              % NAME_BOX)
+        for w, tag, v in sorted(bad, reverse=True):
+            print("  %6.0f px  x%-4d %-34s %s"
+                  % (w, v[0], shown(tag.replace(GIVEN_KEY, "player")), ", ".join(v[2])))
+    return bad
+
+
+def report(doc, title, player=PLAYER_NAME):
     print("\n%s — khung %.0f px, cỡ chữ %.1f px" % (title, NAME_BOX, NAME_SIZE))
-    rows = sorted(((width(k), k, v) for k, v in audit(doc).items()), reverse=True)
+    given = PLAYER_GIVEN_WORST if player is PLAYER_NAME_WORST else PLAYER_GIVEN
+    rows = sorted(((width(shown(t, player, given)), t, v) for t, v in audit(doc).items()),
+                  reverse=True)
     bad = [(w, k, v) for w, k, v in rows if w > NAME_BOX and v[0]]
     if not bad:
         widest = max((r for r in rows if r[2][0]), default=None)
         print("  0 nameplate ADV vượt khung" +
-              ("  (rộng nhất: %.0f px  %s)" % (widest[0], widest[1]) if widest else ""))
-    for w, k, v in bad:
-        print("  %6.0f px  x%-4d %-34s %s" % (w, v[0], k, ", ".join(v[2])))
+              ("  (rộng nhất: %.0f px  %s)" % (widest[0], shown(widest[1], player, given)) if widest else ""))
+    for w, t, v in bad:
+        print("  %6.0f px  x%-4d %-34s %s"
+              % (w, v[0], shown(t, player, given), ", ".join(v[2])))
     skipped = [(w, k, v) for w, k, v in rows if w > NAME_BOX and not v[0] and v[1]]
     if skipped:
         print("  (bỏ qua %d tên chỉ dùng trong [chat] — widget khác: %s)"
-              % (len(skipped), ", ".join(k for _w, k, _v in skipped[:4])))
+              % (len(skipped), ", ".join(shown(t, player, given) for _w, t, _v in skipped[:4])))
     return bad
+
+
+def worst_only(doc, blocking):
+    """Nameplate chỉ tràn khi tên người chơi rộng bất thường — báo, KHÔNG chặn.
+
+    Chặn ở đây thì gate đỏ vĩnh viễn mà không có gì sửa được: bề rộng ấy do người
+    chơi gõ ra, nó không nằm trong `ScenarioData`. Cái chặn được là những nameplate
+    đã tràn sẵn ở tên mặc định — `report()` lo phần đó.
+    """
+    seen = {t for _w, t, _v in blocking}
+    rows = sorted(((width(shown(t, PLAYER_NAME_WORST, PLAYER_GIVEN_WORST)), t, v)
+                    for t, v in audit(doc).items()),
+                  reverse=True)
+    extra = [(w, t, v) for w, t, v in rows if w > NAME_BOX and v[0] and t not in seen]
+    if not extra:
+        return
+    print("")
+    print("  chỉ tràn với tên rộng bất thường (%r — cận trên 6 ký tự) — không chặn:"
+          % PLAYER_NAME_WORST)
+    for w, t, v in extra:
+        print("  %6.0f px  x%-4d %-34s %s"
+              % (w, v[0], shown(t, PLAYER_NAME_WORST, PLAYER_GIVEN_WORST), ", ".join(v[2])))
 
 
 def main():
@@ -245,16 +363,19 @@ def main():
         if co["scriptText_Line"]:
             state = "CÓ Ở BẢN THÔ — không dám sửa"
             ok = False
-        if width(new) > NAME_BOX:
+        if width(shown("【%s】" % new)) > NAME_BOX:
             state = "TÊN MỚI VẪN TRÀN"
             ok = False
         print("%-30s %6.0f   %-22s %6.0f  %s"
-              % (old, width(old), new, width(new), state))
+              % (old, width(shown("【%s】" % old)), new,
+                 width(shown("【%s】" % new)), state))
     if not ok:
         print("\ntình trạng file không như mong đợi — sheet vừa merge đè lên, hoặc bảng RENAMES sai")
         return 2
 
     before = report(doc, "SAU khi sửa" if not total else "TRƯỚC khi sửa")
+    before = before + surname_required(doc)
+    worst_only(doc, before)
     if not total:
         print("\nkhông còn gì để đổi")
         return 1 if before else 0
@@ -316,7 +437,8 @@ def main():
         if a != b:
             raise SystemExit("%s bị đổi" % field)
     print("  loadLine / selLine: nguyên vẹn")
-    report(doc2, "SAU khi sửa")
+    if report(doc2, "SAU khi sửa") or surname_required(doc2):
+        return 1
     return 0
 
 

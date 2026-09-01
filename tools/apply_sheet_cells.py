@@ -324,6 +324,19 @@ def field_get(ent, field):
     return v.get("jp", "") if isinstance(v, dict) else v
 
 
+def field_set(ent, field, val):
+    """Ghi field, giữ nguyên tầng `{"jp": …}` nếu mục vốn bọc thế."""
+    if isinstance(ent.get(field), dict):
+        ent[field]["jp"] = val
+    else:
+        ent[field] = val
+
+
+# Bản mã hoá JSON của asset dùng dấu phân cách SÍT, không có space. Phải khớp đúng thì
+# mới tìm lại được nguyên mục trong chuỗi thô — xem `json_edits`.
+JDUMP = dict(ensure_ascii=False, separators=(",", ":"))
+
+
 RULE_ID = re.compile(r"^([A-Za-z&]+Data)/rule_body/id(\d+)$")
 
 
@@ -394,6 +407,16 @@ def duplicate_paste(todo, skip=()):
         # xuống dòng; để nguyên thì chúng đếm là "hai bản Nhật khác nhau" và lưới báo
         # dán đè cho một việc hoàn toàn đúng (96/cmd/0001 với alert/id66).
         if len(rows) < 2 or len({norm_jp(jp) for _, jp, _ in rows}) < 2:
+            continue
+        # Trùng nhau TỪ TRƯỚC vòng này thì không phải dán đè. Dán đè tạo ra va chạm MỚI;
+        # còn `70/txt/0748` / `0864` / `1036` vốn đã dùng chung một bản dịch từ lâu — ba
+        # câu chỉ khác nhau dấu `、` và thể lịch sự (`思う` / `思います`), tức các nhánh
+        # rẽ của cùng một lời thoại, và người dịch cố ý cho chúng cùng một câu. Vòng (84)
+        # chỉ bỏ ruby `Operator` ở cả ba, thế mà lưới báo hai ô "dán đè".
+        #
+        # Nhánh `ratio` bên dưới không cứu được: cả ba sửa nhẹ như nhau nên tỉ lệ xấp xỉ
+        # bằng nhau, `max` chọn bừa một ô rồi kết tội hai ô kia.
+        if len({bv for _, _, bv in rows}) < 2:
             continue
         # Ô nào bị dán đè thì bản mới của nó KHÁC XA bản cũ của chính nó; ô lành chỉ
         # sửa nhẹ. Nhờ vậy không chặn oan ô lành trong cùng nhóm.
@@ -795,6 +818,28 @@ def build_values():
     _, _, raw_g = load_text(JSONB, "GenebarkChatMainData")
     for n, r in enumerate(json.loads(raw_g.lstrip("﻿"))["data"]):
         out["__gbidx__%d" % n] = r.get("content") or ""
+
+    # MỌI tab bundle json trong FIELD_MAP, không riêng Q&A.
+    #
+    # Thiếu khối này thì `--audit-sheet` mù với 578 hàng: cả tab DictionaryData,
+    # ShortStoryData, TerminalRuleData/ProfileData/ControlSkillData/HomeAlertData,
+    # GenebarkNewsData và GenebarkNoteData đều rơi vào "id không có ở build" và bị
+    # đếm như id rác. Vòng merge ba chiều vẫn ghi được chúng, nên lỗi ẩn: ô nào SHEET
+    # ĐÚNG - BUILD SAI mà sheet đứng yên thì không phép nào nhìn tới. Người dùng bắt
+    # được bằng mắt ở tab DictionaryData (17 ô lệch, có ô lệch hẳn tên mục:
+    # `Gyafun` vs `Tắt đài`, `Người nuôi dưỡng` vs `Kỹ sư huấn luyện`) — đúng lớp lỗi
+    # mà chế độ audit sinh ra để chặn.
+    for (asset, sfield), (root, field) in sorted(FIELD_MAP.items()):
+        try:
+            _, _, raw_a = load_text(JSONB, asset)
+        except SystemExit:
+            continue
+        dj = json.loads(raw_a.lstrip("﻿"))
+        ekey = KEY_OF.get(asset, "id")
+        for e in entries(dj, root):
+            if ekey not in e or field not in e:
+                continue
+            out["%s/%s/id%s" % (asset, sfield, e[ekey])] = field_get(e, field)
     return out
 
 
@@ -841,6 +886,7 @@ def audit_sheet(new_f):
 
     nhom = {"dấu câu": [], "chữ": [], "câu khác hẳn": []}
     bo_trong = bo_dan_xuat = ngoai_build = 0
+    bo_ngat = 0
     for key, (sv, jp) in sheet.items():
         if key in owner:
             bo_dan_xuat += 1
@@ -855,6 +901,29 @@ def audit_sheet(new_f):
         a, b = flat_cell(sv), flat_cell(build[bkey])
         if a == b:
             continue
+        # Chỉ khác ở CHỖ NGẮT DÒNG thì không phải lệch bản dịch, và sheet không tài nào
+        # diễn đạt được nó. `flat_cell` đổi `\n` thành khoảng TRẮNG, nên ô nào build ngắt
+        # ở chỗ sheet không có space là bị báo oan mãi mãi: `g53c奏壱_641` build ghi
+        # `......\nXin lỗi em…`, sheet ghi `......Xin lỗi em…` — làm phẳng ra
+        # `...... Xin` vs `......Xin`. Nó nằm lì trong báo cáo suốt mấy vòng và tôi đã
+        # xếp nhầm nó vào "khác dấu câu".
+        # MỖI chỗ `\n` của build được phép ứng với "" HOẶC " " bên sheet — không hơn.
+        #
+        # Sheet là bản làm phẳng của build, và người gõ lúc thì chèn space thay chỗ
+        # xuống dòng lúc thì không, ngay trong cùng một ô: `...\nVâng.\nEm không nên đi`
+        # thành `...Vâng. Em không nên đi` — chỗ đầu không space, chỗ sau có.
+        #
+        # Nên không thể so bằng một phép biến đổi cố định. Bản trước xoá HẾT `\n` rồi
+        # so, và nó chỉ đúng với ô có một chỗ ngắt; ô hai chỗ ngắt thì `luôn.Anh` không
+        # bao giờ khớp `luôn. Anh`, để lọt 9 ô báo oan.
+        #
+        # Dựng mẫu từ CHÍNH các dòng của build, nối bằng `" ?"`. Chặt đúng mức cần: nó
+        # chỉ tha chỗ xuống dòng, còn thiếu space giữa hai chữ trong CÙNG một dòng
+        # (`xelửa` / `xe lửa`) thì vẫn bị bắt.
+        bdong = [p for p in (flat_cell(x) for x in str(build[bkey]).split("\n")) if p]
+        if bdong and re.fullmatch(" ?".join(re.escape(p) for p in bdong), a):
+            bo_ngat += 1
+            continue
         if AUDIT_BO.sub("", a) == AUDIT_BO.sub("", b):
             nhom["dấu câu"].append((key, b, a, jp))
         elif difflib.SequenceMatcher(None, a, b).ratio() >= 0.6:
@@ -867,6 +936,7 @@ def audit_sheet(new_f):
     print("bỏ qua ô trống    : %d" % bo_trong)
     print("bỏ qua ô dẫn xuất : %d" % bo_dan_xuat)
     print("id không có ở build: %d" % ngoai_build)
+    print("bỏ qua ô chỉ khác NGẮT DÒNG: %d" % bo_ngat)
     print("\nÔ SHEET KHÁC BUILD: %d" % tong)
     for ten in ("dấu câu", "chữ", "câu khác hẳn"):
         rows = nhom[ten]
@@ -1460,26 +1530,42 @@ def main():
         for asset in sorted({e[0] for e in json_edits}):
             env_j, d_j, raw_j = load_text(JSONB, asset)
             out_j = raw_j
-            # Hai mục có thể trùng nhau CẢ bản Nhật lẫn bản Việt — `TerminalHomeAlertData`
-            # id17 và id18 là cùng một thông báo phát hai lần. Đòi "khớp đúng 1 lần" thì
-            # phép thay chết đứng ở đó. Gộp theo chuỗi nguồn: bao nhiêu ô sheet khai thì
-            # phải khớp đúng bấy nhiêu chỗ — vẫn chặn được việc thay nhầm sang mục khác.
-            jg = {}
+            # Thay theo NGUYÊN MỤC, không theo chuỗi giá trị.
+            #
+            # Bản trước tìm-thay bằng chính chuỗi cũ, gộp các ô trùng chuỗi lại rồi đòi
+            # số chỗ khớp bằng số ô sheet khai. Cách đó sập ở hai chỗ:
+            #
+            #  - **chuỗi cũ RỖNG**. `dic_ruby/id105` build đang để trống, mà `""` khớp 22
+            #    chỗ (mọi ruby trống trong asset), nên nó `SystemExit` — và vì
+            #    ScenarioData đã ghi xong từ trước, cả vòng dừng ở trạng thái ghi DỞ:
+            #    85 ô thoại đã vào, 15 ô từ điển thì không, không câu nào báo là đã mất.
+            #  - hai mục trùng nhau cả chuỗi cũ lẫn ý nghĩa (`TerminalHomeAlertData`
+            #    id17/id18) phải gộp thủ công mới thay được.
+            #
+            # Khoá mục (`id`/`no`) là thứ duy nhất chắc chắn duy nhất, nên dựng lại bản
+            # mã hoá JSON của CẢ MỤC và thay đúng một lần. Không đụng được sang mục khác,
+            # và giá trị cũ rỗng hay trùng đều không còn là vấn đề.
+            ekey = KEY_OF.get(asset, "id")
+            dj0 = json.loads(raw_j.lstrip("﻿"))
+            per = {}
             for a, field, eid, cur, val, root in [e for e in json_edits if e[0] == asset]:
-                jg.setdefault(cur, []).append((eid, val))
-            for cur, rows in jg.items():
-                vals = {v for _e, v in rows}
-                if len(vals) > 1:
-                    raise SystemExit("%s: cùng chuỗi nguồn %r nhưng %d bản dịch khác nhau "
-                                     "(id%s)" % (asset, cur[:40], len(vals),
-                                                 ", id".join(str(e) for e, _ in rows)))
-                oj = json.dumps(cur, ensure_ascii=False)
-                nj = json.dumps(rows[0][1], ensure_ascii=False)
+                per.setdefault((root, eid), []).append((field, cur, val))
+            for (root, eid), fields in sorted(per.items(), key=lambda kv: str(kv[0])):
+                ent = next((e for e in entries(dj0, root) if e.get(ekey) == eid), None)
+                if ent is None:
+                    raise SystemExit("%s: không có %s %s khi ghi" % (asset, ekey, eid))
+                oj = json.dumps(ent, **JDUMP)
                 n_hit = out_j.count(oj)
-                if n_hit != len(rows):
-                    raise SystemExit("%s id%s: chuỗi cũ khớp %d chỗ nhưng sheet khai %d ô"
-                                     % (asset, rows[0][0], n_hit, len(rows)))
-                out_j = out_j.replace(oj, nj)
+                if n_hit != 1:
+                    raise SystemExit("%s %s%s: nguyên mục khớp %d chỗ trong asset (cần 1)"
+                                     % (asset, ekey, eid, n_hit))
+                new_ent = json.loads(json.dumps(ent, **JDUMP))
+                for field, cur, val in fields:
+                    if field_get(new_ent, field) != cur:
+                        raise SystemExit("%s %s%s field %r không như đã đọc"
+                                         % (asset, ekey, eid, field))
+                    field_set(new_ent, field, val)
+                out_j = out_j.replace(oj, json.dumps(new_ent, **JDUMP), 1)
             d_j.m_Script = ("﻿" if raw_j.startswith("﻿") else "") + out_j.lstrip("﻿")
             d_j.save()
             with open(JSONB, "wb") as f:

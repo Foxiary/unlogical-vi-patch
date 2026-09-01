@@ -2703,6 +2703,67 @@ trong bundle `font_jp`, cache vào `_advances.json`.
 `SAFETY = 0.985` là mép an toàn: ngắt ở 99.9% thì chỉ cần một cặp kerning là
 TMP ngắt lại, và chú thích lại nhảy như cũ.
 
+### Đo `[主人公]` / `【player】` — luôn theo cận trên, không theo tên mặc định
+
+Tên nhân vật chính do người chơi gõ, **tối đa 6 ký tự**, nên bề rộng của mọi dòng
+chứa token là một khoảng chứ không phải một số. Ba mốc, tất cả nằm ở `adv_layout`:
+
+| hằng | giá trị | dùng ở đâu |
+|---|---|---|
+| `DEFAULT_PLAYER_NAME` | `Kanna` | mốc mặc định — cái chắc chắn xảy ra |
+| `PLAYER_MEASURE` | `WWWWWW` | `[主人公]` giữa câu (tên riêng) |
+| `PLAYER_FULL_MEASURE` | `Suzuno WWWWWW` | `【player】` nameplate (họ + tên) |
+
+`W` là glyph rộng nhất trong `A-Za-z0-9` (advance 60,3), hơn cả kana toàn rộng
+(58) — nên 6 chữ `W` là cận trên thật, không phải ước lượng.
+
+Ba cái bẫy đã dính, ghi lại để đừng dính lại:
+
+1. **Xoá tag về rỗng.** `fix_novel_list_wrap.shown()` từng trả `""` cho mọi tag,
+   nên `[主人公]` được đo **0 px** thay vì 277,2. Dòng `sID=89 text[6]` vượt khung
+   86 px trên máy thật trong khi `--check` báo PASS; TMP đẩy chữ `loại` xuống dòng
+   riêng, mà dòng TMP tự ngắt thì **không có thụt treo** nên nó thò hẳn sang trái
+   một em. Đây là dạng lỗi chỉ hiện ở màn hình, không cách nào thấy khi đọc data.
+2. **Đo bằng tên mặc định.** Đúng cho người chơi không đổi tên, sai cho mọi người
+   còn lại. Chênh lệch `Kanna` → `WWWWWW` là **+115,7 px** mỗi lần xuất hiện.
+3. **Quên mất họ.** `【player】` vẽ **họ + tên** (`Suzuno Kanna`), không phải mỗi
+   tên — ảnh chụp máy thật trong `fix_backlog_autosize` /
+   `fix_backlog_select_label` đọc ra đúng chuỗi đó. Đo bằng `Kanna` là thiếu
+   219,7 px, và chính chỗ thiếu đó đã giấu 11 nameplate đang tràn sẵn.
+
+Ngân sách nameplate: khung 500 px − `Suzuno ` 219,7 = **280,3 px cho phần tên**.
+Mọi tên 6 ký tự thật thử qua đều lọt (`WILLOW` 226,3 px là rộng nhất), nên
+`fix_nameplate_wrap` **chặn theo mốc mặc định** và chỉ **báo** cái cận trên: bề
+rộng ấy do người chơi gõ ra, không sửa được ở phía dữ liệu, chặn thì gate đỏ
+vĩnh viễn mà chẳng có việc gì để làm.
+
+Chỗ nào đo chữ mà chưa qua ba hằng này thì kiểm lại: mỗi tool tự viết `shown()`
+của nó, **không tool nào gọi `adv_layout.tag_display`**, nên sửa ở một chỗ không
+lan sang chỗ khác.
+
+### Bỏ họ chỉ khi tràn — `【player_firstname】`
+
+Engine biết nhiều khoá tên hơn data dùng. Trong `global-metadata.dat`: bốn token
+thân bài `[主人公]` (tên) / `[主人公苗字]` (họ) / `[主人公氏名]` (họ tên) /
+`[主人公愛称]` (biệt danh), và ba khoá nameplate `player`, `player_firstname`,
+`player_lastname`. Script phát hành chỉ dùng `[主人公]` và `【player】`, nhưng
+`resources.assets` có đúng một `【player_firstname】` đứng ở vị trí nameplate —
+tổ viết đã dùng, nên khoá này chạy được.
+
+**Luật: nameplate phải là họ + tên như bản Nhật. Chỉ bỏ họ khi tràn khung 500 px.**
+Ba plate ghép hai người là ngoại lệ duy nhất hiện có (522–545 px → 302–325 px);
+9.802 plate `【player】` còn lại giữ nguyên `Suzuno Kanna`.
+
+Canh hai chiều trong `fix_nameplate_wrap`, vì một chiều là không đủ:
+
+- `RENAMES` ép ba chỗ ngoại lệ giữ dạng đã đổi — merge sheet trả về `player` thì
+  `--check` báo "chờ đổi", `--apply` sửa lại.
+- `surname_required()` bắt chiều ngược — plate nào dùng `player_firstname` mà
+  dựng lại bằng `player` vẫn vừa khung thì là bỏ họ vô cớ, `--check` trả 1.
+
+Bẫy khi tự viết `shown()`: `player_firstname` **chứa** `player` làm tiền tố, phải
+thay nó trước, không thì ra `Suzuno Kanna_firstname`.
+
 ## Dải phím ở chân màn hình (Ⓐ決定 Ⓑ戻る …)
 
 Những dải này **không phải chuỗi ký tự** — chúng là tranh vẽ nằm trong atlas
@@ -3911,54 +3972,237 @@ Ghi xong đọc lại từ đĩa.
 
     python tools\fix_item_name_case.py [--apply|--check]
 
-## Ba tab TERMINAL giãn chữ khác nhau (`fix_terminal_char_spacing.py`)
 
-`python tools\fix_terminal_char_spacing.py [--apply|--check]` — đặt
-`m_characterSpacing = −9.8` cho **9** ô chữ trong `ui_jp`, lấy tab RULE làm chuẩn.
+## `--audit-sheet` từng mù với 578 hàng, và từng báo oan một ô suốt mấy vòng
 
-Ảnh chụp máy thật `_2026-09-02_00-42-11.png` (HOME), `_..._00-44-48.png` (RULE),
-`_..._00-45-17.png` (CONTROL): cả ba tab cùng vẽ bằng `FOT-iroha21popuraStdN-R`
-(pointSize 58, pid -7493831502989913688) mà thân bài HOME và CONTROL rời rạc hơn
-RULE rõ rệt. Bản gốc để lệch nhau:
+Hai lỗi của chính chế độ audit, phát hiện 02/09/2026 khi người dùng chỉ ra tab
+`DictionaryData` chưa bao giờ xuống build.
 
-| tab                         | component                                  |    cs | cỡ chữ | giãn thực |
-|-----------------------------|--------------------------------------------|-------|--------|-----------|
-| RULE — thân bài             | `Terminal_Rule_Item/Text (TMP)`            | −9,80 |     33 | −3,23 px  |
-| RULE — ruy-băng tiêu đề     | `RuleText/TitleText/Text (TMP)`            | −8,00 |     33 | −2,64 px  |
-| HOME — list Information     | `Terminal_Home_Item/Text (TMP)` ×7         |  0,00 |     31 |  0,00 px  |
-| CONTROL — Request / Caption | `Request_Mask` / `Caption_Mask`             |  0,00 |     31 |  0,00 px  |
+### Chỉ đọc ba nguồn trong khi sheet có mười hai
 
-### `cs` chính là phần trăm cỡ chữ, nên khỏi quy đổi
+`build_values()` — bảng "build đang có gì" — chỉ dựng từ `ScenarioData`,
+`Q&AData/qa_title` và chat Genebark. Chín tab bundle json còn lại
+(`DictionaryData`, `ShortStoryData`, `TerminalRule/Profile/ControlSkill/HomeAlertData`,
+`GenebarkNews/NoteData`) rơi hết vào dòng `id không có ở build: 578` và bị đếm như id
+rác, nên **không ô nào trong đó từng được đối chiếu**.
 
-Vì số hạng là `cs × fontSize/100` (xem `docs/02`), trị số `cs` đã là khoảng giãn
-tính theo phần trăm cỡ chữ. Hai ô khác cỡ chữ mà cùng `cs` thì **chặt như nhau
-theo tỉ lệ** — bê nguyên −9,8 sang cỡ 31 là đúng, không phải đổi thành −10,4 để
-khớp px. Ở cỡ 31 ra −3,04 px mỗi khoảng.
+Vòng merge ba chiều vẫn ghi được chúng, nên lỗi ẩn rất kỹ: chỉ những ô SHEET ĐỔI mới
+xuống được, còn ô *sheet đúng – build sai – sheet đứng yên* thì không phép nào nhìn
+tới. Đo được 17 ô như vậy riêng ở tab từ điển, trong đó có ô lệch hẳn tên mục
+(`Gyafun` / `Tắt đài`, `Người nuôi dưỡng` / `Người huấn luyện`) và hai ô mà **chính lời
+thoại đang trỏ vào bằng tên khác** — `[dic no=451 text=Độ thiện cảm]` mở ra mục tên
+"Độ hữu hảo".
 
-### Đo trên ảnh, không suy luận
+Nay đọc mọi tab trong `FIELD_MAP`: `578 -> 21`.
 
-Lấy chữ `Stage` có mặt ở cả hai màn (không dấu, không dấu câu), đo cạnh trái từng
-chữ cái — tức 4 bước chữ từ mép trái `S` sang mép trái `e`:
+### Đổi `\n` thành khoảng trắng rồi báo là "khác dấu câu"
+
+`flat_cell()` làm phẳng bằng cách đổi xuống dòng thành **space**. Ô nào build ngắt dòng
+ở chỗ sheet không có space là lệch vĩnh viễn:
 
 ```
-HOME  (fs 31, cs 0)    S→t 22  t→a 16  a→g 19  g→e 20   tổng 77   bề rộng mực 92
-RULE  (fs 33, cs −9,8) S→t 20  t→a 13  a→g 18  g→e 18   tổng 69   bề rộng mực 85
+build   '......\nXin lỗi em, tôi quên béng mất…'   -> làm phẳng '...... Xin lỗi em…'
+sheet   '......Xin lỗi em, tôi quên béng mất…'                  '......Xin lỗi em…'
 ```
 
-Mô hình dự đoán RULE `77 × 33/31 − 4 × 9,8 × 0,33 = 69,03`, đo được **69**. Font
-RULE to hơn 6,45% mà chữ vẫn hẹp hơn 7 px — toàn bộ là do −9,8.
+Sheet **không thể** mang ngắt dòng, nên đây không phải lệch bản dịch. Tôi đã xếp nhầm
+nó vào nhóm "dấu câu" hai vòng liền và còn khuyên để nguyên.
 
-### Hai ô cố tình bỏ qua
+Chốt mới: xoá HẲN `\n` của build (không đổi thành space) rồi mới so; khớp thì đếm riêng
+vào `bỏ qua ô chỉ khác NGẮT DÒNG`. Cố ý làm hẹp — bỏ khoảng trắng ở **cả hai** bên thì
+giấu luôn lỗi thiếu space giữa hai chữ (`xelửa` / `xe lửa`), một lỗi thật. Đo lại trên
+snapshot (79) vẫn ra 106 ô lệch, chỉ 1 ô bị bỏ qua.
 
-`Infomation_Mask/InfoText (TMP)` (cs 0) và `... InfoText (TMP) _old` (cs 2,2) đều
-nằm dưới `Infomation_Mask` có `m_IsActive = False`, không vẽ ra màn nào.
+### Nhánh ghi bundle json dừng giữa chừng mà không báo
 
-Chỉ sửa `characterSpacing`; bề rộng khung, cỡ chữ, `wrap` và auto-size giữ nguyên.
-Chặt hơn thì dòng chỉ ngắn lại nên không có nguy cơ tràn: 7 ô HOME `autoSize = 0`
-khung căng theo cha, 2 ô CONTROL `autoSize = 1` khoảng [18, 31] nên càng dễ giữ
-cỡ 31.
+Cùng đợt, phép ghi tìm-thay theo **chuỗi giá trị cũ** đã sập: `dic_ruby/id105` đang
+trống, `""` khớp 22 chỗ (mọi ruby trống trong asset) nên `SystemExit` — mà `ScenarioData`
+đã ghi xong từ trước, để lại trạng thái ghi DỞ: 85 ô thoại vào đĩa, 15 ô từ điển không,
+không dòng nào nói là đã mất. Chỉ lộ ra vì đọc lại từ đĩa chứ không tin dòng
+"áp được 19 ô".
 
-Diff nhị phân so với `_backup\ui_jp.precharspacing`: **đúng 9 object đổi**, cả 9
-là MonoBehaviour và giữ nguyên độ dài byte (740/740, 724, 536 — chỉ thay một
-float tại chỗ); 7937 object, bảng loại object không đổi. `manifest.json` cập nhật
-cùng lượt: 51 927 032 → 51 927 076 byte.
+Nay thay theo **nguyên mục**, khoá bằng `id`/`no` — thứ duy nhất chắc chắn duy nhất
+trong asset. Giá trị cũ rỗng hay trùng đều không còn là vấn đề, và bỏ được cả phép gộp
+thủ công cho cặp `TerminalHomeAlertData` id17/id18 vốn trùng nhau từng chữ.
+
+## Nhãn `マップ` của điểm lưu ở màn MAP (`fix_map_select_label.py`)
+
+Thẻ SAVE hiện hai dòng: `Title` lấy từ `ChapterData.title` (đã dịch) và dưới nó là
+**nhãn của điểm lưu**. Lưu ngay một lựa chọn thường thì dòng đó là `選択肢` — đã đổi
+thành `Choice` ở mục "Nhãn `選択肢` của dòng lựa chọn trong BACKLOG". Nhưng màn MAP dùng
+lệnh khác, `[select_map]` thay cho `[select]`, và nhãn của nó là một literal **khác**:
+`マップ`, chưa ai đụng tới.
+
+Ảnh chụp máy thật `_2026-09-02_00-40-16.png`, save No.038:
+
+```
+Title  Ký ức đắng không nuốt trôi
+       マップ                        <- đây
+```
+
+Save đó là `04_03_03` / `*SOU-03-50`, `m_loadline=410` — đúng dòng `[select_map]` trong
+`scriptText_Line`. Trong ScenarioData có **8** lệnh `[select_map]`, tức 8 điểm lưu mang
+nhãn này.
+
+### Vì sao chắc chắn là literal, không phải dữ liệu
+
+Chuỗi `マップ` **không có trong bất kỳ dữ liệu nào hiện ra màn hình**. Quét cả cây gốc
+`D:\Downloads\UNLOGICAL_v2\Data` (2,9 GB — gồm `globalgamemanagers`, nên loại luôn khả
+năng "tên scene") và quét lại các bundle sau khi giải nén bằng UnityPy:
+
+| chỗ | nội dung | có hiện không |
+|---|---|---|
+| `ui_jp`, `json`, `sharedassets*`, `level*` | 0 lần | — |
+| `resources.assets` | 28 lần, trong bản nháp kịch bản cũ (asset chết) | không |
+| `scenario01` | 111 lần, **toàn bộ** trong chú thích `;//マップパート` của `scriptText_Line` | không |
+| `sprite01` | 1 lần, trong đường dẫn `…/12.マップパート/thumbnail/…` | không |
+| `global-metadata.dat` | literal **#14912**, 9 byte | **có** |
+
+Đây là lần thứ ba cùng một bài học (nhãn route SAVE/LOAD, nhãn `選択肢`, giờ là nhãn
+`マップ`): dữ liệu đã dịch mà màn hình vẫn ra tiếng Nhật thì **tìm literal**, đừng sửa
+lại chỗ vốn đã đúng. Dấu hiệu rẻ nhất vẫn là câu hỏi *"chuỗi này có nằm trong file save
+không?"* — lần này câu trả lời còn sắc hơn: file save của chính slot đó ghi
+`m_saveText = "Choice"`, tức **không phải** chuỗi đang hiện trên màn hình, nên dòng thứ
+hai của thẻ SAVE là do code dựng lại lúc vẽ chứ không đọc từ save.
+
+### Chốt trước khi vá
+
+Bài học `涼乃`: literal chỉ đổi được khi **không dữ liệu nào so sánh với nó**, vì vế dữ
+liệu là tag lệnh tiếng Nhật, vĩnh viễn không dịch. Script tự kiểm ba điều và từ chối ghi
+nếu sai: chỉ đúng **một** literal mang chuỗi `マップ` (#14912), ScenarioData có **0** tag
+`[マップ …]`, và **0** chuỗi hiển thị (`text` / `talkName` / `selText`) chứa `マップ`.
+
+`マップ` 9 byte, `Map` 3 byte — ghi đè tại chỗ, 6 byte dư điền `\x00`, hạ `length` trong
+bảng. Kích thước file không đổi, không offset nào dịch.
+
+```powershell
+python tools\fix_map_select_label.py            # chạy thử
+python tools\fix_map_select_label.py --check    # đã vá chưa
+python tools\fix_map_select_label.py --apply
+```
+
+Đã chạy 02/09/2026 (backup `_backup\global-metadata.dat.premaplabel`): **10 byte đổi, 0
+byte ngoài dự kiến**, 15.224 literal đọc lại không mục nào hỏng. Metadata chỉ đọc lúc
+game khởi động — phải **thoát Ryujinx và chạy lại** mới thấy.
+
+## Ô tóm tắt thẻ SAVE/LOAD tràn xuống hàng Date (`fix_save_summary_clip.py`)
+
+Bảng chi tiết bên trái màn SAVE (`level19`, `Load/Normal/SaveDataDetail`) hiện `Title` rồi tới
+**đoạn thoại tại điểm lưu** — chính là `m_saveText` trong file save, tức nguyên câu thoại đang
+hiện lúc bấm save (kèm cả ngắt dòng cứng của kịch bản).
+
+```
+SaveDataDetail          rect 828 x 364
+  Text (TMP)  pid 193   stretch, sizeDelta (-90,-200), pos (5,20)  ->  738 x 164
+                        margin (6.5, 24, 0, 0)  ->  731,5 x 140 dùng được
+                        cỡ 27, charSpacing 8.4, lineSpacing -39, wrap = Normal
+                        m_overflowMode = 0 (Overflow)          <- chỗ hỏng
+```
+
+Chuỗi mẫu của bản gốc là **3 dòng × 24 chữ toàn rộng**, đúng bằng chỗ trống:
+
+```
+pitch      = 27 × (116/58 + (−39)/100)              = 43,47 px
+cao 3 dòng = 2 × 43,47 + 27 × (51,04 + 6,96)/58     = 113,9 ≤ 140  ✓
+cao 4 dòng = 3 × 43,47 + 27                         = 157,4 >  140  ✗
+```
+
+`m_overflowMode = 0` không cắt gì cả: TMP **vẫn vẽ** dòng thứ tư, chỉ là vẽ ra ngoài ô, và nó rơi
+thẳng lên hàng `Date / Time / Playtime` (ảnh `_2026-09-02_00-51-50.png`, save No.039). Bản Nhật
+không bao giờ chạm chuyện này vì câu thoại đã ngắt sẵn cho khung ADV. Ô này chỉ rộng **731,5 px**
+trong khi ô ADV rộng **1280 px**, nên mỗi dòng cứng của kịch bản thường tách làm hai ở đây.
+
+Đo trên `ScenarioData` bằng mô hình `adv_layout` với công thức đúng (`adv·fs/point + cs·fs/100`,
+xem memory `unlogical-text-overflow` — dạng cũ `(adv + cs)·fs/point` rộng hơn 1,64 px mỗi ký tự ở ô
+này): **5.561 / 39.574 câu thoại = 14,1%** cần hơn 3 dòng, tệ nhất 8 dòng.
+
+| số dòng | câu thoại | |
+|---|---|---|
+| 1 | 11.047 (27,9%) | |
+| 2 | 11.784 (29,8%) | |
+| 3 | 11.182 (28,3%) | vừa khít |
+| 4 | 4.559 (11,5%) | bị cắt |
+| 5–8 | 1.002 (2,5%) | bị cắt |
+
+Sửa: `m_overflowMode` → **Ellipsis (1)**, TMP cắt ở mép ô và đặt dấu lửng vào cuối dòng cuối cùng
+còn thấy được. Không đụng cỡ chữ: bật auto-size sẽ cho mỗi save một cỡ khác nhau, mà yêu cầu là
+**cắt** chứ không phải thu nhỏ. `--truncate` thì cắt trơn không dấu (cũng đúng 1 byte).
+
+> **Ellipsis chỉ dùng được sau khi vá glyph — chạy `fix_ellipsis_glyph.py` trước.** Lượt đầu
+> 02/09/2026 tôi kiểm cmap thấy `…` U+2026 có trong font của ô nên coi như xong; ảnh máy thật cho
+> thấy dấu cắt **lơ lửng giữa hàng**. **Có glyph không có nghĩa là đúng kiểu chữ**: đây là font
+> Nhật, `…` của nó là dấu lửng toàn rộng ba chấm giữa dòng. TMP thì luôn dùng U+2026 làm dấu cắt và
+> không cho đổi ký tự ở mức component — nhưng ký tự cố định *không* có nghĩa là glyph cố định, xem
+> mục dưới.
+
+### Ghi vào `level19` mà không `env.file.save()`
+
+`level19` nằm trong danh sách cấm của CLAUDE.md. Script mượn `nodes` TMP của bundle `ui_jp`,
+serialize lại **một** object rồi ghi đè đúng dải byte của nó, với ba chốt:
+
+1. serialize lại y nguyên cây vừa đọc phải ra **đúng từng byte** như cũ — nếu type tree mượn
+   không khớp thì bước này gãy ngay, trước khi có gì được ghi;
+2. bản có sửa phải **cùng độ dài** và lệch **đúng 1 byte**;
+3. dải byte cũ phải khớp `byte_start` và **duy nhất** trong file.
+
+```powershell
+python tools\fix_save_summary_clip.py             # chạy thử
+python tools\fix_save_summary_clip.py --check     # đang ở chế độ nào
+python tools\fix_save_summary_clip.py --stats     # đo lại tỉ lệ tràn
+python tools\fix_save_summary_clip.py --apply [--truncate]
+```
+
+Đã chạy 02/09/2026 (backup `_backup\level19.presaveclip` = bản trước khi vá, `m_overflowMode = 0`).
+Diff nhị phân với backup: **đúng 1 byte** (offset 26416, `0` → `1`), kích thước không đổi; đọc lại
+từ đĩa vẫn 280 object, mọi trường khác của pid 193 y nguyên.
+
+## `…` U+2026 nằm giữa dòng kiểu Nhật (`fix_ellipsis_glyph.py`)
+
+Ký tự dấu cắt của TMP là cố định, **glyph thì không**. Font asset của ô thoại/ô tóm tắt là
+`FOT-NewRodinProN-DB SDF-Dynamic` (`sharedassets7.assets` pid 85) với
+`m_AtlasPopulationMode = 1`, `m_GlyphTable` và `m_CharacterTable` **rỗng** — atlas dựng lúc chạy
+từ TTF trong `Font` pid 7 của chính file đó, tức một file trong romfs của bản mod. Sửa glyph là
+đổi được kiểu chữ, không cần đụng tới code.
+
+Đo trên TTF đang nhúng (unitsPerEm 1000):
+
+```
+…  ellipsis   x  84..916   tâm chấm 166 / 499,5 / 834   y 300..464   advance 1000
+.  period     x  49..201   tâm chấm 125                 y −17..130   advance  256
+```
+
+Bản vá **dời** từng contour, không vẽ lại gì — nên hình dạng chấm giữ nguyên của nhà thiết kế:
+
+```
+dời y  −317                    đáy chấm 300 → −17, ngang đáy dấu `.`
+dời x  −197 / −118 / −41       tâm chấm → 637 / 381 / 125 = ba dấu `.` liền nhau
+advance 1000 → 768 = 3 × 256
+```
+
+`python tools\fix_ellipsis_glyph.py --preview` xuất `tools\_preview\ellipsis_baseline.png`, xếp ba
+hàng `vậy thôi...` / `vậy thôi…` cũ / `vậy thôi…` mới trên cùng một đường chân chữ để nhìn tận mắt.
+
+**Phạm vi ảnh hưởng nhỏ hơn tưởng tượng.** Trong `ScenarioData` còn **53/39.574** câu thoại dùng
+`…`, nhưng 52 câu nằm ở `scenarioID` 3/4/5/8 — route 1 chương 0, tức kịch bản thử của nhà phát
+triển, không bao giờ chạy; **chỉ 1 câu sống** (scenarioID 90). Bundle `json` **0** chỗ. Bản dịch
+viết dấu lửng bằng ba chấm ASCII (memory `unlogical-punctuation-conventions`), nên hạ chấm xuống
+chân chữ là **thống nhất hơn** với phần chữ còn lại. Bản sao TTF thứ hai nằm trong `ui_jp` (cùng
+3.837.584 byte) — không đụng, các widget đọc bản đó gần như không bao giờ hiện `…`.
+
+### Chốt
+
+`fontTools` lưu **no-op** ra đúng từng byte như bản gốc (đã kiểm), nên phần chênh −23.612 byte chỉ
+là bảng `glyf` được nén lại chặt hơn, không phải nội dung. Trước khi ghi, script so **từng glyph
+một** giữa TTF cũ và mới: 15.649 glyph, 10.178 mã `cmap`, chỉ `ellipsis` đổi — contour, cờ điểm,
+mã hint và `hmtx` của mọi glyph khác đều khớp. Sau khi ghi, đọc lại `sharedassets7.assets`: 85
+object, **chỉ pid 7 đổi kích thước** (3.837.726 → 3.814.114), 0 object rỗng.
+
+```powershell
+python tools\fix_ellipsis_glyph.py             # chạy thử + đối chiếu từng glyph
+python tools\fix_ellipsis_glyph.py --check     # đã hạ chấm chưa
+python tools\fix_ellipsis_glyph.py --preview   # ảnh so `...` với `…`
+python tools\fix_ellipsis_glyph.py --apply
+```
+
+Đã chạy 02/09/2026, backup `_backup\sharedassets7.assets.preellipsis`. Lùi lại = chép backup đè
+lên `romfs\Data\sharedassets7.assets`.

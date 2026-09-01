@@ -46,7 +46,24 @@ LINE_SPACING_PCT = -42.0
 # being re-wrapped, which would put the ruby back where it started.
 SAFETY = 0.985
 
-DEFAULT_PLAYER_NAME = "Kanna"   # metadata literal 15063; only a width estimate
+DEFAULT_PLAYER_NAME = "Kanna"   # metadata literal 15063; the default only
+
+# `[主人公]` is measured at its WORST CASE, not at the default name.  Name entry
+# accepts up to 6 characters and the player may type Latin, so the widest a line
+# can ever get is 6x the widest glyph: `W` at 60.3 advance units, ahead of every
+# full-width kana (58.0).  That is 277.2 px at fontSize 42 against 161.5 px for
+# `Kanna` -- a 115.7 px gap, enough to push a word onto its own line while every
+# --check still reported PASS (novel block `sID=89 text[6]` did exactly that).
+# Measuring the default would leave the layout correct only for players who
+# never renamed her.
+PLAYER_NAME_MAX_LEN = 6
+PLAYER_SURNAME = "Suzuno"       # metadata literal 15053; fixed, the player cannot change it
+PLAYER_MEASURE = "W" * PLAYER_NAME_MAX_LEN
+
+# `[主人公]` mid-sentence draws the GIVEN name; the `【player】` nameplate draws the
+# FULL name -- real-screen evidence in fix_backlog_autosize / fix_backlog_select_label
+# reads `Suzuno Kanna`, so the surname plus a space rides along and must be measured.
+PLAYER_FULL_MEASURE = PLAYER_SURNAME + " " + PLAYER_MEASURE
 
 _FALLBACK_ADV = 58.0
 
@@ -109,7 +126,7 @@ def tag_display(tag):
     if m:
         return m.group(1)
     if PLAYER.fullmatch(tag):
-        return DEFAULT_PLAYER_NAME
+        return PLAYER_MEASURE
     return tag
 
 

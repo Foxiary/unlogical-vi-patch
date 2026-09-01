@@ -57,7 +57,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import UnityPy   # noqa: E402
-from adv_layout import ADV   # noqa: E402
+from adv_layout import ADV, PLAYER_MEASURE   # noqa: E402  (PLAYER_MEASURE = "W" * 6)
 
 BUNDLE = os.path.join(ROOT, "romfs", "Data", "StreamingAssets", "scenario", "scenario01")
 BACKUP = os.path.join(ROOT, "_backup", "scenario01.advwrap")
@@ -100,7 +100,7 @@ def shown(s):
         r = RUBY.fullmatch(m.group(0))
         if r:
             return r.group(1)
-        return "Kanna" if m.group(0) == "[主人公]" else ""
+        return PLAYER_MEASURE if m.group(0) == "[主人公]" else ""
     return "".join(c for c in TAG.sub(rep, s) if c not in NOT_DRAWN)
 
 

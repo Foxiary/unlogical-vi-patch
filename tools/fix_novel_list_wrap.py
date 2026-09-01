@@ -87,11 +87,24 @@ TAG = re.compile(r"\[[^\[\]\n]*\]")
 RUBY = re.compile(r"\[([^\[\]\n']*?)'([^\[\]\n]*?)\]")
 
 
+# Bề rộng đo cho `[主人公]`. Đo tag thành 0 px là sai 161 px mỗi lần xuất hiện —
+# đủ để đẩy một từ xuống dòng riêng mà `--check` vẫn báo PASS (khối
+# `sID=89 text[6]` đã dính đúng lỗi này).
+#
+# Và đo theo tên mặc định `Kanna` (161,5 px) cũng chưa đủ: ô nhập tên cho tối đa
+# **6 ký tự Latin**, mà `W` là glyph rộng nhất (60,3 adv — hơn cả kana toàn rộng
+# 58), nên cận trên thật sự là `WWWWWW` = 277,2 px, tức +115,7 px so với `Kanna`.
+# Dòng phải vừa khung với BẤT KỲ tên nào người chơi đặt, nên đo theo cận trên.
+from adv_layout import PLAYER_MEASURE   # noqa: E402  (= "W" * 6)
+
+
 def shown(s):
     """Chữ thật hiện trên màn: ruby chỉ vẽ phần gốc, lệnh khác không vẽ gì."""
     def rep(m):
         r = RUBY.fullmatch(m.group(0))
-        return r.group(1) if r else ""
+        if r:
+            return r.group(1)
+        return PLAYER_MEASURE if m.group(0) == "[主人公]" else ""
     return TAG.sub(rep, s)
 
 

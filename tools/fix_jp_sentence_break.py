@@ -26,10 +26,27 @@ thì cứ để phẳng, mặc TMP tự ngắt.
 Bốn chốt trước khi ghi, thiếu một cái là bỏ qua cả tin nhắn:
 
 0. **Không phải tin nhắn chat.** `talkName` có `@` (`【Kai Munakata@k_munakata2150】`)
-   thì chữ ô đó do `fix_chat_use_genebark.py` sở hữu — nó cố ý ghi phẳng, và hai
-   tool cùng ghi một ô là nguồn lỗi. 289 ô, 137 ô trong đó có ngắt bên bản Nhật.
-   `unplan()` trả về phẳng những ô chat mà chính tool này đã lỡ ngắt trước khi có
-   chốt (làm phẳng rồi soi lại ra đúng chuỗi đang có thì mới nhận).
+   thì bố cục ô đó do `fix_chat_wrap.py --only=adv` sở hữu — bỏ qua, không giành.
+   289 ô, 137 ô trong đó có ngắt bên bản Nhật.
+
+   **Đã BỎ `unplan()` (02/09/2026).** Nó ra đời 28/08 với tiền đề "ô chat luôn
+   phẳng vì `fix_chat_use_genebark` ghi phẳng" — tiền đề đó hết đúng từ 30/08, khi
+   `fix_chat_wrap` nhận phần bố cục chat và CỐ Ý ngắt lại. Từ đó hai tool giằng
+   nhau đúng **47/47 ô**, vòng nào chạy sau thì thắng, và không ai thấy vì cả hai
+   đều cho ra kết quả hợp lệ.
+
+   Chỗ trùng khít 47/47 không phải vì hai luật giống nhau — chúng khác hẳn:
+
+   | | `fix_chat_wrap` | tool này |
+   |---|---|---|
+   | ngắt ở đâu | MỌI dấu kết câu, thêm dấu phẩy khi dòng quá 1220 px | chỉ chỗ bản NHẬT ngắt |
+   | phủ được | 1194/1194 tin nhắn | 218/1194 (976 ô không đủ chốt) |
+   | khung/phông | chat 1220 px, `FOT-DNPShueiMGoStd-B` | ô thoại ADV, `FOT-NewRodinProN-DB` |
+
+   Đo trên 1194 tin nhắn: giống nhau 198, khác nhau 20, còn lại tool này bó tay.
+   `unplan()` chỉ nổ đúng ở phần giao đó — theo định nghĩa, vì nó chỉ gỡ ngắt nào
+   `plan()` dựng lại được y hệt. Nên nó luôn gỡ đúng những chỗ `fix_chat_wrap` sẽ
+   đặt lại nguyên xi: churn thuần tuý, không ai được gì.
 1. Bản Việt phải **phẳng hoàn toàn** (không có `\\n` nào). Ô đã có ngắt là của
    fixer khác (`fix_ellipsis_break`, danh sách novel…) — không giành.
 2. Số câu hai bên phải **bằng nhau**, nếu không thứ tự câu lệch nhau (318/10 489
@@ -184,18 +201,6 @@ def plan(vn, jp):
     return out
 
 
-def unplan(vn, jp):
-    """Ô chat lỡ bị soi ngắt trước khi có chốt @ — trả về bản phẳng.
-
-    Chỉ nhận khi làm phẳng rồi soi lại ra ĐÚNG chuỗi đang có: thế thì ngắt đó do
-    chính tool này đặt. Ngắt của người dịch hay của fixer khác không dựng lại được
-    y hệt nên được để yên."""
-    if chr(10) not in vn:
-        return None
-    flat = vn.replace(chr(10), " ")
-    return flat if plan(flat, jp) == vn else None
-
-
 def load(path):
     env = UnityPy.load(path)
     for o in env.objects:
@@ -232,7 +237,7 @@ def main():
     data = json.loads(raw.lstrip("\ufeff"))
     stock = stock_text()
 
-    hits, skipped, chat_n, undo_n = [], 0, 0, 0
+    hits, skipped, chat_n = [], 0, 0
     for ti, t in enumerate(data["target"]):
         sid = t["scenarioID"]
         names = t.get("talkName") or []
@@ -242,12 +247,8 @@ def main():
                 continue
             if j < len(names) and "@" in (names[j] or ""):
                 # Tin nhắn chat: bảng tên dạng tài khoản (【Kai Munakata@k_munakata2150】).
-                # Chữ ở đây do fix_chat_use_genebark.py sở hữu, nó cố ý ghi PHẲNG.
+                # Bố cục do fix_chat_wrap.py --only=adv sở hữu — xem chốt 0 ở đầu file.
                 chat_n += 1
-                back = unplan(s, jp)
-                if back is not None:      # lỡ ngắt ở lần chạy trước chốt này -> trả lại
-                    hits.append((ti, sid, j, s, back))
-                    undo_n += 1
                 continue
             if chr(10) in s:
                 continue                   # ô của fixer khác, không giành
@@ -260,8 +261,8 @@ def main():
     n_brk = sum(h[4].count(chr(10)) - h[3].count(chr(10)) for h in hits)
     if CHECK:
         print("còn lệch: %d tin nhắn, %+d chỗ ngắt  (bỏ qua %d ô không đủ chốt, "
-              "%d ô chat để cho fix_chat_use_genebark, trong đó %d ô cần trả về phẳng)"
-              % (len(hits), n_brk, skipped, chat_n, undo_n))
+              "%d ô chat để cho fix_chat_wrap --only=adv)"
+              % (len(hits), n_brk, skipped, chat_n))
         for ti, sid, j, old, new in hits[:8]:
             print("  FAIL sID=%-4s text[%-5d] %s" % (sid, j, new[:96].replace("\n", "⏎")))
         if hits:
@@ -278,10 +279,9 @@ def main():
     shrank = sum(1 for _, _, _, o, n in hits if LAY.render(n)[0] < LAY.render(o)[0])
     for ti, sid, j, old, new in hits[:8]:
         print("-> sID=%-4s text[%-5d] %s" % (sid, j, new[:92].replace("\n", "⏎")))
-    print("%s%d tin nhắn đổi, %+d chỗ ngắt (trả về phẳng %d ô chat); "
-          "cao thêm một dòng %d, co cỡ chữ %d"
-          % (chr(10), len(hits), n_brk, undo_n, grew, shrank))
-    print("bỏ qua %d ô không đủ chốt, %d ô chat (fix_chat_use_genebark sở hữu)"
+    print("%s%d tin nhắn đổi, %+d chỗ ngắt; cao thêm một dòng %d, co cỡ chữ %d"
+          % (chr(10), len(hits), n_brk, grew, shrank))
+    print("bỏ qua %d ô không đủ chốt, %d ô chat (fix_chat_wrap --only=adv sở hữu)"
           % (skipped, chat_n))
 
     def enc(x):
