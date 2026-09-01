@@ -103,8 +103,17 @@ MATCH = arg("match")
 # nào khớp build: vòng (32) export lại 18/08 làm 27 ô báo "cả hai bên đổi" mà 26 trong số
 # đó hai bên chỉ khác dấu nháy. Phải liệt kê id tường minh — không có chế độ "lấy tất".
 TAKE = {x.strip() for x in (arg("take-sheet") or "").split(",") if x.strip()}
+# `--force-sheet=id,…`: kéo ô vào `todo` DÙ sheet không đổi giữa hai snapshot.
+# Cần vì phép so ba chiều chỉ nhìn ô có `new != base`; ô mà sheet ĐÚNG, build SAI,
+# nhưng sheet đứng yên thì không vòng nào thấy (xem `audit_sheet`). Đây là đường
+# duy nhất để hành động theo kết quả `--audit-sheet`. Ngầm bật `--take-sheet` cho
+# chính những id đó, vì theo định nghĩa build đang khác.
+FORCE = {x.strip() for x in (arg("force-sheet") or "").split(",") if x.strip()}
 
 TAG = re.compile(r"\[[^\[\]\n]*\]")
+STOCK_ROOT = r"D:\Downloads\UNLOGICAL_v2\Data\StreamingAssets"
+STOCK_SCEN = os.path.join(STOCK_ROOT, "scenario", "scenario01")
+STOCK_JSON = os.path.join(STOCK_ROOT, "json", "json")
 SD_ID = re.compile(r"^(\d+)/txt/(\d+)$")
 DATA_ID = re.compile(r"^([A-Za-z&]+Data)/([A-Za-z_]+)/id(\d+)$")
 # Chat Genebark: id KHÔNG mang khoá `id` mà mang **chỉ số tuyệt đối** trong `data[]`;
@@ -364,14 +373,20 @@ def merge_rule_text(build, sheet):
     return "\n".join(out)
 
 
-def duplicate_paste(todo):
+def duplicate_paste(todo, skip=()):
     """Bắt lỗi "bản dịch rơi vào sai ô": hai ô đổi trong cùng vòng mà bản dịch mới
     giống nhau từng chữ trong khi bản Nhật của chúng khác nhau — dấu hiệu dán đè.
 
     Đã bắt được thật ở snapshot (24): `71/txt/0379` mang bản dịch của `71/txt/0377`.
     """
+    # `skip`: ô đã được người duyệt liệt kê tường minh qua --force-sheet. Lưới này so
+    # "cùng bản dịch mới, khác bản Nhật", nên nó bắt oan các thán từ ngắn giống nhau
+    # (`「...!」` xuất hiện ở 9 ô, bản Nhật `「……！」` và `「――、」`). Với ô đã duyệt thì
+    # tín hiệu đó không còn giá trị.
     by_val = {}
     for key, bv, nv, jp in todo:
+        if key in skip:
+            continue
         by_val.setdefault(nv, []).append((key, jp, bv))
     bad = set()
     for nv, rows in by_val.items():
@@ -466,10 +481,52 @@ def ruby_change_ok(old, new):
         m = RUBY.fullmatch(t)
         if "[%s'%s]" % (m.group(2), m.group(1)) in new:
             continue
-        if m.group(1) in new or m.group(2) in new:
+        # So KHÔNG phân biệt hoa/thường: một nửa ruby thường đổi vai khi bỏ tag, từ tên
+        # riêng đứng đầu thành danh từ chung giữa câu. `[Đình Chỉ'Kỹ năng]` -> `kỹ năng
+        # Ngưng đọng` vẫn giữ nửa `Kỹ năng`, chỉ khác chữ hoa — so nguyên văn thì chặn oan.
+        low = new.lower()
+        if m.group(1).lower() in low or m.group(2).lower() in low:
             continue
         return "mất tag ruby %s mà không giữ lại nửa nào" % t
     return None
+
+
+_STOCK_TAGS = None
+
+
+def stock_tags():
+    """Tập MỌI `[...]` từng xuất hiện trong dữ liệu GỐC 1.0.2.
+
+    Dùng để phân biệt KHOÁ TRA CỨU thật với ngoặc vuông do bản dịch tự đẻ ra.
+
+    Chốt `lookup` trong `guards()` vốn coi mọi tag không-ruby không-dic là khoá, nên nó
+    chặn cả việc SỬA một thẻ ruby viết hỏng. Bản gốc chỉ có **3** ngoặc trần trong
+    `text[]` — `[posteffect colorinvert start|end]` và `[wait time=500]` — còn build có
+    22, tức 19 cái mới sinh ra khi dịch `[育成者'トレーナー]` thành `[người huấn luyện]`:
+    giữ ngoặc mà bỏ mất dấu `'`, thành thứ không phải ruby, không phải `[dic]`, không
+    phải lệnh nào. Engine sẽ in nguyên dấu ngoặc ra màn hình hoặc nuốt cả cụm.
+
+    Tag nào KHÔNG có trong bản gốc thì không thể là khoá tra cứu — engine chưa bao giờ
+    biết tới nó. Bỏ nó khỏi phép so cho phép sửa, mà vẫn chặn việc làm mất tag thật:
+    hai bên vẫn so danh sách tag hợp lệ, thiếu một cái là chặn.
+    """
+    global _STOCK_TAGS
+    if _STOCK_TAGS is None:
+        tags = set()
+        for path, names in ((STOCK_SCEN, None), (STOCK_JSON, None)):
+            if not os.path.exists(path):
+                raise SystemExit("không thấy cây gốc %s — cần nó cho chốt tag" % path)
+            env = UnityPy.load(path)
+            for o in env.objects:
+                if o.type.name != "TextAsset":
+                    continue
+                d = o.read()
+                r = d.m_Script
+                s = r if isinstance(r, str) else bytes(r).decode("utf-8", "replace")
+                tags.update(TAG.findall(s))
+        _STOCK_TAGS = tags
+        print("chốt tag: %d dạng `[...]` có trong bản gốc" % len(tags))
+    return _STOCK_TAGS
 
 
 def guards(old, new):
@@ -480,8 +537,9 @@ def guards(old, new):
     if not new.strip() and old.strip():
         bad.append("ô sheet trắng mà build đang có chữ")
     # Khoá tra cứu: lệnh diễn xuất, [主人公], [se file=…]… phải khớp từng cái.
+    ok = stock_tags()
     lookup = lambda s: sorted(t for t in TAG.findall(s)                      # noqa: E731
-                              if not is_ruby(t) and not DIC.fullmatch(t))
+                              if not is_ruby(t) and not DIC.fullmatch(t) and t in ok)
     if lookup(old) != lookup(new):
         bad.append("tag khoá tra cứu bị đổi")
     # Link từ điển: `no=` không được đổi/mất (chữ hiển thị thì tuỳ).
@@ -581,8 +639,12 @@ def load_tool_module(name):
 
 
 # Số cặp `pairs()` ghép được trên bản gốc 1.0.2 — BẤT BIẾN, không phụ thuộc build
-# hiện tại lẫn sheet. Lệch là cây gốc sai, xem `derived_sd_ids()`.
-PAIRS_EXPECTED = 184
+# hiện tại lẫn sheet. Lệch thì hoặc cây gốc sai, hoặc LUẬT GHÉP vừa đổi.
+#
+# 184 -> 231 (01/09/2026): luật cũ đòi câu Nhật DUY NHẤT ở cả hai bên, quá chặt vì bản
+# gốc lưu trùng cả đoạn hội thoại sang nhiều `groupIDs`. Luật mới ghép theo
+# (câu Nhật, người nói) và chọn chủ bằng `groupIDs` — xem `fix_chat_use_genebark.pairs`.
+PAIRS_EXPECTED = 231
 _DERIVED = None
 
 
@@ -636,11 +698,13 @@ def derived_sd_ids():
             _DERIVED = None
             print("!! chốt chặn chat: ghép được %d cặp, bản gốc 1.0.2 phải ra %d."
                   % (n, PAIRS_EXPECTED))
-            print("   Cây gốc có mặt nhưng nội dung không phải bản 1.0.2 chưa sửa:")
-            print("     %s" % gb.STOCK)
-            print("   Thường là đã chép đè bằng cây đã dịch, hoặc dump từ bản game khác.")
-            print("   Dựng lại cây gốc rồi chạy lại — ĐỪNG merge tiếp: chốt chặn ô chat")
-            print("   dẫn xuất đang hở %d ô." % (PAIRS_EXPECTED - n))
+            print("   Hai nguyên nhân, kiểm theo thứ tự này:")
+            print("   1) LUẬT GHÉP trong fix_chat_use_genebark.pairs() vừa đổi")
+            print("      -> nếu đúng ý, cập nhật PAIRS_EXPECTED thành %d." % n)
+            print("   2) cây gốc không phải bản 1.0.2 chưa sửa: %s" % gb.STOCK)
+            print("      (thường do chép đè bằng cây đã dịch, hoặc dump bản game khác)")
+            print("   ĐỪNG merge tiếp khi chưa rõ: chốt chặn ô chat dẫn xuất lệch %d ô."
+                  % (PAIRS_EXPECTED - n))
             raise SystemExit("cây gốc sai — chốt chặn ô chat dẫn xuất không tin được")
         print("chốt chặn chat: %d cặp ô dẫn xuất (tính từ bản gốc)" % len(_DERIVED))
     return _DERIVED
@@ -847,8 +911,21 @@ def main():
         if pat and not (pat.search(nv) or pat.search(b[0])):
             continue
         todo.append((key, b[0], nv, jp))
+    if FORCE:
+        have = {t[0] for t in todo}
+        them = 0
+        for key in sorted(FORCE):
+            if key in have:
+                TAKE.add(key); continue
+            if key not in new:
+                print("! --force-sheet: %s không có trên sheet" % key); continue
+            nv, jp = new[key]
+            todo.append((key, nv, nv, jp))
+            TAKE.add(key)
+            them += 1
+        print("--force-sheet: nạp thêm %d ô (sheet không đổi nhưng build lệch)" % them)
     print("ô đã đổi trên sheet và khớp bộ lọc: %d" % len(todo))
-    dup = duplicate_paste(todo)
+    dup = duplicate_paste(todo, skip=FORCE)
     if dup:
         print("\n!! %d ô có DẤU HIỆU DÁN ĐÈ trên sheet "
               "(bản dịch mới trùng nhau mà bản Nhật khác nhau)" % len(dup))
@@ -1045,6 +1122,15 @@ def main():
             print("      build : %r" % flat_cur[:88])
             print("      sheet : %r" % nv[:88])
             continue
+        # Tham số lệnh được phân định BẰNG dấu " — `[terinfo text="…"]` — nên một dấu "
+        # trong nội dung sẽ KẾT THÚC tham số sớm và phần sau thành rác. Bản gốc 1.0.2 có
+        # 0 chỗ như vậy; vòng (60) lấy bản sheet dùng " thay `『』` và làm hỏng 3 lệnh ở
+        # sID 72 — game chỉ đọc được `Phát hiện `. Không tự thay dấu: đó là quyết định
+        # câu chữ, phải sửa trên sheet.
+        if kind == "cmd" and '"' in nv:
+            print("!! %-34s chốt chặn: tham số lệnh KHÔNG được chứa dấu %s "
+                  "(nó kết thúc tham số). Dùng 『』 trên sheet." % (key, '"'))
+            continue
         bad = guards(cur, nv)
         if bad:
             print("!! %-34s chốt chặn: %s" % (key, "; ".join(bad))); continue
@@ -1122,6 +1208,12 @@ def main():
                 if out_s.count(oj) != 1:
                     raise SystemExit("scriptText target[%d] khớp %d lần" % (ti, out_s.count(oj)))
                 out_s = out_s.replace(oj, nj)
+                # PHẢI đồng bộ lại `data_s`, không chỉ `out_s`. Nhánh `cmd` bên dưới đọc
+                # `data_s[...]["scriptText"]` rồi tìm bản mã hoá JSON của nó trong `out_s`;
+                # nếu ở đây chỉ sửa `out_s` thì hai bên lệch và nhánh cmd chết với
+                # "scriptText khớp 0 lần" — chỉ xảy ra khi cùng một scenario có CẢ ô `txt`
+                # lẫn ô `cmd` đổi trong một vòng (sID 69 vòng (68), sID 103 vòng (72)).
+                data_s["target"][ti]["scriptText"] = cur_script
 
     # ---- nhánh rule_body: map theo (id, trang), giữ khoảng trắng đầu dòng của build
     rule_edits = []                      # rn / rb / rkeys đã tính trước phần thoát sớm

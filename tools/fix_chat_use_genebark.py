@@ -116,28 +116,165 @@ def guards(old, new, jp):
     return bad
 
 
-def pairs():
-    """Cặp 1:1 theo bản Nhật, và chỉ nhận tin nhắn chat thật."""
-    _, _, sj_raw = load_text(os.path.join(STOCK, "json", "json"), "GenebarkChatMainData")
-    _, _, ss_raw = load_text(os.path.join(STOCK, "scenario", "scenario01"), "ScenarioData")
-    sj = json.loads(sj_raw.lstrip("\ufeff"))["data"]
-    ss = json.loads(ss_raw.lstrip("\ufeff"))
+def _nameplate_map(ss, sj):
+    """{nameplate ADV: speaker Genebark} — suy từ CHÍNH các cặp 1:1 chắc chắn.
 
-    jcnt = collections.Counter((r.get("content") or "") for r in sj)
-    scnt = collections.Counter()
-    pos = {}
+    Không nhúng cứng: dựng từ những câu Nhật xuất hiện đúng một lần ở cả hai bên, rồi
+    đòi mỗi nameplate chỉ ứng với MỘT speaker. Đo trên bản gốc: 7 nameplate, 0 cái mơ hồ.
+
+        【Suzuno@Sz_36iii】 -> player      【RAN@ran_n_rea4】 -> 藍
+        【Kai Munakata@…】  -> 戒           【yasaka@…】       -> 奏壱
+        【YURI@…】          -> ユーリ        【M@6avbjie_w】    -> 雅火
+        【Shiori@…】        -> 栞
+    """
+    adv = collections.defaultdict(list)
     for e in ss["target"]:
+        tn = e["talkName"]
+        tn = tn if isinstance(tn, list) else json.loads(tn.replace("'", '"'))
         for i, s in enumerate(e.get("text") or []):
             if isinstance(s, str) and s:
-                scnt[s] += 1
-                pos.setdefault(s, (e["scenarioID"], i))
-    out = []
+                adv[(s, str(tn[i]) if i < len(tn) else "")].append((e["scenarioID"], i))
+    gb = collections.defaultdict(list)
     for k, r in enumerate(sj):
-        jp = r.get("content") or ""
-        if jcnt[jp] != 1 or scnt.get(jp) != 1:
+        c = r.get("content") or ""
+        if c:
+            gb[(c, r.get("speaker", ""))].append(k)
+
+    jc, sc = collections.Counter(), collections.Counter()
+    for (j, _s), ks in gb.items():
+        jc[j] += len(ks)
+    for (j, _p), cs in adv.items():
+        sc[j] += len(cs)
+
+    m = collections.defaultdict(collections.Counter)
+    for (jp, plate), _cells in adv.items():
+        if jc[jp] == 1 and sc[jp] == 1:
+            for (j2, spk), _ks in gb.items():
+                if j2 == jp:
+                    m[plate][spk] += 1
+    mp = {}
+    for plate, c in m.items():
+        if len(c) > 1:
+            raise SystemExit("nameplate %r ứng với nhiều speaker: %s — không ghép được"
+                             % (plate, dict(c)))
+        mp[plate] = c.most_common(1)[0][0]
+    return adv, gb, mp
+
+
+_GJ = []
+
+
+def _chon_chu(cand, sid, i, neo, cua_scen):
+    """Chọn dòng Genebark SỞ HỮU ô ADV `(sid, i)` trong nhiều ứng viên trùng nhau.
+
+    Mỗi dòng Genebark ứng ĐÚNG MỘT chỗ trong truyện — bản gốc lưu trùng cả đoạn hội
+    thoại sang nhiều `groupIDs` (data[260..266] nhóm 20 và data[274..280] nhóm 21 là
+    bảy dòng y hệt), nên "trùng nội dung" không có nghĩa "cùng một chỗ".
+
+    Cách chọn: **nội suy đơn điệu giữa hai ô NEO kề nhau**. Ô neo là ô chỉ có một ứng
+    viên. Thứ tự tin nhắn trong `data[]` chạy song song thứ tự ô thoại trong cảnh, nên
+    ứng viên đúng phải nằm GIỮA neo trước và neo sau.
+
+    Hai cách làm sai đã thử:
+
+    - *lấy dòng đầu* — sai 10/37 ô. `107/txt/0274..0279` là sáu ô liên tiếp, phải ứng
+      dãy liền `gb788..793`, nhưng bị xé thành `758..761` rồi nhảy ngược `737`.
+    - *so `groupIDs` với TOÀN BỘ ô neo của scenario* — vẫn sai khi một cảnh mở nhiều
+      phiên chat: scenario 77 dùng cả nhóm 20 lẫn 21, nên `77/txt/0029..0034` chọn nhóm
+      21 còn `0035..0049` nhảy ngược về nhóm 20, trong khi thứ tự ô ADV chạy liên tục.
+      Một đoạn liền mạch không thể xen kẽ hai nhóm.
+
+    Nên phải neo theo VỊ TRÍ, không theo tập hợp.
+    """
+    if len(cand) == 1:
+        return cand[0]
+    anc = sorted((j, k) for (s2, j), k in neo.items() if s2 == sid)
+    if not anc:
+        return cand[0]
+    truoc = [k for j, k in anc if j < i]
+    sau = [k for j, k in anc if j > i]
+    lo = truoc[-1] if truoc else None          # neo gần nhất phía trước
+    hi = sau[0] if sau else None               # neo gần nhất phía sau
+
+    def diem(c):
+        # 0 = nằm đúng giữa hai neo kề; rồi tới khoảng cách tới neo gần nhất
+        giua = 0 if (lo is None or c > lo) and (hi is None or c < hi) else 1
+        d = min(abs(c - k) for k in (lo, hi) if k is not None)
+        return (giua, d)
+
+    return min(cand, key=diem)
+
+
+def pairs(bao_bien_the=False):
+    """Cặp ADV <-> Genebark, ghép theo (bản Nhật, NGƯỜI NÓI).
+
+    Bản đầu đòi câu Nhật **duy nhất ở cả hai bên** và chỉ ra 184 cặp. Điều kiện đó quá
+    chặt vì bản gốc **lưu trùng cả đoạn hội thoại**: `groupIDs 20` data[260..266] và
+    `groupIDs 21` data[274..280] là BẢY dòng giống hệt nhau, chỉ khác nhóm chat. Một
+    tin nhắn bị lưu hai lần thì không phải hai bản dịch — nó vẫn là một.
+
+    Hệ quả: 47 ô ADV nằm ngoài bảng, 42 trong số đó còn mang giọng văn viết
+    ("Bây giờ tôi sẽ đến gặp cô.") thay vì giọng nhắn tin ("Đang đến gặp đây") — đúng
+    lớp lỗi mà tool này sinh ra để chữa, chỉ là chưa với tới.
+
+    Nới bằng cách gộp theo **(câu Nhật, speaker)**. Người nói lấy từ nameplate ADV, và
+    ánh xạ nameplate->speaker tự suy từ các cặp 1:1 chắc chắn (xem `_nameplate_map`).
+    Nhiều dòng trong cùng một nhóm là bản lưu trùng -> lấy dòng đầu làm chủ.
+
+    NGOẠI LỆ: nhóm nào các dòng trùng lại được dịch KHÁC nhau thì BỎ, không đoán. Người
+    dùng xác nhận đó là **biến thể có chủ ý** để tránh lặp:
+
+        player はーい  ->  'Tuân lệnh' / 'Okieee' / 'Rõ ạ'
+        ユーリ  はーい  ->  'Okela' / 'Okela~' / 'Okela.'
+
+    5 nhóm như vậy, ứng với 5 ô ADV — chúng giữ chữ riêng, không bị chép đè.
+
+        184 cặp (cũ)  ->  226 cặp,  5 ô cố ý để ngoài
+    """
+    _, _, sj_raw = load_text(os.path.join(STOCK, "json", "json"), "GenebarkChatMainData")
+    _, _, ss_raw = load_text(os.path.join(STOCK, "scenario", "scenario01"), "ScenarioData")
+    sj = json.loads(sj_raw.lstrip("﻿"))["data"]
+    ss = json.loads(ss_raw.lstrip("﻿"))
+    global _GJ
+    _GJ = sj
+    adv, gb, mp = _nameplate_map(ss, sj)
+
+    # bản dịch hiện tại của Genebark — CHỈ dùng để loại nhóm có biến thể chủ ý
+    _, _, cj_raw = load_text(os.path.join(ROOT, "romfs", "Data", "StreamingAssets",
+                                          "json", "json"), "GenebarkChatMainData")
+    cj = json.loads(cj_raw.lstrip("﻿"))["data"]
+
+    # VÒNG 1: chỉ những ô ghép được KHÔNG mơ hồ -> làm NEO cho vòng 2
+    neo = {}
+    cua_scen = collections.defaultdict(list)
+    for (jp, plate), cells in adv.items():
+        spk = mp.get(plate)
+        if spk is None:
             continue
-        sid, i = pos[jp]
-        out.append((k, sid, i, jp))
+        cand = gb.get((jp, spk))
+        if cand and len(cand) == 1:
+            for sid, i in cells:
+                neo[(sid, i)] = cand[0]
+                cua_scen[sid].append(cand[0])
+
+    out, bien_the = [], []
+    for (jp, plate), cells in adv.items():
+        spk = mp.get(plate)
+        if spk is None:
+            continue
+        cand = gb.get((jp, spk))
+        if not cand:
+            continue
+        # KHÔNG loại nhóm có bản dịch khác nhau. Mỗi dòng Genebark ứng ĐÚNG MỘT chỗ
+        # trong truyện, nên hai dòng cùng tiếng Nhật là hai tin nhắn khác nhau — dịch
+        # khác nhau là ĐÚNG, không phải mơ hồ. Bản trước tôi loại chúng vì hiểu ngược,
+        # làm 5 ô mất chủ oan. Việc còn lại chỉ là chọn ĐÚNG dòng, và `_chon_chu` làm
+        # điều đó bằng `groupIDs`.
+        for sid, i in cells:
+            out.append((_chon_chu(cand, sid, i, neo, cua_scen), sid, i, jp))
+    out.sort(key=lambda r: (r[1], r[2]))
+    if bao_bien_the:
+        return out, bien_the
     return out
 
 

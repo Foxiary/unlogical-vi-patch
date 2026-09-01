@@ -3879,3 +3879,34 @@ python tools\fix_password_access_line.py --apply
 nên atlas bị mã hoá ASTC lại một lượt: chín sprite không sửa đo được **PSNR 64,7–89,7 dB**
 (một cái `inf` vì không đổi byte nào) — script in bảng này sau mỗi lần `--apply`, coi
 như biên nhận.
+
+
+## Tên vật phẩm ở popup "Đã nhận được" lệch chữ hoa với lời thoại (`fix_item_name_case.py`)
+
+`ScriptDialogData` là 18 dòng thông báo ngắn hiện lên khi nhận vật phẩm
+("Đã nhận được 『…』"). Nó **không có trên Google Sheet** — không tab nào, không id
+nào, tôi đã quét cả 40 262 ô của snapshot (79) để chắc. Nên mọi vòng merge đều bỏ
+qua nó, và sai ở đây không bao giờ tự khỏi: sửa trên sheet cũng không xuống được.
+
+`check_term_consistency.py` bắt ra một chỗ:
+
+```
+ScenarioData      "Trái tim Thiên sứ"   11 ô lời thoại
+ScriptDialogData  "Trái tim thiên sứ"    1 lần, mục id 11
+```
+
+Người chơi thấy cả hai cùng lúc — popup nổi ngay trên khung thoại đang gọi vật
+phẩm đó là "Trái tim Thiên sứ".
+
+### Vì sao không thay chuỗi thẳng bằng sed
+
+Vế "đúng" không được nhúng cứng. Script tự đếm lại trong `ScenarioData.text[]`:
+dạng đúng phải **áp đảo hẳn** dạng sai, không thì nó dừng và bắt người quyết bằng
+mắt. Chuyện chữ hoa/thường của một tên riêng là chuyện biên tập, và ở dự án này
+đã có tiền lệ đếm đúng số nhưng gắn nhầm đối tượng (xem bài học `火守`).
+
+Ba chốt nữa trước khi ghi: chuỗi sai phải xuất hiện **đúng một lần**, số mục và
+danh sách `id` không đổi, và số mục đổi chữ phải đúng bằng số chuỗi trong `DOI`.
+Ghi xong đọc lại từ đĩa.
+
+    python tools\fix_item_name_case.py [--apply|--check]
