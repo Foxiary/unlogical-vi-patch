@@ -74,8 +74,8 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | file | MB | what the patch changed |
 |---|---|---|
 | `StreamingAssets/scenario/scenario01` | 8.7 | 23 of 145 TextAssets: `ScenarioData` (story) + 22 chapter scripts (tag arguments) |
-| `StreamingAssets/json/json` | 0.1 | 16 of 36 TextAssets — Terminal / Dictionary / Genebark tables |
-| `StreamingAssets/ui/ui_jp` | 51.9 | 5 fonts · 3 TMP components (`NewsText01/02`, `NoteText01`) · backlog + section key sprites · `g` and `Section` atlases |
+| `StreamingAssets/json/json` | 0.1 | 16 of 36 TextAssets — Terminal / Dictionary / Genebark tables · `MusicData.title` in ALL CAPS |
+| `StreamingAssets/ui/ui_jp` | 51.9 | 5 fonts · 3 TMP components (`NewsText01/02`, `NoteText01`) · backlog + section key sprites · `g` and `Section` atlases · section-title marquee (`SynopsisTitle/Mask_Title` gets `AutoScrollText`, `Title` re-anchored left with `ContentSizeFitter` + `LayoutElement`; 2 MonoScripts and 2 typed entries added to the CAB) |
 | `StreamingAssets/scene/scene_jp` | 4.2 | Name-Entry atlas · 1 font |
 | `StreamingAssets/anim/anim01` | 28.3 | **font only** (`FOT-NewRodinProN-M`) — no animation data |
 | `StreamingAssets/movie/movie_jp_02` | 104.6 | the `prologue` clip, replaced wholesale — see below |
@@ -91,14 +91,14 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `sharedassets6.assets` | 16.9 | `Section` atlas — section-select labels, the LOVE `HIGH`/`LOW` markers, skill-frame base |
 | `sharedassets11.assets` | 1.1 | `Manual` atlas — `UL_manual_key` only |
 | `sharedassets17.assets` | 8.5 | `ShortStory` atlas — 2 key sprites · the `SS_Button` row widened 417 → 483 px of text (4 `RectTransform`s shifted) |
-| `sharedassets21.assets` | 4.3 | `Recollection` atlas — `UL_recolle_key` · `RecollectionButton/Text` auto-size + `NoWrap` |
+| `sharedassets21.assets` | 4.3 | `Recollection` atlas — `UL_recolle_key` · `RecollectionButton/Text` `NoWrap`, auto-size **off** again (fixed 32 pt), wrapped in a new `TextMask` parent (`RectMask2D` + `AutoScrollText`) so long titles scroll |
 | `sharedassets10.assets` | 10.6 | **font only** |
 | `sharedassets13.assets` | 2.6 | `Music` atlas — `UL_music_key` · 1 font |
 | `level10` | 0.2 | 4 TMP components (ADV message ×2, novel-mode box, dictionary popup) · the two ADV message `RectTransform`s narrowed 1400 → 1280 so no line slides under the box's corner art |
 | `level17` | 0.03 | the SS LIST `Buttons` `VerticalLayoutGroup` — `m_Padding.m_Left` 95 → 143, pinning the widened row's left edge |
 | `level19` / `level20` | 0.04 | the save/load slot screens — `ChapterTitle (TMP)` auto-sizing, one component each |
 | `level22` | 0.1 | dictionary `MainText (TMP)` wrap mode · ruby `characterSpacing` 15 → 0 · `Mask_Ryby` widened 180 → 500 |
-| `level13` | 0.06 | MUSIC room — `TrackTitle (TMP)` `characterSpacing` 6 → 0 (2 bytes; 16 of 21 track titles still overflow) |
+| `level13` | 0.06 | MUSIC room — `TrackTitle (TMP)` `characterSpacing` 6 → 0, then a `TrackTitleMask` parent (386×100, `RectMask2D` + `AutoScrollText`) with the title re-anchored left, centred, `ContentSizeFitter` + `LayoutElement minWidth 386`: short titles centre, long ones scroll |
 
 **Six font assets carry the added glyphs, and four of them are duplicated across files.** `FOT-NewRodinProN-DB` lives in `sharedassets7`, `scene_jp` *and* `ui_jp`; `FOT-DNPShueiMGoStd-B`/`-L` in `sharedassets10` and `ui_jp`; `FOT-DotGothic12Std-M` in `sharedassets13` and `ui_jp`; `FOT-iroha21popuraStdN-R` in `resources.assets` and `ui_jp`; `FOT-NewRodinProN-M` only in `anim01`. Patching one copy and not its twin leaves tofu on whichever screens load the other file — that is why `anim01` and `sharedassets10` ship at all (`sharedassets13` would anyway, for the `Music` atlas).
 
@@ -139,6 +139,8 @@ These all pass offline checks and fail in game, or fail in a way that looks like
 - `tools/check_layout_breaks.py` — diffs the packed bundle against a pre-merge backup, per string, on the two things a flat sheet cell cannot carry: newline count and indented-line count. Losing either fails. Run against the 15 Aug baseline it found five regressions nobody had noticed, including two messages left **empty** where the Japanese has `「…………」`.
 - **Four layout fixers that must be re-run after every sheet merge**, because the sheet stores each cell as one flat line and the merge flattens their work: `fix_adv_wrap.py` (checks nothing runs under the box art), `fix_novel_list_wrap.py` (numbered rules, hanging indent), `fix_dictionary_wrap.py` (dictionary body to the popup's 586 px), `fix_ellipsis_break.py` (`... ...` breaks the line). Each takes `--check` and exits non-zero, so they belong in the post-merge gate next to `check_scripts.py`.
 - `tools/fix_adv_box_width.py` — the one component patch of that family: `level10` pid 564/581 `m_SizeDelta.x` 1400 → 1280, bytes in place, size unchanged.
+- `tools/marquee_lib.py` + `fix_music_title_marquee.py` / `fix_recollection_marquee.py` / `fix_section_title_marquee.py` — the three one-line boxes that overflow (MUSIC track title, Ending List rows, section title) now **scroll** using a component the game ships but never instantiated: `AutoScrollText` (`Assets/Scripts/Auto/`, MonoScript `globalgamemanagers.assets` pid 1187, 0 instances anywhere). It needs a `RectMask2D` on its own GameObject, moves `targetText.rectTransform.anchoredPosition.x` from 0, and only scrolls when `preferredWidth > mask.rect.width`; it hooks TMP's `TEXT_CHANGED`, so it re-arms itself whenever the game sets the text. Adding a class a file has never seen is data-only: in a no-typetree file the type entry needs `script_id = MD4(class+namespace+assembly)` and `old_type_hash = MonoScript.m_PropertiesHash` (formula verified against every existing entry); in the `ui_jp` bundle the MonoScript lives inside the CAB and the type entry needs a hand-assembled typetree node. Two geometry rules were paid for in screenshots: the mask must cover the **text area only** (a TMP left margin under the mask lets scrolling text run into it), and "centre when it fits, left-align when it scrolls" is done with `ContentSizeFitter` + `LayoutElement.minWidth`, never with TMP alignment, because `StartScroll` forces `x = 0`. Every script re-loads its own output and refuses to write unless all untouched objects are byte-identical; UnityPy re-packs objects at 8-byte alignment (stock uses 16), so the file shrinks a little — `level17`/`level22` shipped that way.
+- `tools/fix_music_title_case.py` — `MusicData.title` in ALL CAPS. The title box uses a TMP **SDF-Dynamic** font (empty character table, glyphs rasterised at runtime), so "does the font have the glyph" means reading the cmap of the source `Font.m_FontData` (`sharedassets13` pid 48 — ULPixel in this patch, which has every Vietnamese capital; stock DotGothic lacks 51). The script refuses to write if a needed glyph is missing.
 
 **The chapter-select synopsis wraps at 18 characters in game code, counting rich-text tag characters.** Editing the TMP component or inserting `<size=>` tags does nothing — three patch rounds were spent rediscovering this. The data itself must word-wrap at ≤18. `check_chapterdata.py` enforces it.
 
