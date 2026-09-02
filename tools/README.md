@@ -1979,7 +1979,7 @@ word-wrap. Ngắt cứng chỉ thật sự mua được bốn thứ, và **cả 
 
 | lý do | quy mô | ai lo |
 |---|---|---|
-| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 4 ô | tool này bỏ qua |
+| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 5 ô | bỏ qua, trừ khi nối xong ruby vẫn đúng chỗ — `ruby_safe()`, xem dưới |
 | novel: engine thụt 1 em cho dòng DATA, không thụt cho dòng TMP ngắt | 1.623 ô | `fix_novel_list_wrap.py` |
 | hoạ tiết góc ô ADV | vài ô | `fix_adv_wrap.py` |
 | caption giữa màn quá lề watermark | 41 ô | `fix_center_caption_wrap.py` |
@@ -2019,6 +2019,20 @@ Không đụng script test của nhà phát triển (`sample1`, `UL_test`,
 không có trong `ChapterData`, không màn nào tới được). Lọc bằng tỉ lệ ký tự CJK:
 nối tiếng Nhật bằng dấu cách là hỏng.
 
+**Ruby không còn là miễn trừ tuyệt đối (02/09/2026).** Ảnh máy thật IMG_7232 —
+`72/txt/0380`, Hotaru — là đúng lỗi mục này mô tả (mẩu `không` đứng lẻ một hàng) mà
+`--check` vẫn PASS, vì ô ấy mang `[dic no=252 text=tinh chỉnh'tuning]` và tool bỏ qua
+mọi ô có ruby. `Ruby_Text` đặt chú thích theo (chỉ số dòng DATA, x trong dòng đó), không
+biết TMP wrap — nên điều thật sự cần giữ không phải "đừng đụng ô có ruby" mà là: sau khi
+nối, **mọi dòng data đứng trước dòng có ruby vẫn vẽ đúng một hàng, và phần đầu dòng cho
+tới hết tag ruby nằm trọn hàng vẽ đầu**, đo ở cỡ auto-size thật (`fix_adv_wrap.render`).
+`ruby_safe()` làm đúng phép đo đó. Ở `72/txt/0380` engine co xuống 32,25 pt; nối cả ba
+dòng làm một thì TMP vẽ 1277 / 1216 / 1255 px và tag ruby kết ở 1115 px trên hàng 1 —
+an toàn, nên tool nối (2 chỗ ngắt). Bốn ô ruby còn lại (`72/txt/0467`, `103/txt/0336`,
+`116/txt/0867`, `127/txt/0385`) không đạt — tag nằm ở 1685 / 3170 / 2255 px, hoặc ô chỉ
+có một dòng — nên giữ nguyên. Sheet đã bỏ ruby khỏi lời thoại; hai snapshot (86)/(87)
+vẫn mang đủ 5 tag này, snapshot mới hơn merge xuống là chúng tự hết.
+
 `check_layout_breaks.py` sẽ báo **mất** ngắt dòng sau đợt này — đúng dự kiến, giống
 trường hợp `fix_ellipsis_break.py` gỡ ngắt theo luật dòng cụt.
 
@@ -2030,6 +2044,60 @@ python tools\fix_adv_wrap.py --apply           # chạy ngay sau, cho ô chạm 
 ```
 
 Backup: `_backup\scenario01.midphrase`.
+
+## Ngắt cứng giữa cụm từ trong văn xuôi chế độ novel (`fix_novel_prose_break.py`)
+
+`python tools\fix_novel_prose_break.py [--apply] [--check]`
+
+Ảnh máy thật IMG_7238 (02/09/2026), `70/txt/0094` — câu mở đầu khối luật, vẽ bởi
+`Message(Novel)`:
+
+```
+  ―Hôm qua, những gì Kohaku đã dạy tôi là "Công          dòng DATA   1284 px
+  việc tối thiểu" của một Operator (Điều hành viên) và   dòng DATA   1547 px > 1400
+"Kiến                                                    TMP ngắt xuống, KHÔNG thụt
+  thức cơ bản" về Unlogical.                             dòng DATA
+```
+
+Cùng cơ chế đã đo ở mục thụt treo bên dưới: ô novel thụt 1 em cho dòng CÓ TRONG DỮ
+LIỆU và không thụt cho dòng TMP tự ngắt. Nên một `\n` đặt giữa cụm từ chỉ vô hại khi
+dòng đứng trước nó **vừa khung**; dòng đó tràn thì mẩu thừa rơi xuống đứng lẻ, thụt
+ngược, rồi `\n` kế tiếp lại thụt vào — `Kiến thức` bị xé làm hai hàng lệch nhau. Đây là
+lớp lỗi `fix_midphrase_break.py` đã dọn ở ADV, nhưng tool đó miễn vùng novel — và ở
+novel nó lộ hơn ADV, vì cái thụt.
+
+Khảo sát cả 1.630 tin nhắn vùng novel (`[ノベルモードN開始…]` … `…終了…`, bỏ mục liệt kê):
+
+| | ノベルモード1 (1400) | 2 (1600) | 3 (chưa đo) |
+|---|---|---|---|
+| một dòng, tràn khung — TMP wrap, dáng đoạn văn thụt đầu dòng | 803 | 50 | 4 |
+| nhiều dòng, có dòng tràn | 104 | 1 | 1 |
+| … trong đó dòng tràn đứng TRƯỚC một `\n` | 13 | 0 | 0 |
+| … và `\n` ấy ngắt giữa cụm từ — **lỗi** | **3** | 0 | 0 |
+
+Mười ca còn lại của hàng thứ ba ngắt ở ranh giới câu: đuôi câu rơi xuống rồi câu sau
+thụt vào, đọc như hai đoạn văn — cùng dáng với 803 ô một dòng, để nguyên.
+
+**Sửa: trong ô lỗi, gỡ mọi `\n` giữa cụm từ (nối bằng dấu cách), giữ `\n` ở ranh giới
+câu.** Ô ấy đằng nào cũng bị TMP wrap; trộn ngắt kiểu khối Nhật (mỗi vế một dòng thụt)
+với wrap của TMP trong cùng một đoạn thì không có cách xếp cho thẳng hàng. Không ngắt
+lại cho vừa 1400: ngắt lấp chỗ là thứ vòng (87) vừa bỏ, và merge kế tiếp dài chữ ra là
+hỏng lại y như cũ.
+
+| ô | trước | sau |
+|---|---|---|
+| `70/txt/0094` | 3 dòng, dòng 2 = 1547 px, ngắt sau `"Công` / `"Kiến` | 1 dòng |
+| `80/txt/0168` | 2 dòng, dòng 1 = 2163 px, ngắt sau `thôi,` | 1 dòng |
+| `80/txt/0183` | 3 dòng, 1471 + 1437 px, ngắt sau `người,` / `yếu` | 1 dòng |
+
+Mirror vào `scriptText` 0/3 — ba ô nằm trong 11% hai bản đã lệch nhau, vô hại vì bản đó
+không được vẽ. `check_layout_breaks.py` báo mất `\n` ở đúng ba ô này, đúng dự kiến.
+Backup `_backup\scenario01.novelprose`.
+
+Tự dò từ phía Nhật nên chạy lại được sau mỗi merge; `--check` vào chốt sau merge (bảng
+ở mục kế). Bỏ qua ô có ruby (ngắt dòng là neo của `Ruby_Text`), ô còn kana (script
+test) và mục liệt kê. `ノベルモード3` (6 ô nhiều dòng) chưa biết widget nào vẽ nên chỉ
+đếm, không đo.
 
 ## Danh sách có số trong chế độ novel — thụt treo
 
@@ -2083,6 +2151,7 @@ nên không khớp verbatim; vô hại vì `scriptText` không được vẽ.
 ```powershell
 python tools\fix_novel_list_wrap.py --apply     # dựng lại ngắt dòng + thụt treo
 python tools\fix_novel_list_wrap.py --check     # exit 1 nếu còn khối sai
+python tools\fix_novel_prose_break.py --check   # exit 1 nếu văn xuôi novel có dòng tràn trước ngắt giữa cụm từ
 python tools\fix_dictionary_wrap.py  --apply    # ô từ điển, cùng lý do
 python tools\fix_terminal_term.py    --check    # exit 1 nếu sheet mang lại cách gọi cũ
 python tools\fix_paren_balance.py    --check    # exit 1 nếu tin nhắn mất dấu `（` mở

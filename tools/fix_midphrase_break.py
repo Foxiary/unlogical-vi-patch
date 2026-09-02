@@ -40,7 +40,15 @@ ngoại lệ, và đó đúng là những chỗ tool này gỡ.
 
 ## Không đụng tới
 
-- tin nhắn có tag ruby
+- tin nhắn có tag ruby — TRỪ KHI nối xong ruby vẫn đứng đúng chỗ. `Ruby_Text` đặt
+  chú thích theo (chỉ số dòng DATA, x trong dòng đó) và không biết TMP wrap, nên
+  nối lại chỉ an toàn khi mọi dòng data đứng trước dòng có ruby vẽ đúng một hàng
+  và phần đầu dòng cho tới hết tag ruby cũng nằm trọn hàng vẽ đầu — đo ở cỡ chữ
+  auto-size thật (`fix_adv_wrap.render`), xem `ruby_safe()`. `72/txt/0380` (ảnh
+  IMG_7232, mẩu `không` đứng lẻ) đúng ca này: engine co xuống 32 pt, tag
+  `[dic … text=tinh chỉnh'tuning]` nằm gọn hàng 1 dù nối cả ba dòng làm một. Bốn
+  ô ruby còn lại không đạt điều kiện nên giữ nguyên; sheet đã bỏ ruby, chờ
+  snapshot mới hơn (87) rồi merge là hết.
 - vùng novel (`fix_adv_wrap.adv_messages()` đã loại sẵn)
 - script test của nhà phát triển: `sample1`, `UL_test`, `UL_Live2d_test_sample`,
   `01_test_live2d_0*` — sID 0–8, toàn tiếng Nhật, không có trong `ChapterData`,
@@ -162,12 +170,37 @@ def candidates(data):
         txt = data["target"][ti]["text"][j]
         if not isinstance(txt, str) or "\n" not in txt:
             continue
-        if (ti, j) in owned or RUBY.search(txt) or is_dev_japanese(txt):
+        if (ti, j) in owned or is_dev_japanese(txt):
             continue
         new = merged(txt)
-        if new != txt and not A.offenders(new)[0]:
-            out.append((ti, sid, j, txt, new))
+        if new == txt or A.offenders(new)[0]:
+            continue
+        if RUBY.search(txt) and not ruby_safe(new):
+            continue
+        out.append((ti, sid, j, txt, new))
     return out
+
+
+def ruby_safe(new):
+    """Nối xong, mọi chú thích ruby vẫn được vẽ đúng chỗ.
+
+    `Ruby_Text` đặt chú thích theo (chỉ số dòng DATA, x trong dòng đó), không biết
+    TMP wrap. Nên cần hai điều: mọi dòng data đứng TRƯỚC dòng cuối có ruby vẽ đúng
+    một hàng, và trên mỗi dòng có ruby thì phần đầu dòng cho tới hết tag ruby cuối
+    nằm trọn hàng vẽ đầu. Đo ở cỡ chữ auto-size thật của tin nhắn
+    (`fix_adv_wrap.render`), quy về thang `w42`.
+    """
+    size = A.render(new)[0]
+    limit = (A.RECT_W - A.SAFETY) * 42.0 / size
+    lines = new.split("\n")
+    last = max(k for k, l in enumerate(lines) if RUBY.search(l))
+    if any(A.w42(l) > limit for l in lines[:last]):
+        return False
+    for l in lines[:last + 1]:
+        ms = list(RUBY.finditer(l))
+        if ms and A.w42(l[:ms[-1].end()]) > limit:
+            return False
+    return True
 
 
 def load(path):
