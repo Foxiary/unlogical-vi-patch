@@ -2064,6 +2064,9 @@ cuối, không lan lên trên.
 
 ## Ending List (Recollection) — tiêu đề đè lên dòng dưới
 
+> **Thay thế 02/09/2026:** auto-size ở đây đã **tắt lại**, tiêu đề dài giờ *chạy chữ* — xem mục
+> [Chạy chữ (marquee)](#chạy-chữ-marquee-tên-bài-music-ending-list-tiêu-đề-section) bên dưới. Phần còn lại giữ làm hồ sơ.
+
 Một dòng của danh sách là prefab `RecollectionButton` trong
 **`sharedassets21.assets`** (bundle của `level21`, cảnh Recollection):
 
@@ -2122,6 +2125,95 @@ Bớt `m_margin.x` (94) cũng vô nghĩa — icon kết thúc ở x = 79, chỉ 
 > nghĩa duy lý" (cần 21.5) sẽ nhỏ rõ so với hàng xóm. Muốn đều hơn thì phải rút
 > gọn bản dịch — `SceneReplayData` không có tab trên sheet nên sửa thẳng bằng
 > `json_term.py`.
+
+## Chạy chữ (marquee): tên bài MUSIC, Ending List, tiêu đề section
+
+Ba ô một dòng mà bản dịch dài hơn khung — tên bài ở màn MUSIC (16/21 tràn sau khi đã bỏ
+charSpacing), tiêu đề Ending List (đang co auto-size xuống tới cỡ 17), tiêu đề section trong
+khung tóm tắt (căn giữa nên bị mask cắt cả hai đầu). Cả ba giờ **chạy chữ** bằng chính code của
+game, không vá NSO. Làm 02/09/2026, bốn script dùng chung `tools\marquee_lib.py`.
+
+### `AutoScrollText` — component có sẵn mà studio không dùng
+
+`global-metadata.dat` khai `AutoScrollText` (`Assets/Scripts/Auto/AutoScrollText.cs`, MonoScript
+`globalgamemanagers.assets` pid 1187) nhưng **0 instance** trong toàn bộ scene/prefab (quét
+5 905 MonoBehaviour của `level*`/`sharedassets*`/`resources` và cả `ui_jp`/`scene_jp`). Code vẫn
+được biên dịch. Đọc bằng Il2CppDumper (`dump.cs` sinh từ NSP update) + capstone trên `main.flat`:
+
+```
+[RequireComponent(RectMask2D)]
+Awake        textRect = targetText.rectTransform; mask = GetComponent<RectMask2D>()  (cùng GameObject)
+OnEnable     TMPro_EventManager.TEXT_CHANGED += OnTMPTextChanged; StartScroll()
+StartScroll  anchoredPosition.x = 0; CalculateWidths();  chỉ chạy khi preferredWidth > mask.rect.width
+ScrollMode   Loop = 0   : trôi sang trái, ra hết thì vòng lại từ x = maskWidth
+             Restart = 1: trôi tới x = -(textWidth - maskWidth), dừng pauseDuration, về 0, chờ startDelay
+.ctor        startDelay 1.0, speed 50 px/s, pauseDuration 1.0
+```
+
+Field serialize: `targetText` (PPtr TMP), `scrollMode`, `startDelay`, `speed`, `pauseDuration`
+— 60 byte kể cả header. Mỗi lần `MusicRoom`/`SceneReplayRoom` gán chữ, TMP bắn TEXT_CHANGED
+và component tự tính lại, nên gắn xong là chạy. Dùng `Restart` (đọc được đầu tên hầu hết thời
+gian); `Loop` để chọn qua `--mode`.
+
+### Thêm một class chưa từng có trong file
+
+File **không nhúng type tree** (`level13`, `sharedassets21`): MonoScript nằm ở external
+`globalgamemanagers.assets`, type entry chỉ cần hai hash — `script_id = MD4(className +
+namespace + assemblyName)` (đối chiếu khớp 23/23 entry sẵn có của `level13`; OpenSSL 3 đã bỏ
+md4 nên `marquee_lib` cài lại thuần Python) và `old_type_hash = MonoScript.m_PropertiesHash`.
+Bundle **có type tree** (`ui_jp`): MonoScript nằm ngay trong CAB, phải thêm MonoScript object
+(chép từ MonoScript sẵn có, đổi tên/hash) và type entry **kèm node** — ghép từ node sẵn có:
+header của `ContentSizeFitter`, `PPtr<$TextMeshProUGUI>` của `EventTriggerButton.textMeshPro`,
+`UInt8` của `useTextColor`. `TypeTreeNode` của UnityPy không `deepcopy` được, dựng lại từ
+`to_dict()`. Kiểm: đọc component mới bằng chính node vừa dựng phải ra đúng giá trị đã ghi.
+
+Object mới = `copy.copy` một ObjectReader cùng class, đổi `path_id`/`type_id`/`data`, rồi
+`env.file.save()`. File co lại vài trăm byte đến 1,3 KB dù thêm object: bản gốc canh mỗi object
+ở mốc **16 byte**, UnityPy canh **8** — `level17`/`level22` đã ship cũng canh 8 và chạy bình
+thường. Cửa an toàn bắt buộc trong cả bốn script: **nạp lại blob và so byte từng object với
+bản gốc**, chỉ các object cố ý sửa được khác, không thì không ghi.
+
+### Ba bài học về hình học, đều do `anchoredPosition.x = 0` bị ép
+
+1. **Mask không được phủ lề trái của TMP.** Ô MUSIC: rect 400 px tại canvas 565..965, TMP
+   `m_margin.x = 14` → chữ nghỉ ở 579, cách icon ♫ 14 px. Bản vá đầu để mask trùng rect: chữ
+   nghỉ vẫn đúng, nhưng lúc trôi chữ chui vào 14 px lề và dí sát icon (ảnh chụp
+   `_2026-09-02_03-27-47`). Sửa: mask = đúng vùng chữ (579..965, 386 px), lề TMP về 0 và gộp
+   vào vị trí mask. Ngưỡng `preferredWidth > 386` = ngưỡng tràn cũ, tập tên chạy chữ không đổi.
+2. **Căn giữa khi vừa, căn trái khi dài** không làm được bằng alignment: TMP căn giữa trong rect
+   cố định thì tên dài tràn đều hai bên, đầu bị mask cắt ngay lúc nghỉ. Giải bằng layout: rect
+   con neo + pivot **mép trái** mask, `ContentSizeFitter` (ngang = PreferredSize) +
+   `LayoutElement.minWidth = bề rộng mask, priority 1` → rect rộng `max(mask, preferredWidth)`.
+   Tên ngắn: rect = mask, chữ căn giữa trong đó. Tên dài: rect = đúng bề rộng chữ, lấp đầy từ
+   mép trái — chính là x = 0 mà scroller cần, và `-(textWidth − maskWidth)` đưa đuôi tới đúng
+   mép phải. `LayoutUtility` lấy `minWidth` từ LayoutElement (priority 1 > TMP 0) và
+   `preferredWidth` từ TMP (LayoutElement để −1). Dùng cho MUSIC và tiêu đề section; Ending List
+   căn trái nên không cần.
+3. Lề âm cũng vậy: `Mask_Title/Title` có `m_margin.x = −5` (bù charSpacing 6 cho cân giữa); với
+   rect neo trái, −5 đẩy chữ ra ngoài mask 5 px và bị cắt → về 0 (tâm lệch 2,5 px, không thấy).
+
+### Từng màn
+
+| màn | file | script | thay đổi |
+|---|---|---|---|
+| MUSIC `TrackTitle` | `level13` | `fix_music_title_marquee.py` | GO cha `TrackTitleMask` 386×100 tại (−188,−228) [RectMask2D, AutoScrollText]; `TrackTitle` neo trái + CSF + LayoutElement; TMP căn giữa, margin.x 14→0. 375 object nguyên byte, 4 sửa, 6 mới |
+| Ending List hàng | `sharedassets21.assets` | `fix_recollection_marquee.py` | GO `TextMask` chèn giữa `RecollectionButton` và `Text`: stretch, thụt trái 94, cao hơn hàng 10 px mỗi bên (dấu không bị cắt); `Text` neo trái 502×51; TMP **auto-size tắt**, cỡ 32 cố định, margin.x 94→0. Quét disassembly: `CreateReplayButtons` chỉ `Instantiate` + `GetComponent<EventTriggerButton>()`, chữ đi qua PPtr `textMeshPro → #169`, không `Transform.Find` → chèn GO an toàn |
+| Section title | `ui_jp` (`ChapterSelect/Story/SynopsisTitle/Mask_Title/Title (TMP)`) | `fix_section_title_marquee.py` | `Mask_Title` đã có RectMask2D, chỉ gắn AutoScrollText; `Title` neo trái + CSF + LayoutElement 527; margin.x −5→0; +2 MonoScript (`AutoScrollText`, `LayoutElement`), +2 type entry có node. Không đổi cây. 7 933 object nguyên byte |
+
+Tham số chung: `restart`, startDelay 1,5 s, 60 px/s, pause 2 s. Mỗi script từ chối file đã vá —
+đổi tham số thì chép backup (`_backup\level13.premarquee`, `sharedassets21.assets.premarquee`,
+`ui_jp.presectionmarquee`) đè lại rồi chạy lại. Nhãn hàng `ChapterSelectButton/Text` chỉ là
+"SECTION n" cố định, không đụng.
+
+### Viết hoa tên bài (`fix_music_title_case.py`)
+
+`MusicData.title` (bundle `json`, **không có tab trên sheet**) đổi sang VIẾT HOA TOÀN BỘ, 21/21,
+sửa thẳng trên văn bản JSON như `json_term.py`. Ô này dùng font TMP **SDF-Dynamic** (bảng ký tự
+rỗng, glyph sinh lúc chạy), nên kiểm glyph phải soi cmap của file font nguồn:
+`TMP#244.m_fontAsset → TMP_FontAsset.m_SourceFontFile → Font.m_FontData` (`sharedassets13`
+pid 48). Bản vá đã thay DotGothic bằng **ULPixel** (2 032 glyph), đủ cả 66 ký tự cần; bản gốc
+thiếu 51 chữ hoa có dấu — script dừng nếu thiếu, để ai lùi font thì không ship ô vuông. Backup
+`_backup\json.premusiccase`.
 
 ## Phím tắt màn Ending List
 
