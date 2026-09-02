@@ -37,8 +37,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/cg/cg_end",
-    "bytes": 7703313,
-    "md5": "450374e66b8667c4a002af177e28f768",
+    "bytes": 7703282,
+    "md5": "93a77b52f16c1b80fb0783f9e3982996",
     "where": "repo"
   },
   {
@@ -49,8 +49,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/json/json",
-    "bytes": 113991,
-    "md5": "6ea91c4b3715d4e64f1d97b12fa0407f",
+    "bytes": 113989,
+    "md5": "fc3aac65dbcdddde7f0327fe67fc55a7",
     "where": "repo"
   },
   {

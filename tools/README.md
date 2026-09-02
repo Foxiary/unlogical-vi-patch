@@ -4416,3 +4416,45 @@ python tools\fix_ellipsis_glyph.py --apply
 
 Đã chạy 02/09/2026, backup `_backup\sharedassets7.assets.preellipsis`. Lùi lại = chép backup đè
 lên `romfs\Data\sharedassets7.assets`.
+
+## `[Error]` dính liền tiêu đề ending (`fix_error_prefix_space.py`)
+
+Ba mục đầu của Ending List mang tiền tố `[Error]` trong `SceneReplayData` (bundle `json`):
+
+```
+#recollection_02   [Error]自己犠牲のペガサス     ->  [Error]Pegasus của sự hy sinh
+#recollection_03   [Error]夢想家のグリフォン     ->  [Error]Griffin của kẻ mộng mơ
+#recollection_04   [Error]合理主義のケルベロス   ->  [Error]Cerberus của chủ nghĩa duy lý
+```
+
+Bản gốc viết liền vì sau `]` là chữ Nhật — tiếng Nhật vốn không có dấu cách nên `]自` vẫn tách
+bạch. Bản dịch thì sau `]` là chữ Latin, `]P` dính thành một cụm. Chèn đúng **một** dấu cách sau
+`]`, không đụng ký tự nào khác (script khẳng định `len(sau) == len(trước) + số ô đổi`).
+
+`[Error]` ở đây **là chữ hiển thị, không phải thẻ lệnh**: TMP vẽ thẳng `title.jp`, không đi qua bộ
+phân tích `[...]` của kịch bản — ảnh chụp máy thật (`_2026-09-02_12-15-50.png`) hiện nguyên văn
+`[Error]Pegasus…`. Nên đây là chuỗi được phép sửa, khác với `[dic no=N]` hay `[主人公]`.
+
+**Phải sửa hai chỗ, nếu không thẻ và danh sách lệch nhau một dấu cách.** Thẻ THE END sau mỗi BAD
+END *vẽ lại chính chuỗi này thành tranh* (xem mục "Thẻ THE END"), và cả ba ending 002/003/004 đều
+có thẻ trong `cg_end`. `fix_endcard_title.py` luôn dựng lại từ bản gốc 1.0.2 nên chạy lại là đủ:
+
+```powershell
+python tools\fix_error_prefix_space.py            # chạy thử
+python tools\fix_error_prefix_space.py --apply
+python tools\fix_endcard_title.py --apply         # BẮT BUỘC chạy kèm
+```
+
+Kiểm sau khi ghi: dựng lại `cg_end` rồi so từng texture với bản trước — **32 ảnh, đúng 3 ảnh đổi**
+(`a_bad_002_002/003/004`, ~8.700–10.500 px mỗi ảnh), 29 ảnh còn lại trùng khít từng pixel, tức
+vòng dựng lại không kéo theo sai khác nào khác. Thẻ vẫn nằm trong lề an toàn: kiểu `a_bad_002`
+cho phép x 412..1508, mục dài nhất (`#004`) chiếm 447..1472.
+
+Hàng Ending List không cần đo lại: cả ba tiêu đề vốn đã dài hơn khung 502 px (607/599/746 px ở cỡ
+32) nên đang chạy chữ bằng `AutoScrollText`; thêm một dấu cách chỉ đẩy lên 620/613/759 px, vẫn cùng
+một trạng thái.
+
+Chạy lại vô hại: `fixed()` chuẩn hoá về đúng một dấu cách nên lần hai báo `0/38`.
+
+Đã chạy 02/09/2026, backup `_backup\json.preerrorspace` và `_backup\cg_end.endcard` (bản gốc
+1.0.2). `manifest.json` cập nhật cùng lượt cho cả `json` và `cg_end`.
