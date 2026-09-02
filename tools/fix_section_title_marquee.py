@@ -151,6 +151,35 @@ def main():
     go_title["m_Component"] += [{"component": {"m_FileID": 0, "m_PathID": p}} for p in (PID_CSF, PID_LE)]
     objs[GO_TITLE].save_typetree(go_title)
 
+    # --- bảng preload của AssetBundle ----------------------------------------------------
+    # Mỗi asset trong bundle có một dải `m_PreloadTable` nạp TRƯỚC asset đó; trong dải của
+    # chapterselect.prefab mọi MonoScript đều đứng trước MonoBehaviour dùng nó (15/15). Object
+    # mới không nằm trong dải thì MonoScript chưa nạp lúc deserialize → component thành
+    # "missing script" (bản vá đầu: LayoutElement/AutoScrollText chết, ContentSizeFitter sống
+    # nhờ MonoScript đã nạp từ prefab khác → rect co bằng chữ, tiêu đề dạt trái). Chèn vào đầu
+    # dải, MonoScript trước component, tăng preloadSize và dời preloadIndex các container sau.
+    ab_obj = next(o for o in objs.values() if o.type.name == "AssetBundle")
+    ab = ab_obj.read_typetree()
+    pre = ab["m_PreloadTable"]
+    hit = [(k, v) for k, v in ab["m_Container"]
+           if GO_MASK in {p["m_PathID"] for p in pre[v["preloadIndex"]:v["preloadIndex"] + v["preloadSize"]]}]
+    assert len(hit) == 1, [k for k, _ in hit]
+    ckey, cv = hit[0]
+    start, size = cv["preloadIndex"], cv["preloadSize"]
+    assert all(v["preloadIndex"] != start for k, v in ab["m_Container"] if k != ckey)
+    in_range = {p["m_PathID"] for p in pre[start:start + size]}
+    ins = [p for p in (ms_csf.path_id, PID_MS_SCROLL, PID_MS_LE, PID_SCROLL, PID_CSF, PID_LE) if p not in in_range]
+    pre[start:start] = [{"m_FileID": 0, "m_PathID": p} for p in ins]
+    cv["preloadSize"] = size + len(ins)
+    shifted = 0
+    for k, v in ab["m_Container"]:
+        if k != ckey and v["preloadIndex"] > start:
+            v["preloadIndex"] += len(ins); shifted += 1
+    ab_obj.save_typetree(ab)
+    print("preload: %s dải %d+%d -> +%d entry (%s); dời %d container sau"
+          % (ckey.split("/")[-1], start, size, len(ins), ", ".join(hex(p) if p > 0 else str(p) for p in ins), shifted))
+    pre_ins, pre_start, pre_size = list(ins), start, size
+
     # --- Title: neo + pivot mép trái, cao kín mask, rộng = mask (CSF nới khi chữ dài hơn)
     rt["m_AnchorMin"] = {"x": 0.0, "y": 0.0}
     rt["m_AnchorMax"] = {"x": 0.0, "y": 1.0}
@@ -172,9 +201,21 @@ def main():
     os.makedirs(os.path.dirname(SCRATCH), exist_ok=True)
     open(SCRATCH, "wb").write(blob)
     chk = cab_of(UnityPy.load(SCRATCH))
-    changed = {GO_MASK, GO_TITLE, RT_TITLE, TMP_TITLE}
+    changed = {GO_MASK, GO_TITLE, RT_TITLE, TMP_TITLE, ab_obj.path_id}
     new_pids = (PID_MS_SCROLL, PID_MS_LE, PID_SCROLL, PID_CSF, PID_LE)
     M.verify_untouched(orig_raw, chk, changed, new_pids)
+    ab2 = next(o for o in chk.objects.values() if o.type.name == "AssetBundle").read_typetree()
+    pre2 = [p["m_PathID"] for p in ab2["m_PreloadTable"]]
+    cv2 = dict(ab2["m_Container"])[ckey]
+    assert len(pre2) == len(pre) and cv2["preloadIndex"] == pre_start and cv2["preloadSize"] == pre_size + len(pre_ins)
+    assert pre2[pre_start:pre_start + len(pre_ins)] == pre_ins
+    rng2 = pre2[pre_start:pre_start + cv2["preloadSize"]]
+    for p in (PID_MS_SCROLL, PID_MS_LE, PID_SCROLL, PID_CSF, PID_LE, ms_csf.path_id):
+        assert p in rng2, p
+    assert rng2.index(PID_MS_SCROLL) < rng2.index(PID_SCROLL) and rng2.index(PID_MS_LE) < rng2.index(PID_LE) and rng2.index(ms_csf.path_id) < rng2.index(PID_CSF)
+    ends = sorted((v["preloadIndex"], v["preloadIndex"] + v["preloadSize"]) for _, v in ab2["m_Container"])
+    assert all(b <= c for (_, b), (c, _) in zip(ends, ends[1:])) and ends[-1][1] == len(pre2), "dải preload chồng/lệch"
+    print("preload đọc lại: dải %d..%d, %d container liền mạch tới %d" % (pre_start, pre_start + cv2["preloadSize"], len(ends), len(pre2)))
     assert chk.objects[TMP_TITLE].get_raw_data() == tmp_data
     for pid, data in ((PID_SCROLL, scroll_data), (PID_CSF, csf_data), (PID_LE, le_data)):
         assert chk.objects[pid].get_raw_data() == data and chk.objects[pid].type.name == "MonoBehaviour"

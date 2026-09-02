@@ -2267,6 +2267,16 @@ header của `ContentSizeFitter`, `PPtr<$TextMeshProUGUI>` của `EventTriggerBu
 `UInt8` của `useTextColor`. `TypeTreeNode` của UnityPy không `deepcopy` được, dựng lại từ
 `to_dict()`. Kiểm: đọc component mới bằng chính node vừa dựng phải ra đúng giá trị đã ghi.
 
+**Và phải chèn vào `m_PreloadTable` của AssetBundle.** Mỗi asset trong bundle có một dải preload
+nạp *trước* nó; trong dải của `chapterselect.prefab` mọi MonoScript đều đứng trước MonoBehaviour
+dùng nó (15/15). Object mới không có trong dải thì MonoScript chưa nạp lúc deserialize → component
+thành "missing script". Bản vá đầu (`81f5b528`) thiếu bước này: `LayoutElement`/`AutoScrollText`
+chết, `ContentSizeFitter` sống vì MonoScript của nó đã nạp từ prefab khác → rect co bằng chữ, tiêu
+đề dạt trái và không chạy (ảnh `_2026-09-02_12-13-21`). Sửa: chèn MonoScript rồi component vào
+đầu dải, `preloadSize` +6, dời `preloadIndex` của 58 container phía sau, kiểm các dải vẫn liền
+mạch tới cuối bảng. `level13`/`sharedassets21` không có bảng này (`PreloadData` của scene chỉ trỏ
+file ngoài, prefab nạp theo PPtr) nên không cần.
+
 Object mới = `copy.copy` một ObjectReader cùng class, đổi `path_id`/`type_id`/`data`, rồi
 `env.file.save()`. File co lại vài trăm byte đến 1,3 KB dù thêm object: bản gốc canh mỗi object
 ở mốc **16 byte**, UnityPy canh **8** — `level17`/`level22` đã ship cũng canh 8 và chạy bình
@@ -2298,7 +2308,7 @@ bản gốc**, chỉ các object cố ý sửa được khác, không thì khôn
 |---|---|---|---|
 | MUSIC `TrackTitle` | `level13` | `fix_music_title_marquee.py` | GO cha `TrackTitleMask` 386×100 tại (−188,−228) [RectMask2D, AutoScrollText]; `TrackTitle` neo trái + CSF + LayoutElement; TMP căn giữa, margin.x 14→0. 375 object nguyên byte, 4 sửa, 6 mới |
 | Ending List hàng | `sharedassets21.assets` | `fix_recollection_marquee.py` | GO `TextMask` chèn giữa `RecollectionButton` và `Text`: stretch, thụt trái 94, cao hơn hàng 10 px mỗi bên (dấu không bị cắt); `Text` neo trái 502×51; TMP **auto-size tắt**, cỡ 32 cố định, margin.x 94→0. Quét disassembly: `CreateReplayButtons` chỉ `Instantiate` + `GetComponent<EventTriggerButton>()`, chữ đi qua PPtr `textMeshPro → #169`, không `Transform.Find` → chèn GO an toàn |
-| Section title | `ui_jp` (`ChapterSelect/Story/SynopsisTitle/Mask_Title/Title (TMP)`) | `fix_section_title_marquee.py` | `Mask_Title` đã có RectMask2D, chỉ gắn AutoScrollText; `Title` neo trái + CSF + LayoutElement 527; margin.x −5→0; +2 MonoScript (`AutoScrollText`, `LayoutElement`), +2 type entry có node. Không đổi cây. 7 933 object nguyên byte |
+| Section title | `ui_jp` (`ChapterSelect/Story/SynopsisTitle/Mask_Title/Title (TMP)`) | `fix_section_title_marquee.py` | `Mask_Title` đã có RectMask2D, chỉ gắn AutoScrollText; `Title` neo trái + CSF + LayoutElement 527; margin.x −5→0; +2 MonoScript (`AutoScrollText`, `LayoutElement`), +2 type entry có node, +6 entry preload. Không đổi cây. 7 932 object nguyên byte |
 
 Tham số chung: `restart`, startDelay 1,5 s, 60 px/s, pause 2 s. Mỗi script từ chối file đã vá —
 đổi tham số thì chép backup (`_backup\level13.premarquee`, `sharedassets21.assets.premarquee`,
