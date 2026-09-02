@@ -2256,6 +2256,20 @@ liền chọn `…Munakata Kai` / `　 sẽ cùng nhau loại bỏ các Player t
 tóm tắt với mọi tên. Backup `_backup\scenario01.novellist` (23:42). Thêm mục luật mới thì
 soát lại `NO_SPLIT`.
 
+**Lượt hai cùng đêm (ảnh IMG_7245): cách chia SẠCH hơn cách chia ngắn.** Với cách chia hai
+dòng tốt nhất, `89/txt/0006` vẫn bị TMP wrap dòng dữ liệu thứ hai ngay trong ô tóm tắt —
+`…tại sân` / `khấu ẩn.`, đuôi sát lề không thụt treo. Gọi một cách chia là *sạch* khi không
+dòng dữ liệu nào bị wrap ở đó: mọi hàng của ô tóm tắt đều là dòng dữ liệu, tiền tố `　 ` theo
+sang được, không từ nào bị TMP tách. `reflow()` giờ lấy cách chia sạch ở đúng số dòng tham
+lam nếu có, không thì cho phép **thêm một dòng** để sạch, miễn còn trong 3 hàng của ô tóm
+tắt (`SUMMARY_ROWS`). 03/09/2026 đổi **11 khối**: 5 khối 1 → 2 dòng (`70/txt/0095`,
+`121/txt/0108`, `127/txt/0407`, `127/txt/0410`, `127/txt/0413`), 6 khối 2 → 3 dòng
+(`70/txt/0096`, `70/txt/0099`, `78/txt/0111`, `89/txt/0006`, `103/txt/0021`,
+`121/txt/0105`); `89/txt/0006` thành `…Munakata Kai` / `　 sẽ cùng nhau loại bỏ các Player
+tại` / `　 sân khấu ẩn.`. Còn 6 khối dài vẫn wrap trong ô tóm tắt vì cần ≥ 4 hàng, đằng nào
+cũng bị cắt `…` ở đó. `check_layout_breaks` chỉ đếm mất, nên +18 ngắt dòng và +18 dòng thụt
+đi qua.
+
 ### Chốt sau mỗi lần merge sheet
 
 ```powershell

@@ -56,8 +56,19 @@ candidate: no line may leave a quote or bracket open, and no break may fall
 between the two halves of a pair in `NO_SPLIT` — a hand-curated list built from
 the 445 adjacent-word pairs these 29 items contain (`trò chơi`, `đăng xuất`,
 `Game Master`, …).  The old greedy pass had been splitting `đăng / xuất`,
-`kẻ / thù`, `Game / Master`.  The line count of each item does not change, so
-`check_layout_breaks` sees no loss.
+`kẻ / thù`, `Game / Master`.
+
+**Second pass the same night (IMG_7245): a *clean* split beats a short one.**
+With the best two-line split, `89/txt/0006` still let TMP wrap its second data
+line inside the summary box — `…tại sân` / `khấu ẩn.`, the tail flush left with
+no hanging indent.  A split is *clean* when no data line wraps there at all: every
+summary row is then a data row, the `　 ` prefix travels with it, and no word is
+cut by TMP.  `reflow()` now takes a clean split when one exists at the greedy line
+count, and otherwise allows **one extra line** to get one, as long as the item
+stays within the summary's 3 rows (`SUMMARY_ROWS`).  11 items changed on
+2026-09-03: five 1 → 2 lines, six 2 → 3 lines; 6 long items still wrap because
+they need ≥ 4 rows and are cut by the summary regardless.  `check_layout_breaks`
+only counts losses, so the added breaks pass.
 
     python tools\\fix_novel_list_wrap.py            # chạy thử
     python tools\\fix_novel_list_wrap.py --apply
@@ -207,8 +218,11 @@ def split_ok(parts):
     return True
 
 
-def save_lines(parts, upper):
-    """Số dòng các phần này chiếm trong ô tóm tắt thẻ SAVE (mô hình adv_layout).
+SUMMARY_ROWS = 3      # ô tóm tắt thẻ SAVE vừa 3 hàng ở cỡ 27 (fix_save_summary_clip.geometry)
+
+
+def save_counts(parts, upper):
+    """Số hàng TMP vẽ cho TỪNG phần trong ô tóm tắt thẻ SAVE (mô hình adv_layout).
 
     `upper=True` đo `[主人公]` theo cận trên `WWWWWW` (luật chung của repo), `False`
     theo tên mặc định — dùng làm tiêu chí phụ, để một cách chia tốt hơn cho tên
@@ -217,9 +231,28 @@ def save_lines(parts, upper):
     A.CHAR_SPACING = SAVE_CS * A.POINT_SIZE / 100.0
     A.PLAYER_MEASURE = PLAYER_MEASURE if upper else A.DEFAULT_PLAYER_NAME
     try:
-        return sum(max(1, len(A.wrap(p, SAVE_FS, limit=SAVE_W))) for p in parts)
+        return [max(1, len(A.wrap(p, SAVE_FS, limit=SAVE_W))) for p in parts]
     finally:
         A.CHAR_SPACING, A.PLAYER_MEASURE = old_cs, old_pm
+
+
+def save_lines(parts, upper):
+    return sum(save_counts(parts, upper))
+
+
+def candidates(words, prefix, k):
+    """Mọi cách chia `words` ra đúng k dòng, dòng nào cũng vừa LIMIT và qua hai chốt."""
+    if k < 1 or k > len(words) or math.comb(len(words) - 1, k - 1) > MAX_COMBOS:
+        return []
+    out = []
+    for cuts in itertools.combinations(range(1, len(words)), k - 1):
+        b = (0,) + cuts + (len(words),)
+        parts = [" ".join(words[x:y]) for x, y in zip(b, b[1:])]
+        parts = [parts[0]] + [prefix + p for p in parts[1:]]
+        if any(width(p) > LIMIT for p in parts) or not split_ok(parts):
+            continue
+        out.append(parts)
+    return out
 
 
 def greedy(words, prefix):
@@ -237,10 +270,17 @@ def greedy(words, prefix):
 
 
 def reflow(text):
-    """Cùng số dòng với gom tham lam; trong các cách chia hợp lệ, chọn theo thứ tự:
-    ít dòng nhất ở ô tóm tắt (tên cận trên), ít dòng nhất ở ô tóm tắt (tên mặc định),
-    rồi tham lam nhất (dòng 1 dài nhất, rồi dòng 2, …). Không cách nào qua hai chốt
-    thì quay về tham lam như cũ."""
+    """Chọn cách chia theo thứ tự:
+
+    (1) **sạch**: không dòng data nào bị TMP wrap trong ô tóm tắt thẻ SAVE — khi đó
+        mọi hàng ở ô tóm tắt đều là dòng data, thụt treo theo được sang, và không có
+        từ nào bị TMP tách. Thử ở đúng số dòng của gom tham lam trước; không có thì
+        thử thêm MỘT dòng, miễn vẫn trong 3 hàng của ô tóm tắt (ảnh IMG_7245:
+        `89/txt/0006` hai dòng thì `sân / khấu` bị TMP tách trong ô tóm tắt, ba dòng
+        ngắn thì hai khung vẽ y nhau). Nhiều cách sạch thì lấy tham lam nhất.
+    (2) không sạch được: cùng số dòng với gom tham lam, ít hàng tóm tắt nhất (tên cận
+        trên), rồi ít nhất với tên mặc định, rồi tham lam nhất.
+    (3) không cách nào qua hai chốt: gom tham lam như cũ."""
     first = text.split("\n")[0]
     m = VN_MARKER.match(first)
     if not m:
@@ -250,20 +290,18 @@ def reflow(text):
     words = [w for w in flat.split(" ") if w]
     base = greedy(words, prefix)
     k = len(base)
-    if k >= 2 and math.comb(len(words) - 1, k - 1) <= MAX_COMBOS:
-        best = None
-        for cuts in itertools.combinations(range(1, len(words)), k - 1):
-            b = (0,) + cuts + (len(words),)
-            parts = [" ".join(words[x:y]) for x, y in zip(b, b[1:])]
-            parts = [parts[0]] + [prefix + p for p in parts[1:]]
-            if any(width(p) > LIMIT for p in parts) or not split_ok(parts):
-                continue
-            key = (save_lines(parts, True), save_lines(parts, False),
-                   tuple(-width(p) for p in parts))
-            if best is None or key < best[0]:
-                best = (key, parts)
-        if best is not None:
-            return "\n".join(best[1]), prefix
+    greedy_key = lambda parts: tuple(-width(p) for p in parts)   # noqa: E731
+    cands = candidates(words, prefix, k)
+    for kk in (k, k + 1):
+        if kk > SUMMARY_ROWS:
+            break
+        cc = cands if kk == k else candidates(words, prefix, kk)
+        clean = [p for p in cc if all(c == 1 for c in save_counts(p, True))]
+        if clean:
+            return "\n".join(min(clean, key=greedy_key)), prefix
+    if cands:
+        best = min(cands, key=lambda p: (save_lines(p, True), save_lines(p, False), greedy_key(p)))
+        return "\n".join(best), prefix
     return "\n".join(base), prefix
 
 
