@@ -154,7 +154,7 @@ Chỉ còn đúng hai cái tên chưa có cách viết La-tinh:
 
 Các mục từng nằm trong danh sách này đã xong: tên ở màn Hồ sơ, 5 tên linh hồn trong danh sách Amity, ký hiệu `小`/`大` ở hai đầu thanh trượt âm lượng (nay là `−`/`+`), 17 nhãn âm lượng giọng nhân vật, và 3 dòng thoại dư ký tự `っ`.
 
-Còn bốn tên vẫn hiện tiếng Nhật ở **dòng INFO đáy tab SOUND** (`蛍`, `栞`, `恭介`, `光希`). Chúng là string literal trong `global-metadata.dat` chứ không phải dữ liệu, mà dạng La-tinh lại dài hơn số byte gốc nên chưa ghi đè tại chỗ được.
+Còn ba tên vẫn hiện tiếng Nhật ở **dòng INFO đáy tab SOUND** (`蛍`, `栞`, `光希`). Chúng là string literal trong `global-metadata.dat` chứ không phải dữ liệu, mà dạng La-tinh (`Hotaru`, `Shiori`, `Mitsuki`) đều dài hơn số byte gốc nên chưa ghi đè tại chỗ được. `恭介` từng nằm trong danh sách này đã xong (`Kyosuke`, dời literal sang vùng trống).
 
 > **Tab SOUND hiển thị tên nhân vật ở hai nơi**, và rất dễ chỉ sửa một. Chữ trên từng dải thanh trượt là **hình vẽ sẵn** trong sprite `UL_option_sound_menu_ch_*`; còn dòng INFO đáy màn ghép `ConfigVolumeData.label` với `SystemTextData` id 71 (`"'s volume settings"`). Sửa xong tranh mà quên `label` thì màn hình hiện `MIYABI` ở dải nhưng `雅火's volume settings` ở dưới.
 
