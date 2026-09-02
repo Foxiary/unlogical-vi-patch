@@ -8,9 +8,9 @@ surname plus the player-entered given name. Dialogue also uses an inline
 ## The two defaults are IL2CPP string literals
 
 Both live in `Managed/Metadata/global-metadata.dat` and each appears exactly once.
-They are two of the **four** literals this patch edits — see
+They are two of the **twenty** literals this patch edits — see
 [the full list](#every-metadata-literal-this-patch-edits) below, because reverting
-the file reverts all four.
+the file reverts all twenty.
 
 | literal idx | was | now | bytes written | offset (v1.0.2) |
 |---|---|---|---|---|
@@ -19,15 +19,34 @@ the file reverts all four.
 
 ## Every metadata literal this patch edits
 
-Verified by diffing the shipped file against a stock v1.0.2 dump — four literals
-in the data blob, three length fields in the table:
+Verified by diffing the shipped file against a stock v1.0.2 dump (re-derived
+2026-09-03): **20 literals** carry new text; 11 entries have a shorter `length`,
+6 have a moved `dataIndex`, and 3 are *longer* than stock. A 21st entry, `・EXTRA`
+(14954), keeps its text but moved with the season block around it:
 
 | idx | was | now | slot | table entry | data offset |
 |---|---|---|---|---|---|
-| 14668 | `。` | `' '` (one space) | 3 → **1** B | 117600 | 491803 |
+| 14668 | `。` | ` ` | 3 → **1** B | 117600 | 491803 |
+| 14856 | `ターミナルを開いてください` | `Vui lòng mở Terminal` | 39 → **23** B | 119104 | 494190 |
+| 14912 | `マップ` | `Map` | 9 → **3** B | 119552 | 494986 |
+| 14936 | `ユーリ・` | `Yuri・` | 12 → **7** B | 119744 | 495362 |
+| 14954 | `・EXTRA⏎` | `・EXTRA⏎` (unchanged text, moved) | 10 → 10 B | 119888 | 495531 → **495528** |
+| 14955 | `・夏⏎` | `・Hè⏎` | 8 → 8 B | 119896 | 495541 → **495538** |
+| 14956 | `・春⏎` | `・Xuân⏎` | 8 → **10** B | 119904 | 495549 → **495546** |
+| 14957 | `・秋⏎` | `・Thu⏎` | 8 → 8 B | 119912 | 495557 → **495556** |
 | 14991 | `共通・` | `Chung - ` | 9 → **8** B | 120184 | 496109 |
+| 15016 | `奏壱・` | `Soichi・` | 9 → 9 B | 120384 | 496565 |
+| 15028 | `恭介` | `Kyosuke` | 6 → **7** B | 120480 | 496663 → **494213** |
+| 15030 | `戒・` | `Kai・` | 6 → 6 B | 120496 | 496672 |
+| 15047 | `権限がありません` | `Không có quyền hạn` | 24 → 24 B | 120632 | 496847 |
 | 15053 | `涼乃` | `Suzuno` | 6 → 6 B | 120680 | 496921 |
+| 15058 | `現在使用できません` | `Chưa thể sử dụng` | 27 → **23** B | 120720 | 496969 |
 | 15063 | `環無` | `Kanna` | 6 → **5** B | 120760 | 497033 |
+| 15074 | `藍・` | `Ran・` | 6 → 6 B | 120848 | 497133 |
+| 15084 | `選択肢` | `Choice` | 9 → **6** B | 120928 | 497446 |
+| 15085 | `選択肢スキップ⏎現在の設定：強制` | `Bỏ qua lựa chọn⏎Cài đặt: Bắt buộc` | 47 → **48** B | 120936 | 497455 → **497452** |
+| 15086 | `選択肢スキップ⏎現在の設定：既読` | `Bỏ qua lựa chọn⏎Cài đặt: Đã đọc` | 47 → 47 B | 120944 | 497502 |
+| 15090 | `雅火・` | `Miyabi・` | 9 → 9 B | 120976 | 497644 |
 
 Literal 14668 is the sentence period the engine appends to every spoken line —
 see [02 — Text rendering](02-text-rendering.md), "The engine appends 。 to spoken
@@ -36,9 +55,20 @@ lines".
 **A replacement does not have to fit the original slot exactly.** Bytes are
 written in place at the literal's existing data offset, and if the new string is
 shorter the **length field** in the string-literal table is decremented — which is
-what happened to 14668, 14991 and 15063. The `dataIndex` half of each entry, and
-therefore every other literal's offset, stays untouched, so no rebuild is needed.
-A *longer* replacement has no room and would need one.
+what happened to the 11 shortened entries (14668, 14991, 15063, …). Every other
+literal's offset stays untouched, so no rebuild is needed.
+
+**A longer replacement needs room, and room can be borrowed from a shortened
+neighbour.** Three literals grew: `・春` 8 → 10 B, `恭介` 6 → 7 B and the `選択肢スキップ…強制`
+line 47 → 48 B. None had slack after it, so their `dataIndex` was moved instead:
+`Kyosuke` sits at 372165, inside the 16 bytes freed when 14856 (`ターミナルを開いてください`,
+39 → 23 B) shrank; the season block (`・EXTRA` / `・夏` / `・春` / `・秋`) and the two
+`選択肢スキップ` lines were re-packed a few bytes earlier into space freed by their own
+shortened neighbours, which is why `・EXTRA` moved without changing. `metadata_term.py`
+refuses growth outright; the moves were made per literal (see `tools/README.md`,
+"Tên nhân vật ở dòng INFO tab SOUND"). The three names still Japanese on that INFO
+line — `蛍`, `栞`, `光希` (`Hotaru`, `Shiori`, `Mitsuki`) — have zero slack too, so each
+would need the same relocation.
 
 Header layout (v31): pair 0 = stringLiteral table (offset **256**, 15,224 entries
 of 8 bytes: `length` then `dataIndex`), pair 1 = stringLiteralData (offset
