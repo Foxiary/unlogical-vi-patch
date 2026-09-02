@@ -1194,18 +1194,25 @@ def main():
         nv_x = expand_breaks(nv)                     # bản có ngắt dòng do SHEET khai
         nv, bv = nv_x.replace("\n", " "), expand_breaks(bv).replace("\n", " ")
         flat_cur = cur.replace("\n", " ")
+        # So bằng `flat_cell` (gộp MỌI khoảng trắng, kể cả U+3000) chứ không chỉ đổi `\n`
+        # thành space: dòng nối tiếp của khối luật novel mở đầu bằng thụt treo `　 `
+        # (fix_novel_list_wrap), nên đổi `\n` -> space còn để lại `sẽ 　 cùng` giữa câu và
+        # ô bị báo "CẢ HAI BÊN ĐỔI" oan — vòng (90), `89/txt/0006`: sheet chỉ đổi
+        # `những` -> `các` mà build "đã đổi" chỉ vì cái thụt treo. Chỉ dùng cho phép so;
+        # `nv`/`bv`/`flat_cur` bên dưới giữ nguyên để carry_breaks và các chốt khác.
+        build_moved = flat_cell(flat_cur) != flat_cell(bv)
         # "Đã có bản mới" phải so NGUYÊN VĂN khi sheet tự khai ngắt dòng — không thì ô chỉ
         # khác bố cục mà giống câu chữ sẽ bị bỏ qua, và cấu trúc mới không bao giờ xuống
         # (vòng (40): 4 hàng note đúng kiểu đó).
-        if (cur == nv_x) if "\n" in nv_x else (flat_cur == nv):
+        if (cur == nv_x) if "\n" in nv_x else (flat_cell(flat_cur) == flat_cell(nv)):
             print("=  %-34s đã có bản mới" % key); continue
-        if flat_cur != bv and key in TAKE:
+        if build_moved and key in TAKE:
             # Người đã xem và chốt "sheet thắng ô này". Vẫn qua đủ các chốt còn lại
             # (tag khoá tra cứu, `no=` của [dic], [主人公], ngoặc cân, carry_breaks) —
             # `--take-sheet` chỉ bỏ *một* điều kiện: "build chưa ai sửa".
             print("~  %-34s LẤY THEO SHEET (--take-sheet, đè bản build)" % key)
             print("      build bị đè: %r" % flat_cur[:88])
-        elif flat_cur != bv:
+        elif build_moved:
             print("!! %-34s CẢ HAI BÊN ĐỔI — bỏ qua" % key)
             print("      nền   : %r" % bv[:88])
             print("      build : %r" % flat_cur[:88])

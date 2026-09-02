@@ -240,6 +240,21 @@ Khoá lấy đúng cột ID của sheet: `76/txt/0011` → `ScenarioData` scenar
   mainframe"). Đó là cách sheet đang viết; muốn nhất quán một kiểu thì sửa trên
   sheet rồi chạy lại tool này.
 
+### Thụt treo `　` làm phép so ba chiều báo oan — vòng `(90)`, 03/09/2026
+
+Sheet chỉ đổi một chữ ở `89/txt/0006` (`những Player` → `các Player`) mà tool báo
+**CẢ HAI BÊN ĐỔI — bỏ qua**. Phía build được làm phẳng bằng `cur.replace("\n", " ")`, nên
+dòng nối tiếp của khối luật novel — mở đầu bằng thụt treo `　 ` do `fix_novel_list_wrap.py`
+đặt — để lại `sẽ 　 cùng` giữa câu, khác bản nền `sẽ cùng`, và build bị coi là "đã đổi". Lỗi
+này nằm sẵn từ trước, chỉ chưa nổ vì các vòng 88/89 không sửa ô nào trong 29 khối luật; từ
+nay bất kỳ ô nào có `　` giữa câu (khối luật, `rule_body`) đều dính. Sửa: phép so "build đã
+đổi" và "đã có bản mới" đi qua `flat_cell()` (gộp mọi khoảng trắng kể cả U+3000) trên cả ba
+phía; `nv`/`bv`/`flat_cur` bên dưới giữ nguyên cho `carry_breaks` và các chốt khác.
+`--take-sheet` vẫn có cho ca hai bên đổi thật. Vòng (90) áp 1 ô, backup
+`_backup\scenario01.UNLOGICAL_v2(90)`; `carry_breaks` mang được chỗ ngắt nhưng rơi tiền tố
+`　 ` — đúng dự kiến, `fix_novel_list_wrap.py --apply` ngay sau dựng lại cả tiền tố lẫn chỗ
+ngắt (ô này thành `…Munakata Kai` / `　 sẽ cùng nhau loại bỏ các Player tại sân khấu ẩn.`).
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
@@ -2235,8 +2250,11 @@ bảng từ ghép soát tay từ 445 cặp từ liền nhau của 29 khối (`tr
 `Game / Master`. Kết quả: **16 khối đổi**, số dòng mỗi khối giữ nguyên nên
 `check_layout_breaks` không thấy gì, tổng dòng của 16 khối ở ô tóm tắt **65 → 49**;
 `89/txt/0006` thành `…Munakata Kai sẽ` / `　 cùng nhau loại bỏ…` — hết dòng cụt với tên mặc
-định, còn tên 6 ký tự Latin thì dòng 1 vẫn wrap, không cách chia nào tránh được. Backup
-`_backup\scenario01.novellist` (23:42). Thêm mục luật mới thì soát lại `NO_SPLIT`.
+định, còn tên 6 ký tự Latin thì dòng 1 vẫn wrap, không cách chia nào tránh được với chữ lúc
+đó. Sheet (90) rút `những Player` → `các Player` (dòng hai 1390 → 1323 px, vừa 1344), tool
+liền chọn `…Munakata Kai` / `　 sẽ cùng nhau loại bỏ các Player tại sân khấu ẩn.`: ba dòng ở ô
+tóm tắt với mọi tên. Backup `_backup\scenario01.novellist` (23:42). Thêm mục luật mới thì
+soát lại `NO_SPLIT`.
 
 ### Chốt sau mỗi lần merge sheet
 
