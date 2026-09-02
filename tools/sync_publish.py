@@ -21,6 +21,13 @@ v1.1 — thứ gì nằm ngoài đường đi của script thì sớm muộn cũ
 
     python tools\\sync_publish.py            # chạy thử, chỉ báo khác biệt
     python tools\\sync_publish.py --apply    # chép + dựng lại manifest
+    python tools\sync_publish.py --apply --force   # đè cả khi clone mới hơn
+
+**Chép MỘT CHIỀU bản làm việc -> clone**, nên trước khi ghi có chốt
+`guard_clone_newer()`: dừng nếu file ở clone mới hơn (mtime) hoặc đang bẩn trong
+git. Ngày 02/09/2026 chưa có chốt này và một lần `--apply` đã xoá 147 dòng của
+`fix_center_caption_wrap.py` cùng 137 dòng `tools/README.md` — cứu được chỉ vì
+chúng đã commit. Sửa thẳng trong clone thì kéo về bản làm việc trước, đừng `--force`.
 """
 import hashlib
 import io
@@ -38,6 +45,7 @@ MOD_EXEFS = os.path.join(os.environ["APPDATA"], "Ryujinx", "mods", "contents",
                          "010068501ff9a000", "vn-translation", "exefs")
 MANIFEST = os.path.join(CLONE, "manifest.json")
 APPLY = "--apply" in sys.argv
+FORCE = "--force" in sys.argv    # bỏ qua chốt "clone mới hơn" — xem guard_clone_newer
 
 # file mới cần thêm vào manifest, kèm nhãn where
 NEW_FILES = {
@@ -118,13 +126,55 @@ def sync_extras():
     if not copied:
         print("  không có gì để chép")
 
-    if APPLY:
-        for rel, src, dst, size, _ in copied:
-            os.makedirs(os.path.dirname(dst), exist_ok=True)
-            shutil.copy2(src, dst)
-        if copied:
-            print("  đã chép %d file" % len(copied))
-    return len(copied)
+    return copied
+
+
+def guard_clone_newer(items):
+    """Chặn khi clone đang giữ bản MỚI HƠN bản làm việc.
+
+    Script này chép một chiều bản làm việc -> clone. Nếu ai đó sửa thẳng trong
+    clone (hoặc commit ở đó rồi bản làm việc chưa kéo về), `--apply` sẽ ghi đè im
+    lặng. Đã xảy ra 02/09/2026: `fix_center_caption_wrap.py` mất 147 dòng và
+    `tools/README.md` mất 137 dòng — cứu được chỉ vì chúng đã commit.
+
+    Hai dấu hiệu, cái nào cũng đủ để dừng:
+      - file ở clone có mtime MỚI HƠN bản làm việc;
+      - file ở clone đang bẩn trong git (chưa commit) — ghi đè là mất hẳn.
+    """
+    import subprocess
+    dirty = set()
+    try:
+        out = subprocess.run(["git", "-C", CLONE, "status", "--porcelain"],
+                             capture_output=True, text=True, timeout=60)
+        for line in out.stdout.splitlines():
+            if len(line) > 3:
+                dirty.add(line[3:].strip().strip('"'))
+    except Exception as e:
+        print("  (không chạy được git status ở clone: %s)" % e)
+
+    bad = []
+    for rel, src, dst in items:
+        if not os.path.exists(dst):
+            continue
+        if rel in dirty:
+            bad.append((rel, "clone đang có sửa đổi CHƯA COMMIT"))
+        elif os.path.getmtime(dst) > os.path.getmtime(src) + 2:
+            bad.append((rel, "clone mới hơn bản làm việc"))
+    if not bad:
+        return
+    print("")
+    print("DỪNG — clone đang giữ bản mới hơn, chép đè là mất:")
+    for rel, why in bad:
+        print("   %-52s %s" % (rel, why))
+    print("")
+    print("Kéo bản của clone về trước rồi chạy lại, ví dụ:")
+    for rel, _why in bad[:3]:
+        print('   copy "%s" "%s"' % (os.path.join(CLONE, rel.replace("/", os.sep)),
+                                     src_of(rel) if not rel.startswith(EXTRA_DIRS) else
+                                     os.path.join(ROOT, rel.replace("/", os.sep))))
+    print("")
+    print("Chắc chắn muốn đè thì thêm --force.")
+    raise SystemExit(2)
 
 
 def main():
@@ -162,12 +212,24 @@ def main():
     print("\nfile cần chép: %d   mục manifest cần cập nhật: %d"
           % (len(changed), sum(1 for r in rows if r[5])))
 
-    n_extra = sync_extras()
+    extras = sync_extras()
 
     if not APPLY:
         print("\nCHẠY THỬ — thêm --apply để chép và ghi manifest (%d nhị phân + %d mã nguồn)"
-              % (len(changed), n_extra))
+              % (len(changed), len(extras)))
         return
+
+    # Chốt một lần cho CẢ nhị phân lẫn mã nguồn, TRƯỚC khi ghi byte nào — chặn nửa
+    # chừng thì clone thành trạng thái pha trộn.
+    if not FORCE:
+        guard_clone_newer([(rel, src, dst) for rel, src, dst, _sz in changed]
+                          + [(rel, src, dst) for rel, src, dst, _sz, _e in extras])
+
+    for rel, src, dst, _size, _existed in extras:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.copy2(src, dst)
+    if extras:
+        print("  đã chép %d file mã nguồn" % len(extras))
 
     for rel, src, dst, size in changed:
         os.makedirs(os.path.dirname(dst), exist_ok=True)
