@@ -1986,7 +1986,7 @@ word-wrap. Ngắt cứng chỉ thật sự mua được bốn thứ, và **cả 
 
 | lý do | quy mô | ai lo |
 |---|---|---|
-| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 5 ô, đang gỡ khỏi sheet | tool này bỏ qua — xem dưới |
+| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 0 ô từ vòng (88) | tool này bỏ qua nếu có — xem dưới |
 | novel: engine thụt 1 em cho dòng DATA, không thụt cho dòng TMP ngắt | 1.623 ô | `fix_novel_list_wrap.py` |
 | hoạ tiết góc ô ADV | vài ô | `fix_adv_wrap.py` |
 | caption giữa màn quá lề watermark | 41 ô | `fix_center_caption_wrap.py` |
@@ -2037,6 +2037,17 @@ một hàng và phần đầu dòng tới hết tag ruby nằm trọn hàng vẽ
 phép đo ấy được gỡ, tool quay về bỏ qua ô có ruby, còn `wrap_ruby_lines.py` và
 `fix_ruby_syntax.py` bị xoá. Snapshot mới hơn merge xuống là 4 ô kia thành ô thường và
 tool này dọn nốt.
+
+**Vòng (88), tối 02/09/2026** (backup `_backup\scenario01.UNLOGICAL_v2(88)` và
+`_backup\json.UNLOGICAL_v2(88)`): sheet bỏ nốt 5 tag — `[dic no=252 text=tinh chỉnh'tuning]`
+thành `text=tinh chỉnh (tuning)`, `[Quyền quản trị'Skill]` / `[Điều Đình'Kỹ năng]` thành
+`skill Quyền quản trị` / `skill Điều Đình`, `[Người tham gia'Player]` thành `Player`, và
+`[×'Error]` thành `dấu "x"`. Ca cuối mất cả hai nửa tag nên phải vào `RUBY_DROP_OK`, lý do
+ghi tại chỗ. Cùng vòng: `116/txt/0865` `quét sinh hiệu` → `quét chỉ số sinh tồn` và tiêu đề
+từ điển `no=352` `Dấu hiệu sinh tồn` → `Chỉ số sinh tồn` (`sinh hiệu` còn 0 chỗ trong build),
+`116/txt/0862` `những Player` → `các Player`. 8 ô áp hết, `check_layout_breaks` PASS ngay
+sau merge; tool này nối 3 ô vừa hết ruby (6 chỗ ngắt), `fix_adv_wrap --check` PASS.
+**Từ vòng này thoại không còn tag ruby nào.**
 
 `check_layout_breaks.py` sẽ báo **mất** ngắt dòng sau đợt này — đúng dự kiến, giống
 trường hợp `fix_ellipsis_break.py` gỡ ngắt theo luật dòng cụt.

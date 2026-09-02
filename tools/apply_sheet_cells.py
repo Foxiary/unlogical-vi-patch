@@ -501,6 +501,11 @@ RUBY_DROP_OK = {
     # sửa thành "được tái hiện lại một cách chuẩn xác nhất", nên thuật ngữ biến mất hoàn
     # toàn là đúng — nó vốn không được phép có mặt trong câu này.
     "105/txt/0293",
+    # 116/txt/0867 — `チェック項目に『[×'エラー]』が出てないか`: dấu × trong danh sách kiểm
+    # tra, đọc là "error". Vòng (88) bỏ ruby khỏi lời thoại và viết thành `dấu "x"` —
+    # chữ x thường thay cho ký hiệu ×, không nửa nào của tag còn nguyên văn nhưng nghĩa
+    # còn đủ (người đọc thấy dấu x trên danh sách). Quyết định của người dịch, cho qua.
+    "116/txt/0867",
 }
 
 

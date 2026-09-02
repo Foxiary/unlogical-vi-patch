@@ -41,10 +41,10 @@ ngoại lệ, và đó đúng là những chỗ tool này gỡ.
 ## Không đụng tới
 
 - tin nhắn có tag ruby (`Ruby_Text` đặt chú thích theo mảng `\\n` của DATA, không
-  biết TMP wrap). Ruby đang bị gỡ khỏi lời thoại: sheet đã bỏ, build còn 5 tag chờ
-  snapshot mới hơn (87). Merge xong thì nhánh bỏ qua này không còn gì để bỏ qua.
-  `72/txt/0380` (ảnh IMG_7232) được nối một lần ngày 02/09/2026 bằng phép đo
-  `ruby_safe()`, rồi phép đo ấy được gỡ cùng ngày — xem tools/README.md.
+  biết TMP wrap). Từ vòng merge (88) ngày 02/09/2026 lời thoại không còn tag ruby
+  nào, nên nhánh này chỉ còn là chốt an toàn nếu ruby quay lại. `72/txt/0380`
+  (ảnh IMG_7232) từng được nối bằng phép đo `ruby_safe()`, rồi phép đo ấy được gỡ
+  cùng ngày — xem tools/README.md.
 - vùng novel (`fix_adv_wrap.adv_messages()` đã loại sẵn)
 - script test của nhà phát triển: `sample1`, `UL_test`, `UL_Live2d_test_sample`,
   `01_test_live2d_0*` — sID 0–8, toàn tiếng Nhật, không có trong `ChapterData`,
