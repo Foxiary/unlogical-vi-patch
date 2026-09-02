@@ -2302,12 +2302,20 @@ bản gốc**, chỉ các object cố ý sửa được khác, không thì khôn
 3. Lề âm cũng vậy: `Mask_Title/Title` có `m_margin.x = −5` (bù charSpacing 6 cho cân giữa); với
    rect neo trái, −5 đẩy chữ ra ngoài mask 5 px và bị cắt → về 0 (tâm lệch 2,5 px, không thấy).
 
+**Chỉ hàng đang chọn mới chạy (Ending List).** `AutoScrollText.OnEnable → StartScroll`, nên đặt nó trên
+`TextMask` là mọi hàng đang hiện cùng chạy — bản đầu 02/09 bị đúng thế. `EventTriggerButton.curObject =
+{select: [On], deSelect: [Off]}` và `CurObjectSetActive → GameObject.SetActive`, tức `On` chỉ active khi
+hàng được chọn. Treo scroller lên GO `TitleScroll` dưới `On` (kèm RectMask2D riêng 502 px vì `mask =
+GetComponent<RectMask2D>()` cùng GameObject — nó không có con graphic nên không cắt gì; `targetText` vẫn
+là TMP trong `TextMask`): chọn hàng → OnEnable → chờ startDelay rồi trôi; rời hàng → OnDisable dừng
+coroutine và trả x về 0. Ô MUSIC và tiêu đề section chỉ có một phần tử nên vẫn để chạy thường trực.
+
 ### Từng màn
 
 | màn | file | script | thay đổi |
 |---|---|---|---|
 | MUSIC `TrackTitle` | `level13` | `fix_music_title_marquee.py` | GO cha `TrackTitleMask` 386×100 tại (−188,−228) [RectMask2D, AutoScrollText]; `TrackTitle` neo trái + CSF + LayoutElement; TMP căn giữa, margin.x 14→0. 375 object nguyên byte, 4 sửa, 6 mới |
-| Ending List hàng | `sharedassets21.assets` | `fix_recollection_marquee.py` | GO `TextMask` chèn giữa `RecollectionButton` và `Text`: stretch, thụt trái 94, cao hơn hàng 10 px mỗi bên (dấu không bị cắt); `Text` neo trái 502×51; TMP **auto-size tắt**, cỡ 32 cố định, margin.x 94→0. Quét disassembly: `CreateReplayButtons` chỉ `Instantiate` + `GetComponent<EventTriggerButton>()`, chữ đi qua PPtr `textMeshPro → #169`, không `Transform.Find` → chèn GO an toàn |
+| Ending List hàng | `sharedassets21.assets` | `fix_recollection_marquee.py` | GO `TextMask` [RectMask2D] chèn giữa `RecollectionButton` và `Text`: stretch, thụt trái 94, cao hơn hàng 10 px mỗi bên (dấu không bị cắt); `AutoScrollText` đặt trên GO `TitleScroll` dưới `On` (chỉ active khi hàng được chọn) nên **chỉ hàng đang chọn chạy chữ**; `Text` neo trái 502×51; TMP **auto-size tắt**, cỡ 32 cố định, margin.x 94→0. Quét disassembly: `CreateReplayButtons` chỉ `Instantiate` + `GetComponent<EventTriggerButton>()`, chữ đi qua PPtr `textMeshPro → #169`, không `Transform.Find` → chèn GO an toàn |
 | Section title | `ui_jp` (`ChapterSelect/Story/SynopsisTitle/Mask_Title/Title (TMP)`) | `fix_section_title_marquee.py` | `Mask_Title` đã có RectMask2D, chỉ gắn AutoScrollText; `Title` neo trái + CSF + LayoutElement 527; margin.x −5→0; +2 MonoScript (`AutoScrollText`, `LayoutElement`), +2 type entry có node, +6 entry preload. Không đổi cây. 7 932 object nguyên byte |
 
 Tham số chung: `restart`, startDelay 1,5 s, 60 px/s, pause 2 s. Mỗi script từ chối file đã vá —

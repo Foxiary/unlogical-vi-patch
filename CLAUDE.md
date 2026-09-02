@@ -91,7 +91,7 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `sharedassets6.assets` | 16.9 | `Section` atlas — section-select labels, the LOVE `HIGH`/`LOW` markers, skill-frame base |
 | `sharedassets11.assets` | 1.1 | `Manual` atlas — `UL_manual_key` only |
 | `sharedassets17.assets` | 8.5 | `ShortStory` atlas — 2 key sprites · the `SS_Button` row widened 417 → 483 px of text (4 `RectTransform`s shifted) |
-| `sharedassets21.assets` | 4.3 | `Recollection` atlas — `UL_recolle_key` · `RecollectionButton/Text` `NoWrap`, auto-size **off** again (fixed 32 pt), wrapped in a new `TextMask` parent (`RectMask2D` + `AutoScrollText`) so long titles scroll |
+| `sharedassets21.assets` | 4.3 | `Recollection` atlas — `UL_recolle_key` · `RecollectionButton/Text` `NoWrap`, auto-size **off** again (fixed 32 pt), wrapped in a new `TextMask` parent (`RectMask2D`); the `AutoScrollText` sits on a `TitleScroll` object under `On`, which `EventTriggerButton` SetActives only for the selected row, so only the highlighted row scrolls |
 | `sharedassets10.assets` | 10.6 | **font only** |
 | `sharedassets13.assets` | 2.6 | `Music` atlas — `UL_music_key` · 1 font |
 | `level10` | 0.2 | 4 TMP components (ADV message ×2, novel-mode box, dictionary popup) · the two ADV message `RectTransform`s narrowed 1400 → 1280 so no line slides under the box's corner art |
