@@ -1001,8 +1001,18 @@ canh giữa theo cả khối chứ không canh giữa từng dòng. Bản Nhật
 (`ゲームの勝敗に影響を及ぼす情報を` / `プレイヤーに開示してはならない。`) nên hai dòng thẳng hàng.
 Kết luận: caption quá 1764 px **phải ngắt cứng trong dữ liệu**, mỗi dòng ≤ 1764, để mọi dòng
 đều là dòng data; thu rect không thay được. Đã revert nguyên commit `ce015cc` (rect, tool
-`fix_caption_box_width.py`, ba ô nối lại). Dòng cụt ở ô tóm tắt thẻ SAVE vì thế vẫn còn; cách
-duy nhất còn lại cho nó là chọn chỗ ngắt tầng hai theo cả ô tóm tắt, chưa làm vì chưa chốt.
+`fix_caption_box_width.py`, ba ô nối lại). Dòng cụt ở ô tóm tắt thẻ SAVE vì thế vẫn còn, và
+cách duy nhất còn lại cho nó là chọn *chỗ* ngắt tầng hai theo cả ô tóm tắt.
+
+**Rồi làm đúng cách đó, cùng tối.** `wrap_words()` giờ duyệt mọi cách chia ra đúng k dòng
+hợp lề 1764 và chọn theo thứ tự: ít dòng nhất trong ô tóm tắt thẻ SAVE (mô hình
+`adv_layout` với cỡ 27, charSpacing 8,4, 731,5 px — đúng số đo của
+`fix_save_summary_clip.py`), rồi không kết dòng bằng lượng từ (`những`/`các`/`một`…), rồi
+mới cân độ dài như cũ. `main()` soát lại cả ô tầng hai đang vừa lề: chỗ ngắt khác kết quả
+tool thì dựng lại, vì ngắt theo từ không mang nghĩa để phải giữ. Kết quả: `85/txt/0767`
+đổi từ 1305 + 1235 thành **1679 + 861 px** — ở ô tóm tắt ra ba dòng trọn, không dòng cụt,
+không bị cắt; `99/txt/0214` và `99/txt/0215` giữ nguyên vì ngắt cân sẵn đã là ít dòng nhất.
+Tầng một không đụng.
 
 Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
 

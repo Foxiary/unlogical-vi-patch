@@ -44,6 +44,16 @@ ghép: `99/txt/0214` ra 1707 px + 365 px với `địa` / `điểm` nằm hai d�
 Không có bảng từ ghép nào ở đây — cân bằng chỉ làm xác suất cắt trúng thấp đi, nên **ô
 nào rơi vào tầng hai vẫn nên liếc mắt đọc lại một lượt**.
 
+**Tối 02/09/2026: tầng hai chọn chỗ ngắt theo cả ô tóm tắt thẻ SAVE.** Cùng chuỗi được
+`SaveDataDetail/Text (TMP)` vẽ ở 731 px, 3 dòng rồi cắt `…`; ngắt cân 1305 + 1235 của
+`85/txt/0767` ra ở đó thành `thông tin có thể` đứng một hàng rồi câu bị cắt (ảnh IMG_7241).
+Thu rect caption xuống 1764 để bỏ hẳn ngắt cứng đã thử và hoàn tác (`ce015cc`): engine thụt
+1 em cho dòng DATA và không thụt cho dòng TMP ngắt, ở caption cũng vậy (ảnh IMG_7243), nên
+caption quá lề vẫn phải ngắt trong dữ liệu. Cái còn chọn được là *chỗ* ngắt: trong mọi cách
+chia hợp lề, lấy cách ít tốn dòng nhất ở ô tóm tắt, rồi không kết dòng bằng lượng từ
+(`những`/`các`/`một`…, đừng tách lượng từ khỏi danh từ), rồi mới cân độ dài. Ô nào tầng hai
+đã ngắt mà khác kết quả này thì tool dựng lại — đó là cách nó chạm được ô đang vừa lề.
+
 **Tự dò lại chỗ ngắt từ câu chữ hiện tại**, nên chạy lại được sau mỗi merge (sheet làm
 phẳng `\\n` mỗi vòng) — tool không ghi chuỗi đích ở đâu cả.
 
@@ -65,7 +75,9 @@ comment.
     python tools\\fix_center_caption_wrap.py --check    # gate, còn dòng quá lề -> exit 1
 """
 import io
+import itertools
 import json
+import math
 import os
 import re
 import shutil
@@ -119,6 +131,17 @@ def caption_cells(t):
     return sorted(set(out))
 
 PUNCT = re.compile(r"(?<=[.!?,;:…])\s+")
+PUNCT_END = re.compile(r"[.!?,;:…]$")
+
+# Ô tóm tắt thẻ SAVE/LOAD (`level19` SaveDataDetail/Text (TMP), xem fix_save_summary_clip.py)
+# vẽ CÙNG chuỗi này trong 731,5 px, cỡ 27, charSpacing 8,4, 3 dòng rồi cắt `…`. Một chỗ
+# ngắt theo từ canh cho caption 1764 px có thể để lại dòng cụt ở đó — ảnh máy thật IMG_7241:
+# `85/txt/0767` ra `thông tin có thể` đứng một hàng rồi câu bị cắt. Tầng hai vì thế chọn chỗ
+# ngắt theo thứ tự: ít dòng nhất trong ô tóm tắt, rồi không kết dòng bằng lượng từ, rồi cân
+# độ dài. Chỉ tầng hai: ngắt theo dấu câu ở tầng một là ngắt có nghĩa, không đem đổi.
+SAVE_FS, SAVE_CS, SAVE_W = 27.0, 8.4, 738.0 - 6.5
+QUANTIFIERS = {"những", "các", "một", "mọi", "mỗi", "vài", "cái"}
+MAX_COMBOS = 200000
 
 
 def width(s):
@@ -144,16 +167,44 @@ def _greedy(words, limit):
     return out
 
 
-def wrap_words(s):
-    """Dự phòng: mệnh đề tự nó đã quá lề -> chia theo từ, **cân độ dài**.
+def save_lines(parts):
+    """Số dòng các phần này chiếm trong ô tóm tắt thẻ SAVE, theo mô hình adv_layout."""
+    old = A.CHAR_SPACING
+    A.CHAR_SPACING = SAVE_CS * A.POINT_SIZE / 100.0
+    try:
+        return sum(max(1, len(A.wrap(p, SAVE_FS, limit=SAVE_W))) for p in parts)
+    finally:
+        A.CHAR_SPACING = old
 
-    Số dòng lấy bằng đúng số dòng tối thiểu (gom tham lam ở 1764), rồi dò nhị phân
-    bề rộng nhỏ nhất vẫn giữ được ngần ấy dòng. Cùng số dòng, dòng ngắn hơn = mối
-    ngắt cân hơn, không còn dòng cụt."""
+
+def wrap_words(s):
+    """Dự phòng: mệnh đề tự nó đã quá lề -> chia theo từ.
+
+    Số dòng lấy bằng đúng số dòng tối thiểu (gom tham lam ở 1764). Trong mọi cách
+    chia ra ngần ấy dòng mà dòng nào cũng ≤ 1764, chọn theo thứ tự: (1) ít dòng
+    nhất trong ô tóm tắt thẻ SAVE, (2) ít dòng kết bằng lượng từ nhất, (3) cân độ
+    dài — cùng số dòng, lệch ít hơn = không còn dòng cụt. Quá nhiều cách chia thì
+    quay về dò nhị phân bề rộng như cũ (chỉ tiêu chí 3)."""
     words = s.split(" ")
     k = len(_greedy(words, SAFE_W))
     if k <= 1:
         return [s]
+    if math.comb(len(words) - 1, k - 1) <= MAX_COMBOS:
+        best = None
+        for cuts in itertools.combinations(range(1, len(words)), k - 1):
+            bounds = (0,) + cuts + (len(words),)
+            parts = [" ".join(words[a:b]) for a, b in zip(bounds, bounds[1:])]
+            ws = [width(p) for p in parts]
+            if max(ws) > SAFE_W:
+                continue
+            key = (save_lines(parts),
+                   sum(p.split(" ")[-1].lower().strip(",.;:!?") in QUANTIFIERS
+                       for p in parts[:-1]),
+                   max(ws) - min(ws))
+            if best is None or key < best[0]:
+                best = (key, parts)
+        if best is not None:
+            return best[1]
     lo, hi = max(width(w) for w in words), SAFE_W
     while hi - lo > 1:
         mid = (lo + hi) / 2
@@ -222,11 +273,18 @@ def main():
                 continue
             segs = shown(cur).split("\n")
             worst = max(width(s) for s in segs)
+            flat = " ".join(x.strip() for x in segs)
             if worst <= SAFE_W:
-                ok.append((sID, j, len(segs), worst))
-                continue
+                # Ô đã ngắt ở TẦNG HAI (có dòng không kết bằng dấu câu) thì soát lại: chỗ
+                # ngắt theo từ không mang nghĩa, nên tiêu chí chọn đổi (ô tóm tắt thẻ SAVE,
+                # xem wrap_words) thì dựng lại. Ô ngắt theo dấu câu không đụng — split_punct
+                # gom tham lam sẽ nối những dòng ngắn mà bản Nhật cố ý tách.
+                tier2 = (len(segs) > 1 and width(flat) > SAFE_W
+                         and any(not PUNCT_END.search(x.rstrip()) for x in segs[:-1]))
+                if not tier2 or split_punct(flat) == [x.strip() for x in segs]:
+                    ok.append((sID, j, len(segs), worst))
+                    continue
             # dựng lại từ bản đã làm phẳng, để chạy lại sau merge cũng cho cùng kết quả
-            flat = " ".join(x.strip() for x in shown(cur).split("\n"))
             new_lines = split_punct(flat)
             if max(width(s) for s in new_lines) > SAFE_W:
                 print("!! %d/txt/%04d: ngắt theo dấu câu vẫn còn dòng %.0f px > %.0f — cần rút chữ"
