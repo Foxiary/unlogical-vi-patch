@@ -8,9 +8,9 @@ A fan Vietnamese translation patch for the Nintendo Switch visual novel **UNLOGI
 
 There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains five things:
 
-- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **28 files ship; 27 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
+- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **32 files ship; 31 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
 - `exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips` — a 19-byte IPS32 code patch, and **the one file that is easy to forget**: it sits beside `romfs/`, not inside it, so a release built by zipping `romfs` alone silently omits it. v1.1 shipped that way once and had to be replaced. It raises the chapter-select hard wrap, `Chapter.get_DefaultMaxCharsPerLine` **18 → 40**, so the engine stops re-chopping lines the data already wrapped by word. Without it those 24–30 character lines get cut every 18 characters into a 18/7/18/7 zig-zag — 421 lines split mid-word, *worse* than not patching at all. Do **not** set it to 0: the same routine counts the lines it breaks to page the `StorySlider`, so zero wrapping means one page and a dead scrollbar. The filename is the NSO build id, so it is bound to v1.0.2.
-- `manifest.json` — path / size / MD5 for all 28, each tagged `"where": "repo"` or `"release"`.
+- `manifest.json` — path / bytes / MD5 for all 33 (the 32 above **plus** the `.ips`), each tagged `"where": "repo"` or `"release"`.
 - `docs/` — reverse-engineering notes, in English (the vocabulary is Unity/UnityPy). `README.md` is in Vietnamese, aimed at players.
 - `tools/` and `e2e/` — the patch scripts and the test harness; see [Tooling](#tooling) below.
 
@@ -61,7 +61,7 @@ Read [`docs/`](docs/) before touching data — the notes exist because these fac
 | Executed script (tag arguments) | `scenario01` → per-chapter scripts | Still Japanese by design; `[geninfo]`/`[terinfo]`/`[select_monitor]` arguments render on screen and must be patched *here*, not in `ScenarioData` |
 | Terminal / Dictionary / widgets | `json` bundle | `TerminalRuleData`, `TerminalHomeAlertData`, `DictionaryData`, … |
 | Four IL2CPP string literals | `Managed/Metadata/global-metadata.dat` | `涼乃`→`Suzuno`, `環無`→`Kanna`, `共通・`→`Chung - `, and `。`→a space (the period the engine appends to every spoken line). Written in place; a shorter replacement also decrements the length field in the literal table. See [`docs/05`](docs/05-protagonist-name.md) |
-| UI words that are **pixels, not strings** | sprite atlases in `scene_jp`, `ui_jp`, `sharedassets5/6/7/9/11/13/16/17/19/21/22` | A text audit reporting a Japanese-looking screen as clean means it is baked art |
+| UI words that are **pixels, not strings** | sprite atlases in `scene_jp`, `ui_jp`, `sharedassets5/6/7/9/11/13/16/17/19/21/22`; sub-graphic art in `anim02/03/04/06`; the THE END cards in `cg_end` | A text audit reporting a Japanese-looking screen as clean means it is baked art. Worse in the `anim` bundles: many of those pictures are **screenshots of the game's own UI** (Terminal pages, System Message, the Question screen), so a page can look untranslated while the data behind it has been done for months — check the picture before hunting for the string |
 
 **Every line that says the protagonist's given name exists twice.** `ScenarioData` has two boolean arrays parallel to `text[]`: `isDefaultNameAdjust` marks the copy holding the **literal** default name, shown to players who kept it, and `isCustomNameAdjust` marks the copy holding the **`[主人公]` token**, shown to players who renamed. A default-name line is drawn verbatim, so writing a token into one prints `[主人公]` on screen. Never "fix" a literal name without checking those flags first — this patch made that mistake once and it shipped visible in the short stories. The **surname** is never tokenised at all: it is fixed in metadata and Name Entry cannot change it. See [`docs/05`](docs/05-protagonist-name.md).
 
@@ -78,6 +78,11 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `StreamingAssets/ui/ui_jp` | 51.9 | 5 fonts · 29 TMP components (auto-sizing on `NewsText01/02`, `NoteText01` and the backlog rows; `characterSpacing` on the 10 Q&A buttons and the 9 TERMINAL HOME / CONTROL text boxes) · backlog + section key sprites · `g` and `Section` atlases · section-title marquee (`SynopsisTitle/Mask_Title` gets `AutoScrollText`, `Title` re-anchored left with `ContentSizeFitter` + `LayoutElement`; 2 MonoScripts and 2 typed entries added to the CAB, all new objects inserted into the `AssetBundle` preload range of `chapterselect.prefab`) |
 | `StreamingAssets/scene/scene_jp` | 4.2 | Name-Entry atlas · 1 font |
 | `StreamingAssets/anim/anim01` | 28.3 | **font only** (`FOT-NewRodinProN-M`) — no animation data |
+| `StreamingAssets/anim/anim02` | 27.8 | sub-graphic art with Japanese **baked into the picture** — 13 textures repainted (`fix_anim_text.py`, one JSON spec per texture in `tools/_anim_specs/`); opening / Stage 1 |
+| `StreamingAssets/anim/anim03` | 30.6 | ditto, 24 textures — Stage 2 |
+| `StreamingAssets/anim/anim04` | 26.3 | ditto, 19 textures — Stage 3 onward |
+| `StreamingAssets/anim/anim06` | 5.4 | ditto, 3 textures — item art |
+| `StreamingAssets/cg/cg_end` | 7.7 | the THE END cards — all 32 ending-title textures repainted (`fix_endcard_title.py`); titles are read from `SceneReplayData` so a card and the Ending List can never drift apart |
 | `StreamingAssets/movie/movie_jp_02` | 104.6 | the `prologue` clip, replaced wholesale — see below |
 | `StreamingAssets/font/font_jp` | 269.6 | the dynamic-font bundle (release asset) |
 | `Managed/Metadata/global-metadata.dat` | 9.3 | the four IL2CPP literals above |

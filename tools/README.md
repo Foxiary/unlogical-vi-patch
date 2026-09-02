@@ -498,8 +498,8 @@ quét cả file trước khi sửa mới lòi ra chỗ thứ hai. Thay trên **c
 `text[]` và bản sao `scriptText` cùng đổi một lượt (4 chỗ = 2 + 2); `scriptText_Line` có 0
 chỗ khớp, vẫn assert nguyên vẹn sau khi ghi. Backup `_backup\scenario01.trichthuong`.
 
-**Cái giá: `85/txt/0293` từ nay báo "cả hai bên đổi" ở MỌI vòng merge sau**, vì build đã
-đúng còn sheet vẫn `trịnh thượng`:
+**Cái giá phải trả ngay:** sửa ở build xong thì chạy lại merge `(89)` so `(88)`, ô đó lập
+tức thành "cả hai bên đổi" — build đã đúng còn snapshot vẫn `trịnh thượng`:
 
 ```
 !! 85/txt/0293                        CẢ HAI BÊN ĐỔI — bỏ qua
@@ -507,11 +507,15 @@ chỗ khớp, vẫn assert nguyên vẹn sau khi ghi. Backup `_backup\scenario01
       sheet : 'Dù thái độ trịnh thượng của cậu ta làm tôi hơi ngứa mắt, nhưng Shinju…'
 ```
 
-Chốt chạy **đúng** — chặn chứ không âm thầm lật lại — nhưng nó sẽ ồn mãi cho tới khi sửa
-upstream, cùng loại với 48 ô `sd_106`/`sd_107` ở trên. Bài học chung: **sửa câu chữ ở build
-là đổi một lỗi hiển thị lấy một cảnh báo vĩnh viễn**; sửa trên sheet rồi merge xuống thì
-không mất gì. Chỉ nên sửa thẳng ở build khi cần bản chơi được ngay, và khi sửa thì ghi ô
-đó vào danh sách phải sửa upstream chứ đừng để nó tự tiêu.
+Chốt chạy **đúng** — chặn chứ không âm thầm lật lại. **Sheet đã sửa ngay tối đó**, nên ô
+này tự lành từ snapshot `(90)` mà không kêu tiếng nào: `new != base` đưa nó vào diện xét,
+rồi `new == build` cho ra `= 85/txt/0293  đã có bản mới`. Chỉ ồn đúng một vòng, và chỉ khi
+chạy lại chính cặp `(89)`/`(88)`.
+
+Bài học vẫn giữ: **sửa câu chữ thẳng ở build là vay một cảnh báo, và chỉ sheet mới trả
+được**. Sửa upstream rồi merge xuống thì không vay gì. Sửa ở build là để có bản chơi được
+ngay — và khi sửa thì đẩy luôn lên sheet, đừng để ô đó tự tiêu; ca này đẩy kịp nên hết
+sau một vòng, còn 48 ô `sd_106`/`sd_107` ở trên thì không, và chúng kêu tới tận bây giờ.
 
 ## 赤川夏音 = Sekigawa Kanon (`fix_sekigawa_name.py`)
 
