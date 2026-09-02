@@ -60,7 +60,7 @@ Read [`docs/`](docs/) before touching data — the notes exist because these fac
 | Story prose, choices | `scenario01` → `ScenarioData` TextAsset | 17.3 M characters ≈ 23 MB of UTF-8; `text[]`/`selText[]` mapped by `loadLine[]`/`selLine[]` |
 | Executed script (tag arguments) | `scenario01` → per-chapter scripts | Still Japanese by design; `[geninfo]`/`[terinfo]`/`[select_monitor]` arguments render on screen and must be patched *here*, not in `ScenarioData` |
 | Terminal / Dictionary / widgets | `json` bundle | `TerminalRuleData`, `TerminalHomeAlertData`, `DictionaryData`, … |
-| Four IL2CPP string literals | `Managed/Metadata/global-metadata.dat` | `涼乃`→`Suzuno`, `環無`→`Kanna`, `共通・`→`Chung - `, and `。`→a space (the period the engine appends to every spoken line). Written in place; a shorter replacement also decrements the length field in the literal table. See [`docs/05`](docs/05-protagonist-name.md) |
+| Twenty IL2CPP string literals | `Managed/Metadata/global-metadata.dat` | eight character names / name prefixes (`涼乃`→`Suzuno`, `環無`→`Kanna`, `恭介`→`Kyosuke`, plus the `ユーリ・` / `奏壱・` / `戒・` / `藍・` / `雅火・` prefixes) · `共通・`→`Chung - ` · the three season suffixes `・春` / `・夏` / `・秋` · seven UI strings (`ターミナルを開いてください`, `マップ`, `権限がありません`, `現在使用できません`, `選択肢`, and the two `選択肢スキップ` settings lines) · and `。`→a space (the period the engine appends to every spoken line). Written in place with `tools/metadata_term.py`; a shorter replacement also decrements the length field in the literal table. **Three of the twenty are 1–2 bytes *longer* than stock** (`・春` 8→10, `恭介` 6→7, `選択肢スキップ…強制` 47→48), grown into the unused slack after their literal — `metadata_term.py` refuses any growth outright, so a longer replacement needs another route, and "the Latin form does not fit" is only true where the following literal starts immediately. Re-derive the list by diffing the literal table against stock rather than trusting this count. See [`docs/05`](docs/05-protagonist-name.md) |
 | UI words that are **pixels, not strings** | sprite atlases in `scene_jp`, `ui_jp`, `sharedassets5/6/7/9/11/13/16/17/19/21/22`; sub-graphic art in `anim02/03/04/06`; the THE END cards in `cg_end` | A text audit reporting a Japanese-looking screen as clean means it is baked art. Worse in the `anim` bundles: many of those pictures are **screenshots of the game's own UI** (Terminal pages, System Message, the Question screen), so a page can look untranslated while the data behind it has been done for months — check the picture before hunting for the string |
 
 **Every line that says the protagonist's given name exists twice.** `ScenarioData` has two boolean arrays parallel to `text[]`: `isDefaultNameAdjust` marks the copy holding the **literal** default name, shown to players who kept it, and `isCustomNameAdjust` marks the copy holding the **`[主人公]` token**, shown to players who renamed. A default-name line is drawn verbatim, so writing a token into one prints `[主人公]` on screen. Never "fix" a literal name without checking those flags first — this patch made that mistake once and it shipped visible in the short stories. The **surname** is never tokenised at all: it is fixed in metadata and Name Entry cannot change it. See [`docs/05`](docs/05-protagonist-name.md).
@@ -85,7 +85,7 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `StreamingAssets/cg/cg_end` | 7.7 | the THE END cards — all 32 ending-title textures repainted (`fix_endcard_title.py`); titles are read from `SceneReplayData` so a card and the Ending List can never drift apart |
 | `StreamingAssets/movie/movie_jp_02` | 104.6 | the `prologue` clip, replaced wholesale — see below |
 | `StreamingAssets/font/font_jp` | 269.6 | the dynamic-font bundle (release asset) |
-| `Managed/Metadata/global-metadata.dat` | 9.3 | the four IL2CPP literals above |
+| `Managed/Metadata/global-metadata.dat` | 9.3 | the twenty IL2CPP literals above |
 | `resources.assets` | 13.4 | `SystemTextData` · chapter script `00_01` · 1 font |
 | `sharedassets7.assets` | 8.3 | `Option` atlas — 46 of 76 sprites · 1 font |
 | `sharedassets9.assets` | 4.3 | `Archive` atlas — 8 sprites |
@@ -176,7 +176,7 @@ Terminology is decided by counting, not taste: a dictionary entry's title must b
 
 The patch is built against **v1.0.2** only. `global-metadata.dat` offsets differ between 1.0.0 and 1.0.2, so applying the metadata patch to another version crashes or garbles text. Confirm the emulator has update `v131072` selected before shipping anything that touches metadata.
 
-Reverting is just deleting that one file from the mod romfs — but it reverts **all four** literals at once, not only the name. Dropping it brings back the `。` the engine appends to every spoken line, and `共通・` in place of `Chung - `.
+Reverting is just deleting that one file from the mod romfs — but it reverts **all twenty** literals at once, not only the name. Dropping it brings back the `。` the engine appends to every spoken line, and `共通・` in place of `Chung - `.
 
 Build target for reference: Unity **6000.0.56f1**, IL2CPP, Switch (Tegra) ASTC textures, UnityPy 1.25.
 
