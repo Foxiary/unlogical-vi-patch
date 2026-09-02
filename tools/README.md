@@ -992,17 +992,17 @@ lại dòng cụt và cắt giữa từ ghép (`99/txt/0214` ra 1707 + 365 px v�
 dòng). Cân bằng không có bảng từ ghép nào chống lưng, chỉ làm xác suất cắt trúng thấp đi, nên
 **ô nào rơi vào tầng hai vẫn nên đọc lại một lượt**.
 
-**Tối 02/09/2026: thu rect thay cho tầng hai.** Ảnh máy thật IMG_7241 (màn LOAD): ô tóm tắt
-thẻ SAVE vẽ cùng chuỗi `85/txt/0767` trong 731 px, và chỗ ngắt theo từ 1305 + 1235 canh cho
-caption để lại `thông tin có thể` đứng một hàng rồi câu bị cắt `…`. Ngắt cứng ở caption vốn
-chỉ để TMP không wrap ở mép 1920, nên đổi cách: `fix_caption_box_width.py` thu rect
-`EXTRAText` (RectTransform pid 722, anchors và pivot giữa, anchoredPosition 0) từ 1920
-xuống **1764** — TMP wrap trong lề an toàn cho cả 41 ô, chữ vẫn canh giữa, mỗi bên còn đúng
-78 px; vá 2 byte tại chỗ trong `level10`, mỏ neo là PPtr cha + 10 float đuôi vì rect
-1920×720 canh giữa là hình học phổ biến. Tầng hai nghỉ: `wrap_words()` trả nguyên dòng, và
-tool nối lại ba ô từng ngắt theo từ — `85/txt/0767` và `99/txt/0214` về một dòng,
-`99/txt/0215` còn hai dòng theo dấu phẩy. Tầng một giữ nguyên. `--check` của cả hai tool vào
-chốt sau merge; `check_layout_breaks` báo mất `\n` ở đúng ba ô này là đúng dự kiến.
+**Tối 02/09/2026, thử rồi hoàn tác: thu rect `EXTRAText` 1920 → 1764 thay cho ngắt cứng.**
+Ý là để TMP tự wrap trong lề an toàn và bỏ ngắt theo từ trong dữ liệu, vì chỗ ngắt ấy để
+lại dòng cụt ở ô tóm tắt thẻ SAVE (ảnh IMG_7241). Ảnh máy thật IMG_7243 chụp `85/txt/0767`
+sau khi đổi: dòng 1 thụt vào một khoảng, dòng 2 sát lề — **engine thụt 1 em cho dòng CÓ
+TRONG DỮ LIỆU và không thụt cho dòng TMP ngắt, ở caption cũng như ở ô novel**, và khối chữ
+canh giữa theo cả khối chứ không canh giữa từng dòng. Bản Nhật ở đây cũng viết hai dòng data
+(`ゲームの勝敗に影響を及ぼす情報を` / `プレイヤーに開示してはならない。`) nên hai dòng thẳng hàng.
+Kết luận: caption quá 1764 px **phải ngắt cứng trong dữ liệu**, mỗi dòng ≤ 1764, để mọi dòng
+đều là dòng data; thu rect không thay được. Đã revert nguyên commit `ce015cc` (rect, tool
+`fix_caption_box_width.py`, ba ô nối lại). Dòng cụt ở ô tóm tắt thẻ SAVE vì thế vẫn còn; cách
+duy nhất còn lại cho nó là chọn chỗ ngắt tầng hai theo cả ô tóm tắt, chưa làm vì chưa chốt.
 
 Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
 

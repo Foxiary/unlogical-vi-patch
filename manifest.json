@@ -61,8 +61,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8724513,
-    "md5": "ccc5d590dee43f651bacd61cb1ce4529",
+    "bytes": 8724425,
+    "md5": "b5afa2b2f1478b20c59cc8aa1ada6775",
     "where": "repo"
   },
   {
@@ -80,7 +80,7 @@
   {
     "path": "romfs/Data/level10",
     "bytes": 160480,
-    "md5": "2bb30e878d37cc97d1d231620293b3fc",
+    "md5": "298849ce83c72ca4191b122065f0d57c",
     "where": "repo"
   },
   {
