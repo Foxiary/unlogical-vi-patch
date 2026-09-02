@@ -1970,6 +1970,67 @@ Kết quả (backup `_backup\json.chatwrap-2`): **65 ô đổi** (59 chuỗi), 1
 trái 45**. `--check` siết lại: **không** dòng nào được quá lề (bản cũ tha những dòng
 "không cắt được theo dấu câu", nay không tha nữa vì TMP ngắt rộng hơn lề).
 
+## Ngắt cứng giữa cụm từ (`fix_midphrase_break.py`)
+
+Cùng một chuỗi `ScenarioData.text[]` được **ba widget bề rộng khác nhau** vẽ — ô
+thoại ADV 1280, BACKLOG 1210, preview thẻ SAVE còn hẹp hơn — nên một chỗ ngắt canh
+cho ADV là sai ở hai chỗ kia, không cách nào canh vừa cả ba. Widget nào cũng bật
+word-wrap. Ngắt cứng chỉ thật sự mua được bốn thứ, và **cả bốn đều đã có chủ**:
+
+| lý do | quy mô | ai lo |
+|---|---|---|
+| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 4 ô | tool này bỏ qua |
+| novel: engine thụt 1 em cho dòng DATA, không thụt cho dòng TMP ngắt | 1.623 ô | `fix_novel_list_wrap.py` |
+| hoạ tiết góc ô ADV | vài ô | `fix_adv_wrap.py` |
+| caption giữa màn quá lề watermark | 41 ô | `fix_center_caption_wrap.py` |
+| ngắt ở ranh giới câu, mirror bản Nhật | 6.875 chỗ | `fix_jp_sentence_break.py`, `fix_ellipsis_break.py` |
+
+Còn lại là ngắt lấp cho vừa bề rộng: không mang nghĩa, và **sinh lỗi** — đoạn trước
+dài quá khung thì TMP ngắt lại, mẩu thừa rơi xuống đứng lẻ một hàng ngay trước
+`\\n` viết tay kế tiếp.
+
+Ký tự cuối của 7.222 chỗ ngắt cứng trong thoại ADV (đã lọc script test):
+
+```
+.  5794 (80,2%)    ?  783 (10,8%)    !  281 (3,9%)    ,  14    ―  3
+còn lại chữ cái thường: 347 chỗ (4,8%)   <- đúng nhóm tool này gỡ
+```
+
+Quy ước sẵn có đã rõ; tool chỉ dọn 4,8% ngoại lệ — **224 tin nhắn, 347 chỗ ngắt**.
+
+Ba cái bẫy đã dính, ghi lại để đừng dính lại:
+
+- **Đếm dòng cụt sai gấp 16 lần.** Đếm "đuôi của mọi đoạn bị TMP ngắt" gộp cả dòng
+  cuối tin nhắn (đương nhiên ngắn) lẫn dòng ngắn do người viết cố ý (`Ơ...` /
+  `Cái gì!?` đứng riêng rồi ngắt ở dấu kết câu). Ra 3.369, rồi 161. Số thật là
+  **10**: phải cùng lúc là đuôi của đoạn bị TMP cắt **và** không phải dòng cuối tin
+  nhắn. Xem `fix_adv_wrap.widows()`.
+- **Hai tool cùng ngắt thì phải biết nhường.** `fix_adv_wrap` ngắt giữa cụm từ để né
+  hoạ tiết, `fix_center_caption_wrap` ngắt giữa cụm từ (còn cân độ dài) để né
+  watermark — cả hai đều **cố ý**. Không miễn thì tool này gỡ ngay ra, và đã gỡ thật:
+  `85/txt/0767`, `99/txt/0214`, `99/txt/0215` mất ngắt ngay sau khi tầng hai của
+  `fix_center_caption_wrap` vừa đặt vào. `candidates()` bỏ qua ô caption và ô nào nối
+  xong sẽ chạm hoạ tiết.
+- **Chuỗi trùng.** `text[]` có câu y hệt ở nhiều ô; thay chuỗi mù thì đụng cả ô không
+  phải ứng viên. Chỉ thay hàng loạt khi MỌI ô mang chuỗi đó đều là ứng viên.
+
+Không đụng script test của nhà phát triển (`sample1`, `UL_test`,
+`UL_Live2d_test_sample`, `01_test_live2d_0*` — sID 0–8, 1.687 ô toàn tiếng Nhật,
+không có trong `ChapterData`, không màn nào tới được). Lọc bằng tỉ lệ ký tự CJK:
+nối tiếng Nhật bằng dấu cách là hỏng.
+
+`check_layout_breaks.py` sẽ báo **mất** ngắt dòng sau đợt này — đúng dự kiến, giống
+trường hợp `fix_ellipsis_break.py` gỡ ngắt theo luật dòng cụt.
+
+```powershell
+python tools\fix_midphrase_break.py            # chạy thử
+python tools\fix_midphrase_break.py --apply
+python tools\fix_midphrase_break.py --check    # chốt sau merge
+python tools\fix_adv_wrap.py --apply           # chạy ngay sau, cho ô chạm hoạ tiết
+```
+
+Backup: `_backup\scenario01.midphrase`.
+
 ## Danh sách có số trong chế độ novel — thụt treo
 
 `python tools\fix_novel_list_wrap.py [--apply]` — cùng họ lỗi với ô từ điển, nhưng

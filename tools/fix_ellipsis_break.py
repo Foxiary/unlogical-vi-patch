@@ -266,7 +266,7 @@ def main():
         for ti, sid, j, old, new in hits[:10]:
             print("  FAIL sID=%-4s text[%-5d] %s" % (sid, j, new[:96].replace("\n", "⏎")))
         if hits:
-            print("\nchạy `python tools\fix_ellipsis_break.py --apply`")
+            print("\nchạy `python tools\\fix_ellipsis_break.py --apply`")
             raise SystemExit(1)
         print("PASS không còn chỗ nào")
         return

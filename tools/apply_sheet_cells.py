@@ -492,10 +492,24 @@ def is_ruby(t):
     return bool(RUBY.fullmatch(t)) and not t.startswith("[dic ")
 
 
-def ruby_change_ok(old, new):
+# Những ô mà mất CẢ HAI nửa ruby là ĐÚNG chứ không phải xoá hụt. Danh sách phải nhỏ
+# và mỗi mục phải nói rõ vì sao — đây là chỗ duy nhất tắt được chốt ruby.
+RUBY_DROP_OK = {
+    # 105/txt/0293 — `主の記憶をもとに、登場人物も忠実に再現されます`.
+    # `再現される` là "được tái hiện", một động từ. Bản dịch cũ đọc nhầm nó thành tên
+    # thuật ngữ: "các nhân vật cũng được [Kính giới'Recollection] trung thực". Vòng (87)
+    # sửa thành "được tái hiện lại một cách chuẩn xác nhất", nên thuật ngữ biến mất hoàn
+    # toàn là đúng — nó vốn không được phép có mặt trong câu này.
+    "105/txt/0293",
+}
+
+
+def ruby_change_ok(old, new, key=None):
     """Tag ruby được phép đổi theo ba cách: giữ nguyên, **đảo hai nửa**, hoặc **bỏ tag
     mà giữ lại một nửa làm chữ thường** (vòng (28) bỏ gloss: `[Thiên thần tập sự'Spirit]`
-    -> `Spirit`). Mất tag mà cả hai nửa cũng mất thì là xoá hụt — chặn."""
+    -> `Spirit`). Mất tag mà cả hai nửa cũng mất thì là xoá hụt — chặn, trừ `RUBY_DROP_OK`."""
+    if key in RUBY_DROP_OK:
+        return None
     for t in TAG.findall(old):
         if not is_ruby(t):
             continue
@@ -552,7 +566,7 @@ def stock_tags():
     return _STOCK_TAGS
 
 
-def guards(old, new):
+def guards(old, new, key=None):
     bad = []
     # Ô trắng không bao giờ được ghi đè lên chữ đang có: đúng lớp lỗi đã làm
     # `107/txt/0099` và `0302` rỗng hẳn trên máy (bản Nhật là 「…………」). Tool này so
@@ -569,7 +583,7 @@ def guards(old, new):
     dic_nos = lambda s: sorted(m.group(1) for m in DIC.finditer(s))          # noqa: E731
     if dic_nos(old) != dic_nos(new):
         bad.append("link [dic no=…] bị đổi hoặc mất")
-    r = ruby_change_ok(old, new)
+    r = ruby_change_ok(old, new, key)
     if r:
         bad.append(r)
     if ("[主人公]" in old) != ("[主人公]" in new):
@@ -1201,7 +1215,7 @@ def main():
             print("!! %-34s chốt chặn: tham số lệnh KHÔNG được chứa dấu %s "
                   "(nó kết thúc tham số). Dùng 『』 trên sheet." % (key, '"'))
             continue
-        bad = guards(cur, nv)
+        bad = guards(cur, nv, key)
         if bad:
             print("!! %-34s chốt chặn: %s" % (key, "; ".join(bad))); continue
         # Sheet có tự khai ngắt dòng thì SHEET thắng — chỉ các tab *Data làm được, bằng

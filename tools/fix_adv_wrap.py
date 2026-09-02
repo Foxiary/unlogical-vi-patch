@@ -92,15 +92,27 @@ NOVEL_ON = re.compile(r"^\[ノベルモード[^\]]*開始")
 NOVEL_OFF = re.compile(r"^\[ノベルモード[^\]]*終了")
 TAG = re.compile(r"\[[^\[\]\n]*\]")
 RUBY = re.compile(r"\[([^\[\]\n']*?)'([^\[\]\n]*?)\]")
+# Link từ điển: engine chỉ vẽ giá trị của `text=`, bỏ hết `dic no=NNN text=`.
+# Thiếu nhánh này thì RUBY nuốt nguyên tag và `shown()` trả về
+# "dic no=252 text=tinh chỉnh" — đo DƯ 16 ký tự; còn tag không kèm ruby thì rơi
+# vào nhánh "" và đo THIẾU nguyên chữ đang hiện trên màn. 93 tin nhắn ADV dính,
+# và chính nó làm mô hình đoán sai chỗ TMP ngắt ở sID=72 text[380].
+DIC = re.compile(r"\[dic\b[^\[\]\n]*?text=([^\[\]\n]*?)\]")
 
 
 def shown(s):
     """Chữ thật hiện trên màn: ruby vẽ phần gốc, lệnh khác không vẽ, 「」 không vẽ."""
     def rep(m):
-        r = RUBY.fullmatch(m.group(0))
+        tag = m.group(0)
+        d = DIC.fullmatch(tag)
+        if d:                              # [dic no=N text=CHỮ] và …text=CHỮ'ruby]
+            inner = d.group(1)
+            r = RUBY.fullmatch("[" + inner + "]")
+            return r.group(1) if r else inner
+        r = RUBY.fullmatch(tag)
         if r:
             return r.group(1)
-        return PLAYER_MEASURE if m.group(0) == "[主人公]" else ""
+        return PLAYER_MEASURE if tag == "[主人公]" else ""
     return "".join(c for c in TAG.sub(rep, s) if c not in NOT_DRAWN)
 
 
@@ -316,6 +328,39 @@ def mirror(script, old, new):
     return "\n".join(lines)
 
 
+WIDOW_PX = 200.0
+
+
+def widows(text):
+    """Mẩu chữ do TMP cắt ra, đứng lẻ một hàng, mà BÊN DƯỚI VẪN CÒN CHỮ.
+
+    Rect đã thu xuống 1280 nên TMP ngắt lại là **bình thường** — đó chính là cách
+    giữ chữ khỏi hoạ tiết. Phải cùng lúc hai điều mới tính là lỗi:
+
+      (a) mẩu đó là ĐUÔI của một đoạn viết tay bị TMP cắt. Dòng ngắn do người
+          viết cố ý — `Ơ...` / `Cái gì!?` đứng riêng rồi ngắt ở dấu kết câu —
+          không phải lỗi, mà đếm kiểu cũ thì gộp cả chúng vào (161 thay vì 10).
+      (b) không phải dòng cuối tin nhắn. Dòng cuối ngắn là chuyện đương nhiên.
+
+    Đo theo cận trên của tên người chơi (`WWWWWW`), nên vài chỗ chỉ cụt với tên
+    6 ký tự rộng bất thường chứ không cụt ở tên mặc định.
+    """
+    size, lines = render(text)
+    lim = RECT_W * FMAX / size
+    out = []
+    segs = text.split(chr(10))
+    for si, seg in enumerate(segs):
+        got = wrap_words([measure(w) for w in words_of(shown(seg))], lim) or [(0.0, 0)]
+        if len(got) < 2:
+            continue
+        if si == len(segs) - 1:          # đuôi của đoạn cuối = dòng cuối tin nhắn
+            continue
+        w = got[-1][0] * size / FMAX
+        if w < WIDOW_PX:
+            out.append(w)
+    return out
+
+
 def main():
     env, d, raw = load(BUNDLE)
     bom = "﻿" if raw.startswith("﻿") else ""
@@ -342,6 +387,13 @@ def main():
             print("\nchạy `python tools\\fix_adv_wrap.py --apply`")
             raise SystemExit(1)
         print("PASS không dòng nào chạm hoạ tiết")
+        wd = [(w, sid, jj) for ti, sid, jj in adv_messages(data)
+               for w in widows(data["target"][ti]["text"][jj] or "")]
+        print("")
+        print("đuôi cụt do TMP ngắt lại (<%.0f px, KHÔNG chặn): %d chỗ / %d dưới 100 px"
+              % (WIDOW_PX, len(wd), sum(1 for w, _s, _j in wd if w < 100)))
+        for w, sid, jj in sorted(wd)[:5]:
+            print("     %6.1f px  sID=%-4s text[%d]" % (w, sid, jj))
         return
 
     out, plan, skipped = raw, [], 0
