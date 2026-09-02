@@ -103,6 +103,10 @@ Gỡ bản vá code: xoá đúng file `.ips`.
 
 ## Lỗi nhảy chữ của chú thích (ruby)
 
+> **Tool đã xoá (02/09/2026).** Lời thoại không còn ruby trên sheet, nên
+> `wrap_ruby_lines.py` hết việc và bị gỡ khỏi `tools/`; bản cuối ở commit `508f596`
+> (`git show 508f596:tools/wrap_ruby_lines.py`). Phần dưới giữ lại làm hồ sơ.
+
 `Ruby_Text` (IL2CPP, `Assets/Scripts/Util/Text/Ruby_Text.cs` — `textArray`,
 `GetIndent`, `AdjustRubyPositions`) đặt chú thích dựa trên **mảng dòng của
 chính câu thoại**, tức là chuỗi được cắt theo `\n`. Nó **không** biết gì về
@@ -129,6 +133,9 @@ câu ruby mà TMP vẫn sẽ ngắt lại (phải là 0).
 Backup: `_backup\scenario01.prerubywrap`.
 
 ## Thẻ ruby sai cú pháp
+
+> **Tool đã xoá (02/09/2026)** cùng lý do với `wrap_ruby_lines.py`; bản cuối ở commit
+> `508f596` (`git show 508f596:tools/fix_ruby_syntax.py`).
 
 `python tools\fix_ruby_syntax.py [--apply]` — sửa 5 thẻ, **chỉ dấu câu**, không
 đổi một chữ dịch nào. Backup `_backup\scenario01.prerubysyntax`.
@@ -1979,7 +1986,7 @@ word-wrap. Ngắt cứng chỉ thật sự mua được bốn thứ, và **cả 
 
 | lý do | quy mô | ai lo |
 |---|---|---|
-| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 5 ô | bỏ qua, trừ khi nối xong ruby vẫn đúng chỗ — `ruby_safe()`, xem dưới |
+| ruby: `Ruby_Text` đặt chú thích theo mảng `\\n` của chính câu | 5 ô, đang gỡ khỏi sheet | tool này bỏ qua — xem dưới |
 | novel: engine thụt 1 em cho dòng DATA, không thụt cho dòng TMP ngắt | 1.623 ô | `fix_novel_list_wrap.py` |
 | hoạ tiết góc ô ADV | vài ô | `fix_adv_wrap.py` |
 | caption giữa màn quá lề watermark | 41 ô | `fix_center_caption_wrap.py` |
@@ -2019,19 +2026,17 @@ Không đụng script test của nhà phát triển (`sample1`, `UL_test`,
 không có trong `ChapterData`, không màn nào tới được). Lọc bằng tỉ lệ ký tự CJK:
 nối tiếng Nhật bằng dấu cách là hỏng.
 
-**Ruby không còn là miễn trừ tuyệt đối (02/09/2026).** Ảnh máy thật IMG_7232 —
-`72/txt/0380`, Hotaru — là đúng lỗi mục này mô tả (mẩu `không` đứng lẻ một hàng) mà
-`--check` vẫn PASS, vì ô ấy mang `[dic no=252 text=tinh chỉnh'tuning]` và tool bỏ qua
-mọi ô có ruby. `Ruby_Text` đặt chú thích theo (chỉ số dòng DATA, x trong dòng đó), không
-biết TMP wrap — nên điều thật sự cần giữ không phải "đừng đụng ô có ruby" mà là: sau khi
-nối, **mọi dòng data đứng trước dòng có ruby vẫn vẽ đúng một hàng, và phần đầu dòng cho
-tới hết tag ruby nằm trọn hàng vẽ đầu**, đo ở cỡ auto-size thật (`fix_adv_wrap.render`).
-`ruby_safe()` làm đúng phép đo đó. Ở `72/txt/0380` engine co xuống 32,25 pt; nối cả ba
-dòng làm một thì TMP vẽ 1277 / 1216 / 1255 px và tag ruby kết ở 1115 px trên hàng 1 —
-an toàn, nên tool nối (2 chỗ ngắt). Bốn ô ruby còn lại (`72/txt/0467`, `103/txt/0336`,
-`116/txt/0867`, `127/txt/0385`) không đạt — tag nằm ở 1685 / 3170 / 2255 px, hoặc ô chỉ
-có một dòng — nên giữ nguyên. Sheet đã bỏ ruby khỏi lời thoại; hai snapshot (86)/(87)
-vẫn mang đủ 5 tag này, snapshot mới hơn merge xuống là chúng tự hết.
+**Ruby (02/09/2026).** Ảnh máy thật IMG_7232 — `72/txt/0380`, Hotaru — là đúng lỗi mục
+này mô tả (mẩu `không` đứng lẻ một hàng) mà `--check` vẫn PASS, vì ô ấy mang
+`[dic no=252 text=tinh chỉnh'tuning]` và tool bỏ qua mọi ô có ruby. Ô đó đã được nối
+một lần bằng phép đo `ruby_safe()`: nối được khi mọi dòng data trước dòng ruby vẽ đúng
+một hàng và phần đầu dòng tới hết tag ruby nằm trọn hàng vẽ đầu, đo ở cỡ auto-size thật
+(32,25 pt, tag kết ở 1115 px, TMP vẽ 1277 / 1216 / 1255 px). Rồi cùng ngày quyết định
+**bỏ hẳn ruby khỏi lời thoại**: sheet đã bỏ, hai snapshot (86)/(87) vẫn mang 5 tag
+(`72/txt/0380`, `72/txt/0467`, `103/txt/0336`, `116/txt/0867`, `127/txt/0385`), nên
+phép đo ấy được gỡ, tool quay về bỏ qua ô có ruby, còn `wrap_ruby_lines.py` và
+`fix_ruby_syntax.py` bị xoá. Snapshot mới hơn merge xuống là 4 ô kia thành ô thường và
+tool này dọn nốt.
 
 `check_layout_breaks.py` sẽ báo **mất** ngắt dòng sau đợt này — đúng dự kiến, giống
 trường hợp `fix_ellipsis_break.py` gỡ ngắt theo luật dòng cụt.
