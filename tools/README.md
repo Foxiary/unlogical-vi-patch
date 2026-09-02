@@ -975,7 +975,19 @@ vấn đề độ dài bản dịch.
 thì trùng nhịp bản gốc. Kiểm được: `71/txt/0345` ngắt ra **đúng chỗ bản Nhật tự ngắt**
 (`大切な人を失うのはつらいでしょ？` / `　こんな風に死んでほしくはないでしょ？`).
 
-Đã chạy 18/08/2026 (backup `_backup\scenario01.centercaption`):
+**Tầng hai (02/09/2026): mệnh đề tự nó quá lề thì ngắt theo từ, và ở tầng này thì CÂN độ
+dài.** Ba ô không có dấu câu nào nằm đúng chỗ — `85/txt/0767` là một mệnh đề liền 2556 px.
+Bỏ mặc không phải là "giữ nguyên": rect rộng 1920 nên TMP vẫn wrap, chỉ là wrap ở **1920**,
+tức dòng chạy hết mép màn và đè qua watermark — đúng cái lỗi mục này sinh ra để chặn. Ngắt ở
+1764 chỉ đổi *chỗ* ngắt chứ không thêm dòng nào TMP đã không tự thêm. Cân độ dài (ngược tầng
+một) vì ở đây không còn dấu câu nào để trùng nhịp bản gốc: gom tham lam đã thử và bỏ — nó để
+lại dòng cụt và cắt giữa từ ghép (`99/txt/0214` ra 1707 + 365 px với `địa` / `điểm` nằm hai
+dòng). Cân bằng không có bảng từ ghép nào chống lưng, chỉ làm xác suất cắt trúng thấp đi, nên
+**ô nào rơi vào tầng hai vẫn nên đọc lại một lượt**.
+
+Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
+
+Đã chạy 18/08/2026 (backup `_backup\scenario01.centercaption`) — 3 ô trong `PLAN` viết tay:
 
 | ô | trước | sau |
 |---|---|---|
@@ -983,13 +995,40 @@ thì trùng nhịp bản gốc. Kiểm được: `71/txt/0345` ngắt ra **đún
 | `71/txt/0345` | 2592 px (147%) | 1232 px (70%) + 1344 px (76%) |
 | `71/txt/0346` | 754 px (43%) | không cần |
 
-Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
+**Chạy lại 02/09/2026 sau khi bỏ `PLAN`** (backup `_backup\scenario01.centercaption2`) — quét
+ra **41 ô** caption, 8 ô còn quá lề:
+
+| ô | trước | sau | tầng |
+|---|---|---|---|
+| `71/txt/0060` | 2592 px (147%) | 1232 + 1344 px | dấu câu |
+| `71/txt/0090` | 2592 px (147%) | 1232 + 1344 px | dấu câu |
+| `71/txt/0116` | 2592 px (147%) | 1232 + 1344 px | dấu câu |
+| `85/txt/0767` | 2556 px (145%) | 1305 + 1235 px | từ |
+| `86/txt/0664` | 1862 px (106%) | 858 + 988 px | dấu câu |
+| `97/txt/0288` | 1869 px (106%) | 1085 + 767 px | dấu câu |
+| `99/txt/0214` | 2088 px (118%) | 1059 + 1013 px | từ |
+| `99/txt/0215` | 2907 px (165%) | 937 + 978 + 960 px | cả hai |
+
+Ba ô đầu là **cùng một câu với `71/txt/0345`**: cảnh Angelica lặp lại **bốn lần** trong
+prologue (script line 642 / 1000 / 1319 / 3224) và vòng 18/08 chỉ vá bản thứ tư — ba bản kia
+vẫn phẳng 2592 px suốt từ đó. Đó là cái giá của `PLAN` viết tay và là lý do bỏ nó. `mirror()`
+phải sửa theo: ba ô mang chuỗi y hệt nhau nên đòi khớp **đúng một lần** trong `scriptText` sẽ
+bỏ cả ba; giờ nó nhận `expect=` số bản sao đang cùng sửa.
+
+Sát ngưỡng, chưa vượt nên để nguyên: `103/txt/0414` **96%** (đúng câu đó, bản route 3),
+`92/txt/0027` 92%.
 
 Tool **tự dò lại chỗ ngắt từ câu chữ hiện tại** nên chạy lại được sau mỗi merge (sheet làm
-phẳng `\n` mỗi vòng); `PLAN` chỉ ghi *id ô*. **Hạn chế đã biết:** chưa quét được cả chế độ vì
-chưa biết engine reset `textmode` ở lệnh nào — dò ngược tới `[textmode=5]` gần nhất cho ra ca
-cách **2593 dòng script**, tức có thứ khác `[textmode=N]` đang reset mode. Ô nào xác định chắc
-thì thêm vào `PLAN`.
+phẳng `\n` mỗi vòng) và không ghi chuỗi đích ở đâu cả.
+
+**Hạn chế cũ đã gỡ.** Câu hỏi "engine reset `textmode` ở lệnh nào" có đáp án:
+**`[ノベルモード…終了…]`**, đúng họ lệnh `fix_novel_list_wrap.py` đang dùng — `sID 92` line
+168..178 mở bằng `[textmode=5]` và đóng bằng `[ノベルモード1終了]`, không có `[textmode=0]`
+nào. Lấy nó làm điểm kết khối thì **cả 26 khối `[textmode=5]` đều đóng gọn trong 6–28 dòng
+script**; hai khối từng dài 1905 và 3774 dòng (`sID 71` line 1319, `sID 92` line 168) biến
+mất, kể cả ca "cách 2593 dòng" từng ghi ở đây. Khối = từ `[textmode=5]` tới `[textmode=N]`
+hoặc `[ノベルモード…終了…]` kế tiếp; ô nào có `loadLine` rơi vào khoảng đó là caption. Chỉ nhận
+dòng lệnh thật (`strip()` mở đầu bằng `[`) — script có cả `;//[ノベルモード…]` là comment.
 
 ## Ô SHORT STORY rộng hơn lề watermark — thu rect một float
 
