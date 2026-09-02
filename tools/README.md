@@ -2184,6 +2184,22 @@ sửa 1386/1400. `--check` xác nhận 29/29 vừa khung và có thụt treo. Mi
 `scriptText` được 6/19 — 13 khối còn lại nằm trong số 11% mà hai bản đã lệch nhau
 nên không khớp verbatim; vô hại vì `scriptText` không được vẽ.
 
+**Tối 02/09/2026: chọn chỗ ngắt theo cả ô tóm tắt thẻ SAVE.** Ảnh máy thật IMG_7244 (màn
+SAVE, slot 019): ô tóm tắt 731 px wrap dòng 1 của `89/txt/0006`, `cùng` rơi xuống đứng lẻ
+rồi tới chỗ ngắt thụt treo. Đo cả 29 khối trên mô hình của `fix_save_summary_clip.py`: 14
+khối tốn thêm dòng ở ô tóm tắt chỉ vì chỗ ngắt gom tham lam. `reflow()` giờ duyệt mọi cách
+chia ra cùng số dòng vừa 1344 và chọn theo thứ tự: ít dòng nhất ở ô tóm tắt (tên đo cận
+trên `WWWWWW`), rồi ít dòng nhất với tên mặc định, rồi tham lam nhất. Hai chốt mới trên mọi
+ứng viên: không dòng nào để ngoặc / ngoặc kép mở dở, và không tách cặp trong `NO_SPLIT` —
+bảng từ ghép soát tay từ 445 cặp từ liền nhau của 29 khối (`trò chơi`, `đăng xuất`,
+`Game Master`…). Không có bảng đó thì tối ưu theo ô tóm tắt sẵn sàng cắt `trò / chơi`,
+`hoàn / toàn`, `bất / kỳ`, `cho / đến`; tham lam cũ cũng đã cắt `đăng / xuất`, `kẻ / thù`,
+`Game / Master`. Kết quả: **16 khối đổi**, số dòng mỗi khối giữ nguyên nên
+`check_layout_breaks` không thấy gì, tổng dòng của 16 khối ở ô tóm tắt **65 → 49**;
+`89/txt/0006` thành `…Munakata Kai sẽ` / `　 cùng nhau loại bỏ…` — hết dòng cụt với tên mặc
+định, còn tên 6 ký tự Latin thì dòng 1 vẫn wrap, không cách chia nào tránh được. Backup
+`_backup\scenario01.novellist` (23:42). Thêm mục luật mới thì soát lại `NO_SPLIT`.
+
 ### Chốt sau mỗi lần merge sheet
 
 ```powershell

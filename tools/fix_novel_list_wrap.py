@@ -43,6 +43,22 @@ inserted into the string and therefore eats wrap width, times 0.99 because the
 model's error against a real screen is under 2% and 7 px of headroom is thinner
 than that.
 
+**Where the break falls also matters in the SAVE/LOAD summary box (2026-09-02).**
+`SaveDataDetail/Text (TMP)` draws the same string in 731.5 px at 27 pt, spacing
+8.4, three lines then `…` (see `fix_save_summary_clip.py`).  A greedy first line
+tuned to 1344 px wraps there and leaves its last word alone on a line right
+before our hard break (IMG_7244: `3. Cả Suzuno Kanna và Munakata Kai sẽ` /
+`cùng` / `　 nhau loại bỏ …`).  So `reflow()` now enumerates every split into the
+same minimal number of lines that fits 1344 and picks by: fewest summary lines
+with the name measured at its upper bound, then fewest with the default name,
+then the greediest (longest first line, then second, …).  Two guards on every
+candidate: no line may leave a quote or bracket open, and no break may fall
+between the two halves of a pair in `NO_SPLIT` — a hand-curated list built from
+the 445 adjacent-word pairs these 29 items contain (`trò chơi`, `đăng xuất`,
+`Game Master`, …).  The old greedy pass had been splitting `đăng / xuất`,
+`kẻ / thù`, `Game / Master`.  The line count of each item does not change, so
+`check_layout_breaks` sees no loss.
+
     python tools\\fix_novel_list_wrap.py            # chạy thử
     python tools\\fix_novel_list_wrap.py --apply
     python tools\\fix_novel_list_wrap.py --check    # chốt sau merge, lỗi -> exit 1
@@ -51,7 +67,9 @@ than that.
 no indent, so it belongs next to `check_scripts.py` in the post-merge gate.
 """
 import io
+import itertools
 import json
+import math
 import os
 import re
 import shutil
@@ -63,6 +81,7 @@ ROOT = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 
 import UnityPy   # noqa: E402
+import adv_layout as A   # noqa: E402
 from adv_layout import ADV   # noqa: E402
 
 BUNDLE = os.path.join(ROOT, "romfs", "Data", "StreamingAssets", "scenario", "scenario01")
@@ -127,17 +146,85 @@ def pick_prefix(marker):
     return min(PREFIXES, key=lambda p: abs(contrib(p) - want))
 
 
-def reflow(text):
-    first = text.split("\n")[0]
-    m = VN_MARKER.match(first)
-    if not m:
-        return None, None
-    prefix = pick_prefix(m.group(0))
-    flat = " ".join(l.lstrip("　 ") for l in text.split("\n"))
+# Ô tóm tắt thẻ SAVE/LOAD (`level19` SaveDataDetail/Text (TMP), xem fix_save_summary_clip.py)
+# vẽ CÙNG chuỗi này trong 731,5 px, cỡ 27, charSpacing 8,4, 3 dòng rồi cắt `…`. Dòng đầu
+# gom tham lam tới 1344 px wrap ở đó và để chữ cuối đứng lẻ một hàng ngay trước chỗ ngắt
+# thụt treo (ảnh IMG_7244). Nên trong mọi cách chia ra cùng số dòng, chọn cách ít tốn dòng
+# ở ô tóm tắt nhất — đo tên theo cận trên trước, tên mặc định sau — rồi mới tham lam.
+SAVE_FS, SAVE_CS, SAVE_W = 27.0, 8.4, 738.0 - 6.5
+MAX_COMBOS = 200000
+BRACKETS = [("“", "”"), ("「", "」"), ("『", "』"), ("(", ")"), ("（", "）")]
+# Từ ghép / tên riêng không được tách hai dòng — soát tay từ 445 cặp từ liền nhau của 29
+# khối luật (02/09/2026). Không có bảng này thì tối ưu theo ô tóm tắt sẵn sàng cắt
+# `trò / chơi`, `hoàn / toàn`, `bất / kỳ`; tham lam cũ cũng đã cắt `đăng / xuất`, `kẻ / thù`,
+# `Game / Master`. Thêm mục mới thì thêm vào đây, viết thường, bỏ dấu câu và ngoặc kép.
+NO_SPLIT = {
+    ("ảnh", "hưởng"), ("bất", "kỳ"), ("bắt", "đầu"), ("bốc", "cháy"), ("buộc", "phải"),
+    ("cá", "tính"), ("câu", "hỏi"), ("chiến", "thắng"), ("chỉ", "định"), ("chỉ", "số"),
+    ("cho", "đến"), ("còn", "lại"), ("cùng", "nhau"), ("dân", "thường"), ("duy", "nhất"), ("đăng", "xuất"),
+    ("địa", "điểm"), ("điều", "khiển"), ("điểm", "số"), ("đóng", "vai"), ("đối", "đầu"),
+    ("đối", "tượng"), ("đòn", "đánh"), ("đã", "định"), ("giao", "lưu"), ("giải", "trí"),
+    ("giới", "hạn"), ("hiển", "thị"), ("hiệu", "quả"), ("hoàn", "thành"), ("hoàn", "toàn"),
+    ("học", "hỏi"), ("học", "tập"), ("hỏa", "lực"), ("hung", "thủ"), ("hệ", "thống"),
+    ("kết", "thúc"), ("kẻ", "thua"), ("kẻ", "thù"), ("khoang", "treo"), ("kỹ", "năng"),
+    ("loại", "bỏ"), ("màn", "hình"), ("mệnh", "lệnh"), ("mục", "tiêu"), ("năng", "lực"),
+    ("ngưng", "đọng"), ("người", "chơi"), ("nhà", "vua"), ("nhanh", "chóng"), ("nội", "dung"),
+    ("phân", "định"), ("phát", "sinh"), ("phản", "ánh"), ("phòng", "giải"), ("quy", "tắc"),
+    ("quyết", "định"), ("riêng", "biệt"), ("sai", "sót"), ("sát", "hại"), ("sát", "thương"),
+    ("sân", "khấu"), ("số", "hiệu"), ("số", "lần"), ("số", "điểm"), ("sống", "sót"),
+    ("sử", "dụng"), ("sự", "cố"), ("tham", "gia"), ("thay", "đổi"), ("theo", "dõi"),
+    ("thoát", "khỏi"), ("thông", "tin"), ("thời", "gian"), ("thắng", "bại"), ("thần", "ẩn"),
+    ("thực", "hiện"), ("thực", "tế"), ("thường", "dân"), ("tiến", "độ"), ("tiến", "trình"),
+    ("tiết", "lộ"), ("tiềm", "thức"), ("tích", "lũy"), ("tình", "trạng"), ("tìm", "kiếm"),
+    ("tối", "đa"), ("tổng", "số"), ("trở", "nên"), ("trở", "thành"), ("trở", "xuống"),
+    ("trưởng", "thành"), ("trả", "lời"), ("trò", "chơi"), ("tuyển", "chọn"), ("tuyệt", "đối"),
+    ("tương", "thích"), ("tương", "ứng"), ("tấn", "công"), ("tăng", "lên"), ("tử", "vong"),
+    ("vô", "hiệu"), ("xem", "xét"), ("xâm", "nhập"), ("xúc", "xắc"), ("xử", "thua"),
+    ("ý", "thức"),
+    # tên riêng, số kèm đơn vị
+    ("game", "master"), ("munakata", "kai"), ("nagamori", "ran"), ("suzuno", "[主人公]"),
+    ("round", "3"), ("10", "giây"), ("3", "người"), ("6", "người"), ("con", "xúc"),
+}
+
+
+def norm(w):
+    return w.strip("\"“”「」『』()（）,.;:!?―…").lower()
+
+
+def split_ok(parts):
+    """Hai chốt: không dòng nào để ngoặc / ngoặc kép mở dở, không tách cặp trong NO_SPLIT."""
+    for p in parts:
+        if p.count('"') % 2:
+            return False
+        for o, c in BRACKETS:
+            if p.count(o) != p.count(c):
+                return False
+    for a, b in zip(parts, parts[1:]):
+        last = norm(a.split(" ")[-1])
+        first = norm(b.lstrip("　 ").split(" ")[0])
+        if (last, first) in NO_SPLIT:
+            return False
+    return True
+
+
+def save_lines(parts, upper):
+    """Số dòng các phần này chiếm trong ô tóm tắt thẻ SAVE (mô hình adv_layout).
+
+    `upper=True` đo `[主人公]` theo cận trên `WWWWWW` (luật chung của repo), `False`
+    theo tên mặc định — dùng làm tiêu chí phụ, để một cách chia tốt hơn cho tên
+    mặc định vẫn được chọn khi cận trên hoà nhau."""
+    old_cs, old_pm = A.CHAR_SPACING, A.PLAYER_MEASURE
+    A.CHAR_SPACING = SAVE_CS * A.POINT_SIZE / 100.0
+    A.PLAYER_MEASURE = PLAYER_MEASURE if upper else A.DEFAULT_PLAYER_NAME
+    try:
+        return sum(max(1, len(A.wrap(p, SAVE_FS, limit=SAVE_W))) for p in parts)
+    finally:
+        A.CHAR_SPACING, A.PLAYER_MEASURE = old_cs, old_pm
+
+
+def greedy(words, prefix):
     out, cur = [], ""
-    for w in flat.split(" "):
-        if not w:
-            continue
+    for w in words:
         cand = w if not cur else cur + " " + w
         if cur and width(cand) > LIMIT:
             out.append(cur)
@@ -146,7 +233,38 @@ def reflow(text):
             cur = cand
     if cur:
         out.append(cur)
-    return "\n".join(out), prefix
+    return out
+
+
+def reflow(text):
+    """Cùng số dòng với gom tham lam; trong các cách chia hợp lệ, chọn theo thứ tự:
+    ít dòng nhất ở ô tóm tắt (tên cận trên), ít dòng nhất ở ô tóm tắt (tên mặc định),
+    rồi tham lam nhất (dòng 1 dài nhất, rồi dòng 2, …). Không cách nào qua hai chốt
+    thì quay về tham lam như cũ."""
+    first = text.split("\n")[0]
+    m = VN_MARKER.match(first)
+    if not m:
+        return None, None
+    prefix = pick_prefix(m.group(0))
+    flat = " ".join(l.lstrip("　 ") for l in text.split("\n"))
+    words = [w for w in flat.split(" ") if w]
+    base = greedy(words, prefix)
+    k = len(base)
+    if k >= 2 and math.comb(len(words) - 1, k - 1) <= MAX_COMBOS:
+        best = None
+        for cuts in itertools.combinations(range(1, len(words)), k - 1):
+            b = (0,) + cuts + (len(words),)
+            parts = [" ".join(words[x:y]) for x, y in zip(b, b[1:])]
+            parts = [parts[0]] + [prefix + p for p in parts[1:]]
+            if any(width(p) > LIMIT for p in parts) or not split_ok(parts):
+                continue
+            key = (save_lines(parts, True), save_lines(parts, False),
+                   tuple(-width(p) for p in parts))
+            if best is None or key < best[0]:
+                best = (key, parts)
+        if best is not None:
+            return "\n".join(best[1]), prefix
+    return "\n".join(base), prefix
 
 
 def find_blocks(data):
