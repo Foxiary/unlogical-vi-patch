@@ -44,6 +44,13 @@ ghép: `99/txt/0214` ra 1707 px + 365 px với `địa` / `điểm` nằm hai d�
 Không có bảng từ ghép nào ở đây — cân bằng chỉ làm xác suất cắt trúng thấp đi, nên **ô
 nào rơi vào tầng hai vẫn nên liếc mắt đọc lại một lượt**.
 
+**Tối 02/09/2026: tầng hai nghỉ.** Rect `EXTRAText` thu 1920 → 1764
+(`fix_caption_box_width.py`), TMP tự wrap trong lề an toàn, nên `wrap_words()` trả nguyên
+dòng và tool nối lại ba ô từng ngắt theo từ (`85/txt/0767`, `99/txt/0214`, `99/txt/0215`):
+chỗ ngắt ấy để lại dòng cụt ở ô tóm tắt thẻ SAVE/LOAD 731 px (ảnh máy thật IMG_7241). Tầng
+một giữ nguyên — ngắt theo dấu câu vẫn là ngắt có nghĩa. `--check` giờ cũng đỏ khi một ô
+caption còn chỗ ngắt không ở dấu câu.
+
 **Tự dò lại chỗ ngắt từ câu chữ hiện tại**, nên chạy lại được sau mỗi merge (sheet làm
 phẳng `\\n` mỗi vòng) — tool không ghi chuỗi đích ở đâu cả.
 
@@ -119,6 +126,7 @@ def caption_cells(t):
     return sorted(set(out))
 
 PUNCT = re.compile(r"(?<=[.!?,;:…])\s+")
+PUNCT_END = re.compile(r"[.!?,;:…]$")
 
 
 def width(s):
@@ -145,23 +153,13 @@ def _greedy(words, limit):
 
 
 def wrap_words(s):
-    """Dự phòng: mệnh đề tự nó đã quá lề -> chia theo từ, **cân độ dài**.
+    """Tầng hai ĐÃ NGHỈ (02/09/2026, tối): mệnh đề quá lề không ngắt theo từ nữa.
 
-    Số dòng lấy bằng đúng số dòng tối thiểu (gom tham lam ở 1764), rồi dò nhị phân
-    bề rộng nhỏ nhất vẫn giữ được ngần ấy dòng. Cùng số dòng, dòng ngắn hơn = mối
-    ngắt cân hơn, không còn dòng cụt."""
-    words = s.split(" ")
-    k = len(_greedy(words, SAFE_W))
-    if k <= 1:
-        return [s]
-    lo, hi = max(width(w) for w in words), SAFE_W
-    while hi - lo > 1:
-        mid = (lo + hi) / 2
-        if len(_greedy(words, mid)) <= k:
-            hi = mid
-        else:
-            lo = mid
-    return _greedy(words, hi)
+    Rect `EXTRAText` đã thu 1920 -> 1764 (`fix_caption_box_width.py`), nên TMP tự wrap
+    trong lề an toàn — chỗ ngắt theo từ trong dữ liệu chỉ lặp lại việc TMP đang làm,
+    còn ở ô tóm tắt thẻ SAVE (731 px) thì nó để lại dòng cụt (ảnh IMG_7241). Bản cân
+    độ dài cũ (dò nhị phân bề rộng nhỏ nhất giữ đủ số dòng) ở commit `0a6fd11`."""
+    return [s]
 
 
 def split_punct(s):
@@ -222,18 +220,22 @@ def main():
                 continue
             segs = shown(cur).split("\n")
             worst = max(width(s) for s in segs)
-            if worst <= SAFE_W:
+            flat = " ".join(x.strip() for x in segs)
+            # Ô còn chỗ ngắt KHÔNG ở dấu câu là ngắt theo từ của tầng hai cũ: rect đã thu
+            # 1764 nên TMP tự lo, còn ở ô tóm tắt thẻ SAVE nó để lại dòng cụt -> nối lại.
+            tier2 = len(segs) > 1 and any(not PUNCT_END.search(x.rstrip()) for x in segs[:-1])
+            if worst <= SAFE_W and not tier2:
                 ok.append((sID, j, len(segs), worst))
                 continue
             # dựng lại từ bản đã làm phẳng, để chạy lại sau merge cũng cho cùng kết quả
-            flat = " ".join(x.strip() for x in shown(cur).split("\n"))
             new_lines = split_punct(flat)
-            if max(width(s) for s in new_lines) > SAFE_W:
-                print("!! %d/txt/%04d: ngắt theo dấu câu vẫn còn dòng %.0f px > %.0f — cần rút chữ"
-                      % (sID, j, max(width(s) for s in new_lines), SAFE_W))
-                for s in new_lines:
-                    print("      %7.0f px %4.0f%%  %r" % (width(s), 100 * width(s) / SAFE_W, s))
+            if [x.strip() for x in segs] == new_lines:
+                ok.append((sID, j, len(segs), worst))
                 continue
+            if max(width(s) for s in new_lines) > SAFE_W:
+                # mệnh đề liền quá 1764 px: TMP wrap trong rect 1764 (fix_caption_box_width.py)
+                print("=  %d/txt/%04d: dòng %.0f px không có dấu câu để ngắt — TMP tự wrap trong rect 1764"
+                      % (sID, j, max(width(s) for s in new_lines)))
             # ngắt không được rơi vào giữa `[...]`: một newline thật trong tham số lệnh
             # là kết thúc dòng lệnh (xem CLAUDE.md).
             if any(s.count("[") != s.count("]") for s in new_lines):

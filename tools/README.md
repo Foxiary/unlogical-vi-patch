@@ -992,6 +992,18 @@ lại dòng cụt và cắt giữa từ ghép (`99/txt/0214` ra 1707 + 365 px v�
 dòng). Cân bằng không có bảng từ ghép nào chống lưng, chỉ làm xác suất cắt trúng thấp đi, nên
 **ô nào rơi vào tầng hai vẫn nên đọc lại một lượt**.
 
+**Tối 02/09/2026: thu rect thay cho tầng hai.** Ảnh máy thật IMG_7241 (màn LOAD): ô tóm tắt
+thẻ SAVE vẽ cùng chuỗi `85/txt/0767` trong 731 px, và chỗ ngắt theo từ 1305 + 1235 canh cho
+caption để lại `thông tin có thể` đứng một hàng rồi câu bị cắt `…`. Ngắt cứng ở caption vốn
+chỉ để TMP không wrap ở mép 1920, nên đổi cách: `fix_caption_box_width.py` thu rect
+`EXTRAText` (RectTransform pid 722, anchors và pivot giữa, anchoredPosition 0) từ 1920
+xuống **1764** — TMP wrap trong lề an toàn cho cả 41 ô, chữ vẫn canh giữa, mỗi bên còn đúng
+78 px; vá 2 byte tại chỗ trong `level10`, mỏ neo là PPtr cha + 10 float đuôi vì rect
+1920×720 canh giữa là hình học phổ biến. Tầng hai nghỉ: `wrap_words()` trả nguyên dòng, và
+tool nối lại ba ô từng ngắt theo từ — `85/txt/0767` và `99/txt/0214` về một dòng,
+`99/txt/0215` còn hai dòng theo dấu phẩy. Tầng một giữ nguyên. `--check` của cả hai tool vào
+chốt sau merge; `check_layout_breaks` báo mất `\n` ở đúng ba ô này là đúng dự kiến.
+
 Khung cao 720 px với bước dòng 61,6 px = chỗ cho **11 dòng**, nên ngắt không tốn gì.
 
 Đã chạy 18/08/2026 (backup `_backup\scenario01.centercaption`) — 3 ô trong `PLAN` viết tay:
