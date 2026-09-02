@@ -479,6 +479,40 @@ ghi rác, nhưng ô đó không xuống được. Sửa thì phải thay trong *
 bằng `"no": <n>`, mỗi giá trị `no` chỉ xuất hiện một lần) chứ không thay trên cả file —
 cùng lý do `ScenarioData` phải vá theo cả mảng `text[]` thay vì theo từng chuỗi. Chưa làm.
 
+### Vòng (89), tối 02/09/2026 — và cái giá của việc sửa chính tả ở build
+
+Snapshot `(89)` so với `(88)`, backup `_backup\scenario01.UNLOGICAL_v2(89)`; bundle `json`
+vòng này không đổi. **4 ô đổi, áp hết**, đều là văn xuôi `ScenarioData` và không ô nào
+vướng chốt: `72/txt/0926` (viết lại câu Kai tước dao), `72/txt/0927` (`cậu ấy` → `anh ấy`),
+`85/txt/0293` (`thái độ kẻ cả` → `thái độ trịnh thượng`), `86/txt/0664` (đảo sang bị động).
+Chỉ `86/txt/0664` có ngắt dòng cứng và `carry_breaks` đặt lại đúng chỗ trên câu chữ mới.
+Sau merge: `fix_chat_use_genebark --apply` no-op (231/231 cặp đã giống), `fix_adv_wrap` /
+`novel_list` / `dictionary_wrap` / `ellipsis_break` không có gì để sửa, toàn bộ `--check`
+cùng `check_scripts` và `check_layout_breaks` (`+0` ngắt dòng, `+0` thụt lề) PASS.
+
+**`trịnh thượng` không phải từ tiếng Việt** — sheet viết sai, dạng đúng là `trịch thượng`,
+và chính build đã dùng dạng đúng sẵn ở `84/txt/0492`. Nên đây là thống nhất về dạng đã có,
+không phải tự chế cách viết mới. Sai **2 chỗ chứ không phải 1**: ô `85/txt/0293` vừa merge
+vòng này, và ô `93/txt/0321` (`「...Nói cái giọng trịch thượng gì thế?」`) đã sai từ trước —
+quét cả file trước khi sửa mới lòi ra chỗ thứ hai. Thay trên **chuỗi thô** của asset nên
+`text[]` và bản sao `scriptText` cùng đổi một lượt (4 chỗ = 2 + 2); `scriptText_Line` có 0
+chỗ khớp, vẫn assert nguyên vẹn sau khi ghi. Backup `_backup\scenario01.trichthuong`.
+
+**Cái giá: `85/txt/0293` từ nay báo "cả hai bên đổi" ở MỌI vòng merge sau**, vì build đã
+đúng còn sheet vẫn `trịnh thượng`:
+
+```
+!! 85/txt/0293                        CẢ HAI BÊN ĐỔI — bỏ qua
+      build : 'Dù thái độ trịch thượng của cậu ta làm tôi hơi ngứa mắt, nhưng Shinju…'
+      sheet : 'Dù thái độ trịnh thượng của cậu ta làm tôi hơi ngứa mắt, nhưng Shinju…'
+```
+
+Chốt chạy **đúng** — chặn chứ không âm thầm lật lại — nhưng nó sẽ ồn mãi cho tới khi sửa
+upstream, cùng loại với 48 ô `sd_106`/`sd_107` ở trên. Bài học chung: **sửa câu chữ ở build
+là đổi một lỗi hiển thị lấy một cảnh báo vĩnh viễn**; sửa trên sheet rồi merge xuống thì
+không mất gì. Chỉ nên sửa thẳng ở build khi cần bản chơi được ngay, và khi sửa thì ghi ô
+đó vào danh sách phải sửa upstream chứ đừng để nó tự tiêu.
+
 ## 赤川夏音 = Sekigawa Kanon (`fix_sekigawa_name.py`)
 
 `python tools/fix_sekigawa_name.py [--apply] [--report]`
