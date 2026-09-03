@@ -296,6 +296,17 @@ Nền `(94)`, backup `_backup/scenario01.UNLOGICAL_v2(95)`; `json` không đổi
 phần còn lại của đợt `(93)` đổi cách Hidaka (火高) và người chơi xưng với nhau (`ông/em` →
 `chú/cháu`). Không ô nào vướng chốt, fixer no-op, gate PASS; `--check-chat` vẫn 2/231 cũ.
 
+### Vòng `(96)`, rạng sáng 04/09/2026 — `lỗi` → `bug`, và 9 ô Hidaka "ta/cô" → "ta/cháu"
+
+Nền `(95)`, backup `_backup/scenario01.UNLOGICAL_v2(96)`, `json.UNLOGICAL_v2(96)`. **41 ô thoại +
+1 ô từ điển (`DictionaryData/dic_body/id112`), áp hết, không ô nào vướng chốt.** Hai đợt:
+đổi thuật ngữ `lỗi` → `bug` (`Không gian Lỗi` → `không gian bug` 17 chỗ, sau merge còn 0 dạng
+cũ; `gây ra bug`, `sửa bug`, `con bug`), và đổi xưng hô của Hidaka thật với người chơi ở sID
+78/80/81 — đúng 9 ô mà phép quét talkName `火高` + `cô` chỉ ra tối 03/09, cùng `chúng ta` →
+`bọn ta`. Còn lại 17 câu Hidaka gọi `cô`: 14 câu Hidaka giả ở sID 83 (cặp `tôi/cô`, giọng thù
+địch, để người dịch quyết) và 3 câu gọi kèm họ / gọi chung (`cô Suzuno`, `cô cậu`).
+Fixer no-op, gate PASS; `--check-chat` vẫn 2/231 cũ.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
