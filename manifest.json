@@ -196,5 +196,17 @@
     "bytes": 19,
     "md5": "16d9f956cab4fc6ff19f9df7df1ddb8e",
     "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b001/romfs/scenario/scenario_aoc01",
+    "bytes": 76610,
+    "md5": "35e3960004495e8f4b836ad6f9354b48",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b001/romfs/json/json_aoc01",
+    "bytes": 1614,
+    "md5": "f75491bc6ce9873c39a3ae65e34feb5b",
+    "where": "repo"
   }
 ]

@@ -6,11 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A fan Vietnamese translation patch for the Nintendo Switch visual novel **UNLOGICAL** (Title ID `010068501ff9a000`, game version **v1.0.2**), shipped as LayeredFS mod romfs.
 
-There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains five things:
+There is **no build system** — nothing regenerates `romfs/` from a source of truth. The repo contains six things:
 
-- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **32 files ship; 31 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
+- `romfs/Data/**` — the patched Unity binaries (`.assets`, bundles, `global-metadata.dat`). These *are* the deliverable. **32 files ship for the base title; 31 are tracked in git** — `font_jp` is gitignored and published as a release asset instead.
+- `aoc/010068501ff9b001/romfs/**` — the mod for the **DLC 1 title** (an AOC with its own romfs, see the trap below): `scenario/scenario_aoc01` and `json/json_aoc01`, 2 files. LayeredFS applies per title, so these ship in the release zip under a second root folder `vn-translation-dlc1/`, to be extracted into `contents/010068501ff9b001/`; the workshop copy is `D:\Downloads\010068501ff9b001\romfs`, junctioned into Ryujinx the same way as the base title.
 - `exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips` — a 19-byte IPS32 code patch, and **the one file that is easy to forget**: it sits beside `romfs/`, not inside it, so a release built by zipping `romfs` alone silently omits it. v1.1 shipped that way once and had to be replaced. It raises the chapter-select hard wrap, `Chapter.get_DefaultMaxCharsPerLine` **18 → 40**, so the engine stops re-chopping lines the data already wrapped by word. Without it those 24–30 character lines get cut every 18 characters into a 18/7/18/7 zig-zag — 421 lines split mid-word, *worse* than not patching at all. Do **not** set it to 0: the same routine counts the lines it breaks to page the `StorySlider`, so zero wrapping means one page and a dead scrollbar. The filename is the NSO build id, so it is bound to v1.0.2.
-- `manifest.json` — path / bytes / MD5 for all 33 (the 32 above **plus** the `.ips`), each tagged `"where": "repo"` or `"release"`.
+- `manifest.json` — path / bytes / MD5 for all 35 (the 32 base files and 2 AOC files above **plus** the `.ips`), each tagged `"where": "repo"` or `"release"`. `tools/make_release.py` decides the zip folder from the path (`romfs/`, `exefs/` → `vn-translation/`; `aoc/<title>/` → `vn-translation-dlc1/`), and `tools/sync_publish.py` maps `aoc/<title>/romfs/...` to the workshop `D:\Downloads\<title>\romfs\...`.
 - `docs/` — reverse-engineering notes, in English (the vocabulary is Unity/UnityPy). `README.md` is in Vietnamese, aimed at players.
 - `tools/` and `e2e/` — the patch scripts and the test harness; see [Tooling](#tooling) below.
 
@@ -104,6 +105,8 @@ Derived by diffing every shipped file against the stock v1.0.2 dump, object by o
 | `level19` / `level20` | 0.04 | the save/load slot screens — `ChapterTitle (TMP)` auto-sizing, one component each |
 | `level22` | 0.1 | dictionary `MainText (TMP)` wrap mode · ruby `characterSpacing` 15 → 0 · `Mask_Ryby` widened 180 → 500 |
 | `level13` | 0.06 | MUSIC room — `TrackTitle (TMP)` `characterSpacing` 6 → 0, then a `TrackTitleMask` parent (386×100, `RectMask2D` + `AutoScrollText`) with the title re-anchored left, centred, `ContentSizeFitter` + `LayoutElement minWidth 386`: short titles centre, long ones scroll |
+| `aoc/010068501ff9b001/romfs/scenario/scenario_aoc01` | 0.08 | **DLC 1 title.** `ScenarioData` — all 399 lines of the five "朝のひと時" short stories (scenarios 1005–1009) and their 119 nameplates rewritten to the base form `【雅火/Miyabi】`; the five `09_0N` scripts, `scenariolist` and `ChapterAlready` untouched |
+| `aoc/010068501ff9b001/romfs/json/json_aoc01` | 0.002 | **DLC 1 title.** `DLCData_01` — the five `charaName` strings the Download Contents list draws, romanised; the sprite-name fields beside them are keys and stay |
 
 **Six font assets carry the added glyphs, and four of them are duplicated across files.** `FOT-NewRodinProN-DB` lives in `sharedassets7`, `scene_jp` *and* `ui_jp`; `FOT-DNPShueiMGoStd-B`/`-L` in `sharedassets10` and `ui_jp`; `FOT-DotGothic12Std-M` in `sharedassets13` and `ui_jp`; `FOT-iroha21popuraStdN-R` in `resources.assets` and `ui_jp`; `FOT-NewRodinProN-M` only in `anim01`. Patching one copy and not its twin leaves tofu on whichever screens load the other file — that is why `anim01` and `sharedassets10` ship at all (`sharedassets13` would anyway, for the `Music` atlas).
 

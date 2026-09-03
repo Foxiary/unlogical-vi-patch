@@ -16,3 +16,6 @@ exefs/** binary
 
 # The e2e harness is Windows-only (Ryujinx + Win32 input); keep CRLF on checkout
 *.ps1  text eol=crlf
+
+# AOC (DLC) mod for title 010068501ff9b001 — Unity bundles, same rule as romfs/
+aoc/** binary

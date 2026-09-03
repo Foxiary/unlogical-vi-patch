@@ -4040,7 +4040,14 @@ nguyên byte. Thư mục thử cho máy thật: `D:\Downloads\unlogical-vi-patch
 **Còn lại, chưa làm:** ảnh có chữ Nhật (`朝のひと時` trên 5 thumbnail, màn Caution, 5 cửa sổ
 CHAPTER và 2 dải phím trong bundle gốc — cần tiêu đề tiếng Việt và câu Caution; font
 `ULPixel`/`font_BASE` của `fix_key_prompts.py` nằm ở scratchpad đã mất, phải trích lại từ
-Font asset), và chỗ đặt trong repo / cách đóng gói phát hành cho title thứ hai.
+Font asset).
+
+**Chỗ đặt và đóng gói (chốt 03/09/2026):** hai bundle nằm ở `aoc/010068501ff9b001/romfs/…`
+trong repo, có mục trong `manifest.json` như mọi file khác. `make_release.py` đọc tiền tố
+đường dẫn để chọn thư mục gốc trong zip: `romfs/`, `exefs/` → `vn-translation/` như cũ;
+`aoc/010068501ff9b001/` → **`vn-translation-dlc1/`**, người chơi chép vào
+`contents/010068501ff9b001/`. `sync_publish.py` map `aoc/<title>/romfs/…` sang bản làm việc
+`D:\Downloads\<title>\romfs\…`. `.gitattributes` đánh dấu `aoc/**` binary.
 
 ## `scenarioID` 0–12 là script test, KHÔNG dịch
 

@@ -60,6 +60,8 @@ Chỉ cần **một file duy nhất** — không cần tải cả repository.
 
 > **Phải có đủ cả `romfs` lẫn `exefs`.** File `.ips` chỉ nặng 19 byte nhưng nó tắt luật ngắt dòng cứng ở màn chọn chương. Nếu chỉ chép `romfs`, phần tóm tắt chương sẽ bị cắt dòng giữa từ, mỗi 18 ký tự một lần. Đây cũng là lý do bản v1.1 phát hành lần đầu bị thiếu và đã được thay thế.
 
+5. **Nếu có DLC 1** (*Download Contents* thứ nhất, năm truyện ngắn "buổi sáng"): trong zip còn thư mục `vn-translation-dlc1`. DLC là một title riêng, ID `010068501ff9b001`, nên mod của game gốc không dịch được nó. Chép thư mục `romfs` bên trong `vn-translation-dlc1` sang `%APPDATA%\Ryujinx\mods\contents\010068501ff9b001\vn-translation\romfs\`. Trên Switch chạy Atmosphère: `atmosphere/contents/010068501ff9b001/romfs/`.
+
 File zip chỉ chứa dữ liệu game đã sửa đổi, không kèm README hay tài liệu.
 
 ---
@@ -94,6 +96,10 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
 <mods>/contents/010068501ff9a000/vn-translation/exefs/
     669EA2FE0282C2C0EFEA4DA183419FB7.ips
 
+<mods>/contents/010068501ff9b001/vn-translation/romfs/    <- DLC 1, title riêng
+    scenario/scenario_aoc01
+    json/json_aoc01
+
 ```
 
 ### 3. Bản vá code (19 byte, bắt buộc)
@@ -127,6 +133,7 @@ Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn
 
 * 132/140 kịch bản scenario (toàn bộ hội thoại, lời dẫn và các lựa chọn)
 * 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
+* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt)
 
 Terminal (Thiết bị)
 
@@ -157,6 +164,8 @@ Các mục từng nằm trong danh sách này đã xong: tên ở màn Hồ sơ,
 Còn ba tên vẫn hiện tiếng Nhật ở **dòng INFO đáy tab SOUND** (`蛍`, `栞`, `光希`). Chúng là string literal trong `global-metadata.dat` chứ không phải dữ liệu, mà dạng La-tinh (`Hotaru`, `Shiori`, `Mitsuki`) đều dài hơn số byte gốc nên chưa ghi đè tại chỗ được. `恭介` từng nằm trong danh sách này đã xong (`Kyosuke`, dời literal sang vùng trống).
 
 > **Tab SOUND hiển thị tên nhân vật ở hai nơi**, và rất dễ chỉ sửa một. Chữ trên từng dải thanh trượt là **hình vẽ sẵn** trong sprite `UL_option_sound_menu_ch_*`; còn dòng INFO đáy màn ghép `ConfigVolumeData.label` với `SystemTextData` id 71 (`"'s volume settings"`). Sửa xong tranh mà quên `label` thì màn hình hiện `MIYABI` ở dải nhưng `雅火's volume settings` ở dưới.
+
+**DLC** còn ba chỗ tiếng Nhật nằm trong hình vẽ sẵn, chưa dịch: tiêu đề `朝のひと時` ở góc năm thumbnail và màn cảnh báo Caution (trong romfs của DLC), năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím `Ⓐ決定 Ⓑ戻る` / `Ⓐシーン再生 Ⓑ戻る` (trong game gốc, hai bundle `sprite02` và `texture02` chưa ship). **DLC 2** (năm truyện hẹn hò) đã có bản dịch nhưng chưa có file game để vá.
 
 Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
 

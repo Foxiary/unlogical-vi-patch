@@ -33,6 +33,19 @@ CLONE = r"D:\OneDrive - vlylm\Game\unlogical-vi-patch"
 REPO = "Foxiary/unlogical-vi-patch"
 OUT_DIR = r"D:\Downloads"
 ZIP_ROOT = "vn-translation"
+# Mod cho title AOC (DLC) nằm ở `aoc/<titleId>/romfs/...` trong repo; trong zip nó thành một
+# thư mục gốc riêng để người chơi chép vào `contents/<titleId>/` — LayeredFS áp theo title.
+AOC_ROOTS = {"aoc/010068501ff9b001/": "vn-translation-dlc1"}
+
+
+def arcname(rel):
+    """Đường dẫn trong zip cho một mục manifest."""
+    for prefix, root in AOC_ROOTS.items():
+        if rel.startswith(prefix):
+            return "%s/%s" % (root, rel[len(prefix):])
+    if rel.startswith("aoc/"):
+        raise SystemExit("mục aoc chưa khai trong AOC_ROOTS: " + rel)
+    return "%s/%s" % (ZIP_ROOT, rel)
 IPS = "exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips"
 
 args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -120,7 +133,7 @@ def build(man):
     with zipfile.ZipFile(ZIP, "w", zipfile.ZIP_DEFLATED, compresslevel=1) as z:
         for i, e in enumerate(man, 1):
             src = os.path.join(CLONE, e["path"].replace("/", os.sep))
-            z.write(src, "%s/%s" % (ZIP_ROOT, e["path"]))
+            z.write(src, arcname(e["path"]))
             print("  [%2d/%d] %s" % (i, len(man), e["path"]))
     size = os.path.getsize(ZIP)
     print("\nđã dựng %s — %.1f MB trong %.0f giây" % (ZIP, size / 1e6, time.time() - t0))
@@ -131,7 +144,9 @@ def build(man):
     assert "%s/%s" % (ZIP_ROOT, IPS) in names, "zip thiếu bản .ips"
     assert not [n for n in names if n.endswith(".resS")], "zip dính .resS"
     assert not [n for n in names if "/CAB-" in n], "zip dính rác CAB-*"
-    print("kiểm tra zip: %d file, có .ips, không .resS, không CAB-*" % len(names))
+    roots = sorted({n.split("/", 1)[0] for n in names})
+    assert roots == sorted({ZIP_ROOT} | set(AOC_ROOTS.values())), "thư mục gốc trong zip: %s" % roots
+    print("kiểm tra zip: %d file, có .ips, không .resS, không CAB-*, thư mục gốc %s" % (len(names), ", ".join(roots)))
 
 
 def publish(man):

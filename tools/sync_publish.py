@@ -41,6 +41,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
 CLONE = r"D:\OneDrive - vlylm\Game\unlogical-vi-patch"
+AOC_WORK_BASE = "D:/Downloads"          # bản làm việc của các title AOC: D:/Downloads/<titleId>/romfs
 MOD_EXEFS = os.path.join(os.environ["APPDATA"], "Ryujinx", "mods", "contents",
                          "010068501ff9a000", "vn-translation", "exefs")
 MANIFEST = os.path.join(CLONE, "manifest.json")
@@ -69,6 +70,12 @@ def src_of(rel):
     """Đường dẫn bản làm việc cho một entry của manifest."""
     if rel.startswith("exefs/"):
         return os.path.join(MOD_EXEFS, rel.split("/", 1)[1])
+    if rel.startswith("aoc/"):
+        # aoc/<titleId>/romfs/... -> bản làm việc của title AOC đó, nằm cạnh bản làm việc của
+        # game gốc: D:/Downloads/<titleId>/romfs/... (junction vào Ryujinx như title gốc).
+        # Ghi tường minh, không suy từ ROOT: chạy nhầm từ clone thì ROOT là clone.
+        _, title, rest = rel.split("/", 2)
+        return os.path.join(AOC_WORK_BASE, title, rest.replace("/", os.sep))
     return os.path.join(ROOT, rel.replace("/", os.sep))
 
 
