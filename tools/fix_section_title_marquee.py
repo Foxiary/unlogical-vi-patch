@@ -26,7 +26,7 @@ cả MonoScript lẫn type entry. Không đổi cây (Title vẫn là con trực
 Kiểm tra: nạp lại bundle, so byte 7 9xx object — chỉ 4 object được khác (GO Mask_Title,
 GO Title, RT Title, TMP Title; TMP đúng 1 trường margin.x). Lưu `packer="lz4"`.
 
-    python tools\\fix_section_title_marquee.py [--apply] [--mode restart|loop] [--delay 1.5] [--speed 60] [--pause 2]
+    python tools\\fix_section_title_marquee.py [--apply] [--mode restart|loop] [--delay 0.5] [--speed 60] [--pause 2]
 """
 import argparse
 import copy
@@ -65,7 +65,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--mode", choices=M.MODES, default="restart")
-    ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--delay", type=float, default=0.5)   # 1,5 lúc dựng; hạ 0,5 cho cả bốn marquee 03/09/2026 (set_marquee_delay.py)
     ap.add_argument("--speed", type=float, default=60.0)
     ap.add_argument("--pause", type=float, default=2.0)
     args = ap.parse_args()

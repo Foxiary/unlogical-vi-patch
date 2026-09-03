@@ -39,7 +39,7 @@ dấu tiếng Việt không bị cắt trên/dưới; NoWrap nên không có gì
 Kiểm tra trước khi ghi: nạp lại blob, so byte từng object — chỉ #125, #130, #131, #169 được khác
 (#169 đúng hai trường `m_enableAutoSizing`, `m_margin.x`). Script từ chối file đã vá (pid ≥ 175).
 
-    python tools\\fix_recollection_marquee.py [--apply] [--mode restart|loop] [--delay 1.5] [--speed 60] [--pause 2]
+    python tools\\fix_recollection_marquee.py [--apply] [--mode restart|loop] [--delay 0.5] [--speed 60] [--pause 2]
 """
 import argparse
 import hashlib
@@ -74,7 +74,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--mode", choices=M.MODES, default="restart")
-    ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--delay", type=float, default=0.5)   # 1,5 lúc dựng; hạ 0,5 cho cả bốn marquee 03/09/2026 (set_marquee_delay.py)
     ap.add_argument("--speed", type=float, default=60.0)
     ap.add_argument("--pause", type=float, default=2.0)
     args = ap.parse_args()

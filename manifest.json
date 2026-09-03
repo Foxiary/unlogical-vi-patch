@@ -73,8 +73,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/ui/ui_jp",
-    "bytes": 51927686,
-    "md5": "3d38e0591208ba4d3b3f7c892f128f65",
+    "bytes": 51927685,
+    "md5": "c2d32f6952832472f2bfeef5c022b4c7",
     "where": "repo"
   },
   {
@@ -86,7 +86,7 @@
   {
     "path": "romfs/Data/level13",
     "bytes": 59952,
-    "md5": "e712e2971356462f923787ff16a70d62",
+    "md5": "3aef35b51946112853e09e3105304970",
     "where": "repo"
   },
   {
@@ -158,7 +158,7 @@
   {
     "path": "romfs/Data/sharedassets21.assets",
     "bytes": 4294000,
-    "md5": "d58c45a019af10eebfbadfeba6103e6f",
+    "md5": "84ebf3ba5ebcd29f2520ff193c566a35",
     "where": "repo"
   },
   {

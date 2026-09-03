@@ -4170,9 +4170,17 @@ các từ và cả name trong chapter panel nữa, giảm thời gian kích ho�
 - **Tên trong cửa sổ CHAPTER** → `.upper()` (`YASAKA SOICHI` rộng tới x373, `MUNAKATA KAI`
   x380; ngưỡng 450), cùng neo `H`. Font điểm ảnh của bản vá (`FOT-DotGothic12Std-M` = ULPixel)
   có đủ 2 032 glyph kể cả mọi chữ hoa có dấu — kiểm cmap trước khi vẽ, không thiếu chữ nào.
-- **Marquee**: `fix_dlc_list_marquee.py --delay` mặc định 1,5 → **0,5 s**; ba marquee khác
-  (MUSIC, Ending List, section) vẫn 1,5 s. `sharedassets24.assets` ghi lại, cùng cỡ 43 760 byte,
-  chỉ khác trường `startDelay` của AutoScrollText#53.
+- **Marquee**: `fix_dlc_list_marquee.py --delay` mặc định 1,5 → **0,5 s**; `sharedassets24.assets`
+  ghi lại, cùng cỡ 43 760 byte, chỉ khác trường `startDelay` của AutoScrollText#53.
+
+Ngay sau đó người dùng chốt *"đổi luôn ba marquee kia xuống 0,5 s"* (MUSIC `level13`, Ending List
+`sharedassets21`, tên section `ui_jp`). Ba tool `fix_*_marquee.py` từ chối chạy trên file đã vá,
+và dựng lại từ backup `_backup\*.premarquee` có thể kéo mất sửa đổi ghi lên cùng file sau đó,
+nên viết `set_marquee_delay.py`: tìm mọi MonoBehaviour 60 byte có `m_Script` trỏ
+`AutoScrollText` (pid 1187 của `globalgamemanagers`, hoặc MonoScript cùng CAB với `ui_jp`), đổi
+đúng float ở offset 48. `.assets` ghi 4 byte tại `byte_start + 48`, cỡ file không đổi; `ui_jp`
+phải `set_raw_data` + `save(packer="lz4")`, tool nạp lại và bắt buộc mọi object khác y nguyên.
+Mặc định `--delay` của cả bốn tool marquee hạ về 0,5 để chạy lại từ đầu vẫn ra đúng bản ship.
 
 Cả ba bundle `--check` PASS; manifest cập nhật `sprite_jp_aoc01/02`, `sprite02`,
 `sharedassets24.assets`.

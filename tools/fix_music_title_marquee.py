@@ -54,7 +54,7 @@ round-trip). Script từ chối file đã vá (pid ≥ 380) — muốn đổi th
 `_backup\\level13.premarquee` đè lại rồi chạy lại.
 
     python tools\\fix_music_title_marquee.py [--apply] [--mode restart|loop]
-                                            [--delay 1.5] [--speed 60] [--pause 2] [--softness 0]
+                                            [--delay 0.5] [--speed 60] [--pause 2] [--softness 0]
 """
 import argparse
 import copy
@@ -206,7 +206,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--mode", choices=MODES, default="restart")
-    ap.add_argument("--delay", type=float, default=1.5, help="startDelay (s)")
+    ap.add_argument("--delay", type=float, default=0.5, help="startDelay (s) — 1,5 lúc dựng, hạ 0,5 cho cả bốn marquee 03/09/2026 (set_marquee_delay.py)")
     ap.add_argument("--speed", type=float, default=60.0, help="px/s trên canvas 1920")
     ap.add_argument("--pause", type=float, default=2.0, help="pauseDuration (s), chỉ Restart")
     ap.add_argument("--softness", type=int, default=0, help="RectMask2D m_Softness.x (px mờ mép)")
