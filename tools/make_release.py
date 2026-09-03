@@ -35,7 +35,8 @@ OUT_DIR = r"D:\Downloads"
 ZIP_ROOT = "vn-translation"
 # Mod cho title AOC (DLC) nằm ở `aoc/<titleId>/romfs/...` trong repo; trong zip nó thành một
 # thư mục gốc riêng để người chơi chép vào `contents/<titleId>/` — LayeredFS áp theo title.
-AOC_ROOTS = {"aoc/010068501ff9b001/": "vn-translation-dlc1"}
+AOC_ROOTS = {"aoc/010068501ff9b001/": "vn-translation-dlc1",
+             "aoc/010068501ff9b002/": "vn-translation-dlc2"}
 
 
 def arcname(rel):

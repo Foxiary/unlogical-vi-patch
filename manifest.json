@@ -226,5 +226,23 @@
     "bytes": 2521036,
     "md5": "72a3031a2d34a099d126f2f9e75a43f5",
     "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/scenario/scenario_aoc02",
+    "bytes": 116826,
+    "md5": "5ad39387594073cf0dac595f0e898893",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/json/json_aoc02",
+    "bytes": 1619,
+    "md5": "9b68b7c59356720bf07a754b8304b603",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/sprite/sprite_jp_aoc02",
+    "bytes": 2574966,
+    "md5": "42c20fec1c9aa521e0864b30272b9f06",
+    "where": "repo"
   }
 ]

@@ -46,20 +46,32 @@ ROOT = os.path.dirname(HERE)
 APPLY = "--apply" in sys.argv
 CHECK = "--check" in sys.argv
 
-STOCK_AOC = r"D:\Downloads\UNLOGICAL_DLC1\romfs"
-WORK_AOC = r"D:\Downloads\010068501ff9b001\romfs"
+# `--dlc N` (mặc định 1). DLC 2 (title 010068501FF9B002) cùng khung tranh, tiền tố sprite
+# `UL_dlc_d_*`, phụ đề `デート`, Caution chỉ hai dòng (không có dòng ※). Phần vỏ trong game gốc
+# (sprite02/texture02, tiền tố `cd`) dùng chung cho cả hai DLC nên chỉ vá ở lượt --dlc 1.
+DLC = int(sys.argv[sys.argv.index("--dlc") + 1]) if "--dlc" in sys.argv else 1
+LETTER = {1: "c", 2: "d"}[DLC]
+STOCK_AOC = r"D:\Downloads\UNLOGICAL_DLC%d\romfs" % DLC
+WORK_AOC = r"D:\Downloads\010068501ff9b00%d\romfs" % DLC
 STOCK_BASE = r"D:\Downloads\UNLOGICAL_v2\Data\StreamingAssets"
 PATCH_BASE = os.path.join(ROOT, "romfs", "Data", "StreamingAssets")
 PREVIEW = os.path.join(ROOT, "_preview", "dlc_art")
 BACKUP = os.path.join(ROOT, "_backup")
 
 # ---- chữ -------------------------------------------------------------------------------
-TITLE = "Khoảnh khắc ban mai"          # 朝のひと時 — tiêu đề chung của 5 truyện DLC 1
-CAUTION = [
-    "Nội dung này có tiết lộ diễn biến của phần chính.",           # 当コンテンツには、本編のネタバレが含まれています。
-    "Khuyến nghị chơi sau khi đã hoàn thành phần chính.",           # 本編をクリアしてからのプレイを推奨いたします。
-    "※Truyện của Miyabi là ngoại truyện sau 『END No.12 Hình hài của hạnh phúc』.",  # ※雅火は『END No.12 幸せのかたち』後のSSです。
-]
+TITLE = {1: "Khoảnh khắc ban mai",      # 朝のひと時 — tiêu đề chung của 5 truyện DLC 1
+         2: "Hẹn hò"}[DLC]              # デート — DLC 2
+CAUTION = {
+    1: [
+        "Nội dung này có tiết lộ diễn biến của phần chính.",           # 当コンテンツには、本編のネタバレが含まれています。
+        "Khuyến nghị chơi sau khi đã hoàn thành phần chính.",           # 本編をクリアしてからのプレイを推奨いたします。
+        "※Truyện của Miyabi là ngoại truyện sau 『END No.12 Hình hài của hạnh phúc』.",  # ※雅火は『END No.12 幸せのかたち』後のSSです。
+    ],
+    2: [
+        "Nội dung này có tiết lộ diễn biến của phần chính.",
+        "Khuyến nghị chơi sau khi đã hoàn thành phần chính.",
+    ],
+}[DLC]
 # tên trong cửa sổ CHAPTER = charaName của DLCData_01 (apply_dlc_sheet.CHARA_NAME)
 NAMES = {"01_miya": "Miyabi", "02_kai": "Munakata Kai", "03_ran": "Nagamori Ran",
          "04_soi": "Yasaka Soichi", "05_yuri": "Yuri"}
@@ -166,7 +178,10 @@ def thumbnail(img, name, report):
     med = np.median(lum(a)[40:140, 20:340], axis=1)
     below = [i for i, v in enumerate(med) if v < 700]
     ref = float(np.median(med[below[0]:below[0] + 6]))     # bỏ hàng mép đang chuyển màu
-    rows = [i for i in range(below[0], len(med)) if abs(med[i] - ref) <= 20]
+    # Dải phẳng tuyệt đối (trung vị lệch 0), còn hàng đầu của tranh dưới dải hồng của Miyabi
+    # (DLC 2) lệch có 8 và 14 — dung sai 20 gộp luôn tranh vào dải, siết còn 5. Không dùng độ
+    # lệch chuẩn theo hàng: hàng có chữ trắng rộng (DLC 1, 5 chữ) lệch chuẩn cao hơn cả tranh.
+    rows = [i for i in range(below[0], len(med)) if abs(med[i] - ref) <= 5]
     first = last = rows[0]
     while last + 1 in rows:
         last += 1
@@ -207,8 +222,8 @@ def caution(img, name, report):
             if 12 < y - start < 60:
                 bands.append((start, y))
             start = None
-    if len(bands) != 3:
-        raise SystemExit("%s: chờ 3 dải chữ, thấy %s" % (name, bands))
+    if len(bands) != len(CAUTION):
+        raise SystemExit("%s: chờ %d dải chữ, thấy %s" % (name, len(CAUTION), bands))
     color = tuple(int(v) for v in np.median(a[dark & (np.arange(a.shape[0])[:, None] >= bands[0][0])][:, :3], axis=0)) + (255,)
     mask = np.zeros(a.shape[:2], bool)
     for y0, y1 in bands:
@@ -282,11 +297,13 @@ def chapter_window(img, name, report):
 
 JOBS = [
     # (bundle gốc, bundle đích, [(tên sprite hoặc tiền tố, hàm)])
-    (os.path.join(STOCK_AOC, "sprite", "sprite_jp_aoc01"), os.path.join(WORK_AOC, "sprite", "sprite_jp_aoc01"),
-     [("UL_dlc_c_win_02_", thumbnail), ("UL_dlc_a_headsup_01", caution)]),
-    (os.path.join(STOCK_BASE, "sprite", "sprite02"), os.path.join(PATCH_BASE, "sprite", "sprite02"),
-     [("UL_dlc_cd_win_01_", chapter_window)]),
+    (os.path.join(STOCK_AOC, "sprite", "sprite_jp_aoc0%d" % DLC),
+     os.path.join(WORK_AOC, "sprite", "sprite_jp_aoc0%d" % DLC),
+     [("UL_dlc_%s_win_02_" % LETTER, thumbnail), ("UL_dlc_a_headsup_0%d" % DLC, caution)]),
 ]
+if DLC == 1:
+    JOBS.append((os.path.join(STOCK_BASE, "sprite", "sprite02"), os.path.join(PATCH_BASE, "sprite", "sprite02"),
+                 [("UL_dlc_cd_win_01_", chapter_window)]))
 
 
 def targets(c, prefix):

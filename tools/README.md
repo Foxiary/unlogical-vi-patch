@@ -4062,6 +4062,31 @@ chọn bằng cách vẽ một chữ mẫu cho cao bằng chữ cũ, không làm
 Font: `fontcache.py` trích TTF từ `ui_jp` ra `_fonts/` (gitignore) — thay thư mục scratchpad đã
 mất mà `fix_key_prompts.py` từng trỏ vào; tool đó nay dùng `fontcache.ttf()`.
 
+### DLC 2 — `010068501FF9B002` (03/09/2026)
+
+NSP `UN_LOGICAL [010068501FF9B002][v0][DLC2].nsp` (9,97 MB, thêm `cg/cg_aoc02` 5 CG không chữ),
+bóc ra `D:\Downloads\UNLOGICAL_DLC2\romfs`. Cùng khung DLC 1: `scenario_aoc02` với scenario
+2005–2009 (script `09_06`…`09_10`, "デート"), `json_aoc02` (`DLCData_02`), `sprite_jp_aoc02`
+(tiền tố `UL_dlc_d_*`, `UL_dlc_a_headsup_02`). Khác một điểm: **mỗi scenario có một lựa chọn ba
+phương án** trong `selText[k]` (JSON lồng `{"target":[…]}`, `selLine` trỏ dòng script). Sheet
+`UNLOGICAL_DLC2.xlsx` ghi ba phương án ở hàng `{sid}/cmd/0000..0002` — trên sheet gốc `cmd` là
+lệnh Terminal, ở đây là phương án lựa chọn, đúng thứ tự trong JSON. Mỗi scenario còn một ô
+`text[]` rỗng không có trên sheet (`''`), bỏ qua. Hai tool nhận `--dlc N`; phần vỏ trong game
+gốc (`sprite02`, `texture02`, tiền tố `cd`) dùng chung hai DLC nên chỉ vá ở lượt `--dlc 1`.
+
+`apply_dlc_sheet.py --dlc 2`: 568/568 câu, 15 phương án lựa chọn (thay cả chuỗi `selText[k]`
+như `apply_sheet_cells`), 230 nameplate, `DLCData_02` 5 tên; `TOKEN_DROP_OK` thêm `2007/txt/0100`
+(lời kể của Ran, bản dịch bỏ tên; không có bản đôi). `fix_dlc_art.py --dlc 2`: phụ đề `デート` →
+**"Hẹn hò"** trên 5 thumbnail (cùng cỡ 17), Caution 2 chỉ hai dòng (không có dòng ※), cỡ 33.
+Một bài học thêm khi dò dải phụ đề: hàng đầu của tranh dưới dải hồng của Miyabi lệch trung vị
+có 8 và 14 so với dải, dung sai 20 gộp luôn tranh vào dải (khung chữ thành 31 px) — siết còn
+**5** vì dải phẳng tuyệt đối; không dùng độ lệch chuẩn theo hàng để phân biệt, vì hàng có chữ
+trắng rộng (DLC 1, năm chữ) lệch chuẩn còn cao hơn tranh.
+
+Repo: `aoc/010068501ff9b002/romfs/…`, zip → `vn-translation-dlc2/` (`AOC_ROOTS`), bản làm việc
+`D:\Downloads\010068501ff9b002\romfs` junction vào Ryujinx (DLC 2 chưa cài trong Ryujinx nên chưa
+thử được ở đó; thư mục thử cho máy thật: `D:\Downloads\unlogical-vi-patch-dlc2-romfs`).
+
 **Chỗ đặt và đóng gói (chốt 03/09/2026):** hai bundle nằm ở `aoc/010068501ff9b001/romfs/…`
 trong repo, có mục trong `manifest.json` như mọi file khác. `make_release.py` đọc tiền tố
 đường dẫn để chọn thư mục gốc trong zip: `romfs/`, `exefs/` → `vn-translation/` như cũ;

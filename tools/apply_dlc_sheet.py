@@ -53,11 +53,17 @@ ROOT = os.path.dirname(HERE)
 import UnityPy   # noqa: E402
 from openpyxl import load_workbook   # noqa: E402
 
-STOCK_AOC = r"D:\Downloads\UNLOGICAL_DLC1\romfs"           # dump gốc của AOC (extract_dlc_romfs.py)
-WORK_AOC = r"D:\Downloads\010068501ff9b001\romfs"          # bản làm việc = mod cho title AOC
-SHEET = r"D:\Downloads\UNLOGICAL_DLC1.xlsx"
-SCEN = os.path.join("scenario", "scenario_aoc01")
-JSONB = os.path.join("json", "json_aoc01")
+# `--dlc N` (mặc định 1). DLC 2 = title 010068501FF9B002, cùng khung: scenario 2005..2009,
+# script 09_06..09_10 ("デート"), thêm mỗi scenario MỘT lựa chọn ba phương án trong `selText`
+# — sheet DLC ghi ba phương án đó ở hàng `{sid}/cmd/0000..0002`, đúng thứ tự trong JSON.
+DLC = int(sys.argv[sys.argv.index("--dlc") + 1]) if "--dlc" in sys.argv else 1
+TITLE_ID = "010068501ff9b00%d" % DLC
+STOCK_AOC = r"D:\Downloads\UNLOGICAL_DLC%d\romfs" % DLC     # dump gốc của AOC (extract_dlc_romfs.py)
+WORK_AOC = r"D:\Downloads\%s\romfs" % TITLE_ID              # bản làm việc = mod cho title AOC
+SHEET = r"D:\Downloads\UNLOGICAL_DLC%d.xlsx" % DLC
+SCEN = os.path.join("scenario", "scenario_aoc0%d" % DLC)
+JSONB = os.path.join("json", "json_aoc0%d" % DLC)
+DLCDATA = "DLCData_0%d" % DLC
 APPLY = "--apply" in sys.argv
 CHECK = "--check" in sys.argv
 
@@ -78,12 +84,16 @@ TOKEN_DROP_OK = {
     # `[主人公]がそっちに向かおうとする` -> "em định đi ra chỗ đó": kể chuyện ngôi thứ nhất
     # của Kai, tên nhân vật thành "em" là đúng giọng; ô này không có bản đôi.
     "1006/txt/0004",
+    # DLC 2 — `恋人になった[主人公]に対して…` -> "Khi đã thành người yêu của nhau, tôi cũng…":
+    # lời kể của Ran, bản dịch chuyển sang "của nhau"; ô không có bản đôi.
+    "2007/txt/0100",
 }
 DEFAULT_GIVEN = "Kanna"
 
 TAG = re.compile(r"\[[^\[\]\n]*\]")
 KANA = re.compile(r"[ぁ-ゖァ-ヺ]")
 SD_ID = re.compile(r"^(\d+)/txt/(\d+)$")
+CMD_ID = re.compile(r"^(\d+)/cmd/(\d+)$")     # trên sheet DLC: phương án thứ k của lựa chọn
 
 
 def flat(s):
@@ -119,7 +129,9 @@ def read_sheet():
         if not ws.title.startswith("sd_"):
             continue
         for row in ws.iter_rows(values_only=True):
-            if not row or not isinstance(row[0], str) or not SD_ID.match(row[0].strip()):
+            if not row or not isinstance(row[0], str):
+                continue
+            if not (SD_ID.match(row[0].strip()) or CMD_ID.match(row[0].strip())):
                 continue
             jp = row[2] if len(row) > 2 and isinstance(row[2], str) else ""
             vi = row[3] if len(row) > 3 and isinstance(row[3], str) else ""
@@ -136,18 +148,21 @@ def check_work():
         for j, s in enumerate(t["text"]):
             if isinstance(s, str) and KANA.search(TAG.sub("", s)):
                 bad.append("%s/txt/%04d còn kana: %r" % (t["scenarioID"], j, s[:40]))
+        for k, s in enumerate(t["selText"]):
+            if s and KANA.search(s):
+                bad.append("%s/selText[%d] còn kana: %r" % (t["scenarioID"], k, s[:60]))
         for n in t["talkName"]:
             if n and n not in NAMEPLATE.values():
                 bad.append("nameplate lạ %r" % n)
-    _, _, rawj = load_text_asset(os.path.join(WORK_AOC, JSONB), "DLCData_01")
+    _, _, rawj = load_text_asset(os.path.join(WORK_AOC, JSONB), DLCDATA)
     for k in CHARA_NAME:
         if '"jp": "%s"' % k in rawj:
-            bad.append("DLCData_01 còn charaName %r" % k)
+            bad.append("%s còn charaName %r" % (DLCDATA, k))
     for b in bad[:10]:
         print("  FAIL", b)
     if bad:
         raise SystemExit("%d lỗi trong %s" % (len(bad), WORK_AOC))
-    print("PASS %s: 0 ô kana, nameplate đúng dạng, DLCData_01 đã La-tinh" % WORK_AOC)
+    print("PASS %s: 0 ô kana (text + selText), nameplate đúng dạng, %s đã La-tinh" % (WORK_AOC, DLCDATA))
 
 
 def main():
@@ -173,7 +188,7 @@ def main():
         raise SystemExit("%s không khớp đúng một lần trong file" % what)
 
     out = raw
-    n_ok = n_name = 0
+    n_ok = n_name = n_sel = 0
     problems = []
     mirrored = mirror_failed = 0
     for ti, t in enumerate(data["target"]):
@@ -222,6 +237,39 @@ def main():
             n_ok += 1
         if new_text != t["text"]:
             out = replace_array(out, t["text"], new_text, "text[] target[%d]" % ti)
+        # lựa chọn: selText[k] là JSON lồng `{"target":[…]}`; sheet ghi phương án i ở
+        # `{sid}/cmd/{i:04d}`. Thay cả chuỗi selText[k] (như apply_sheet_cells), không thay
+        # từng phương án — hai phương án có thể trùng chữ.
+        for k, cur_raw in enumerate(t["selText"]):
+            if not cur_raw:
+                continue
+            doc = json.loads(cur_raw)
+            opts = doc["target"]
+            new_opts = list(opts)
+            for i, opt in enumerate(opts):
+                key = "%d/cmd/%04d" % (sid, i)
+                if key not in cells:
+                    problems.append((key, "phương án không có trên sheet: %r" % opt[:30]))
+                    continue
+                jp, vi = cells[key]
+                if flat(jp) != flat(opt):
+                    problems.append((key, "JP sheet khác build: %r != %r" % (flat(jp)[:30], flat(opt)[:30])))
+                    continue
+                if not vi.strip() or KANA.search(vi):
+                    problems.append((key, "VN trống hoặc còn kana"))
+                    continue
+                if ("[主人公]" in opt) != ("[主人公]" in vi):
+                    problems.append((key, "[主人公] chỉ có một bên"))
+                    continue
+                new_opts[i] = vi.replace("\n", " ")
+            if new_opts != opts:
+                doc["target"] = new_opts
+                new_raw = json.dumps(doc, ensure_ascii=False, separators=(",", ":"))
+                oj, nj = json.dumps(cur_raw, ensure_ascii=False), json.dumps(new_raw, ensure_ascii=False)
+                if out.count(oj) != 1:
+                    raise SystemExit("selText sID=%d [%d] khớp %d lần" % (sid, k, out.count(oj)))
+                out = out.replace(oj, nj)
+                n_sel += sum(1 for a, b in zip(opts, new_opts) if a != b)
         if cur_s != script:
             oj, nj = json.dumps(script, ensure_ascii=False), json.dumps(cur_s, ensure_ascii=False)
             if out.count(oj) != 1:
@@ -237,8 +285,8 @@ def main():
             out = replace_array(out, names, new_names, "talkName target[%d]" % ti)
             n_name += sum(1 for a, b in zip(names, new_names) if a != b)
 
-    print("ghi %d/%d câu, đổi %d nameplate, mirror scriptText %d (không khớp %d)"
-          % (n_ok, sum(len(t["text"]) for t in data["target"]), n_name, mirrored, mirror_failed))
+    print("ghi %d/%d câu, %d phương án lựa chọn, đổi %d nameplate, mirror scriptText %d (không khớp %d)"
+          % (n_ok, sum(1 for t in data["target"] for s in t["text"] if s.strip()), n_sel, n_name, mirrored, mirror_failed))
     for k, why in problems:
         print("  !! %-16s %s" % (k, why))
     if problems:
@@ -247,19 +295,23 @@ def main():
     after = json.loads(out.lstrip("\ufeff"))
     for t, ta in zip(data["target"], after["target"]):
         assert ta["loadLine"] == t["loadLine"] and ta["scriptText_Line"] == t["scriptText_Line"]
-        assert ta["selText"] == t["selText"] and len(ta["text"]) == len(t["text"])
+        assert ta["selLine"] == t["selLine"] and len(ta["selText"]) == len(t["selText"])
+        assert len(ta["text"]) == len(t["text"])
         assert ta["isDefaultNameAdjust"] == t["isDefaultNameAdjust"]
-    print("kiểm tra: loadLine/scriptText_Line/selText/cờ tên nguyên vẹn")
+        for s0, s1 in zip(t["selText"], ta["selText"]):
+            assert bool(s0) == bool(s1)
+            if s0:
+                assert len(json.loads(s0)["target"]) == len(json.loads(s1)["target"])
+    print("kiểm tra: loadLine/scriptText_Line/selLine/cờ tên nguyên vẹn, selText giữ đúng số phương án")
 
-    # DLCData_01
-    envj, dj, rawj = load_text_asset(os.path.join(STOCK_AOC, JSONB), "DLCData_01")
+    envj, dj, rawj = load_text_asset(os.path.join(STOCK_AOC, JSONB), DLCDATA)
     outj = rawj
     for jp, vn in CHARA_NAME.items():
         a, b = '"jp": "%s"' % jp, '"jp": "%s"' % vn
         assert outj.count(a) == 1, (jp, outj.count(a))
         outj = outj.replace(a, b)
     json.loads(outj.lstrip("\ufeff"))
-    print("DLCData_01: %d charaName -> La-tinh" % len(CHARA_NAME))
+    print("%s: %d charaName -> La-tinh" % (DLCDATA, len(CHARA_NAME)))
 
     if not APPLY:
         print("\nCHẠY THỬ — thêm --apply để ghi %s" % WORK_AOC)
