@@ -85,6 +85,8 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     StreamingAssets/movie/movie_jp_02
     StreamingAssets/scenario/scenario01
     StreamingAssets/scene/scene_jp
+    StreamingAssets/sprite/sprite02       <- vỏ DLC trong game gốc
+    StreamingAssets/texture/texture02     <- vỏ DLC trong game gốc
     StreamingAssets/ui/ui_jp
     level10  level17  level19  level20  level22
     resources.assets
@@ -99,6 +101,7 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
 <mods>/contents/010068501ff9b001/vn-translation/romfs/    <- DLC 1, title riêng
     scenario/scenario_aoc01
     json/json_aoc01
+    sprite/sprite_jp_aoc01
 
 ```
 
@@ -133,7 +136,7 @@ Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn
 
 * 132/140 kịch bản scenario (toàn bộ hội thoại, lời dẫn và các lựa chọn)
 * 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
-* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt)
+* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "Khoảnh khắc ban mai" trên năm thumbnail, màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím
 
 Terminal (Thiết bị)
 
@@ -165,7 +168,7 @@ Còn ba tên vẫn hiện tiếng Nhật ở **dòng INFO đáy tab SOUND** (`�
 
 > **Tab SOUND hiển thị tên nhân vật ở hai nơi**, và rất dễ chỉ sửa một. Chữ trên từng dải thanh trượt là **hình vẽ sẵn** trong sprite `UL_option_sound_menu_ch_*`; còn dòng INFO đáy màn ghép `ConfigVolumeData.label` với `SystemTextData` id 71 (`"'s volume settings"`). Sửa xong tranh mà quên `label` thì màn hình hiện `MIYABI` ở dải nhưng `雅火's volume settings` ở dưới.
 
-**DLC** còn ba chỗ tiếng Nhật nằm trong hình vẽ sẵn, chưa dịch: tiêu đề `朝のひと時` ở góc năm thumbnail và màn cảnh báo Caution (trong romfs của DLC), năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím `Ⓐ決定 Ⓑ戻る` / `Ⓐシーン再生 Ⓑ戻る` (trong game gốc, hai bundle `sprite02` và `texture02` chưa ship). **DLC 2** (năm truyện hẹn hò) đã có bản dịch nhưng chưa có file game để vá.
+**DLC 2** (năm truyện hẹn hò) đã có bản dịch nhưng chưa có file game để vá.
 
 Ngoài ra, một vấn đề về trình bày (không phải tiếng Nhật sót lại):
 

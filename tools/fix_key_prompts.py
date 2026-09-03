@@ -38,10 +38,11 @@ STOCK = "D:/Downloads/UNLOGICAL_v2/Data"
 BACKUP = os.path.join(ROOT, "_backup")
 PREVIEW = os.path.join(ROOT, "_keyprompt")
 
-_FONTDIR = ("C:/Users/ADMIN/AppData/Local/Temp/claude/D--Downloads-010068501ff9a000/"
-            "9d4f7fb5-9b6c-4487-a5b3-fbf1cbd6951d/scratchpad/fonts/")
-FONT = _FONTDIR + "font_BASE.ttf"        # FOT-NewRodin ProN DB — chữ UI gothic
-FONT_PIXEL = _FONTDIR + "ULPixel.ttf"    # mặt chữ dot-matrix của màn nhập tên
+# Font trích từ ui_jp ra <repo>/_fonts qua fontcache.py — bản đầu trỏ vào scratchpad của
+# một phiên Claude, thư mục đó mất ngày 03/09/2026 và tool chết theo.
+from fontcache import ttf                # noqa: E402
+FONT = ttf("FOT-NewRodinProN-DB")        # font_BASE.ttf cũ — chữ UI gothic
+FONT_PIXEL = ttf("FOT-DotGothic12Std-M")  # ULPixel.ttf cũ — mặt chữ dot-matrix của màn nhập tên
 
 SIZE_MAX = 28          # cỡ chuẩn của bản vá, ứng với đĩa nút 29 px
 SIZE_MIN = 14
@@ -100,6 +101,13 @@ JOBS = [
     ]),
     ("sharedassets21.assets", "assets", [                     # RECOLLECTION
         ("UL_recolle_key", [(2, 31, "Play scene"), (202, 231, "Back")]),
+    ]),
+    # DOWNLOAD CONTENTS (vỏ DLC nằm trong game gốc; bundle này chưa từng ship trước 03/09/2026).
+    # Toạ độ icon tính trong ô sprite: UL_dlc_b_key rect x=215 (đĩa A 217..246, B 345..374),
+    # UL_dlc_cd_key rect x=143 (đĩa A 145..174, B 345..374) — đo trên texture02 gốc.
+    ("StreamingAssets/texture/texture02", "bundle", [
+        ("UL_dlc_b_key",  [(2, 31, "Select"), (130, 159, "Back")]),
+        ("UL_dlc_cd_key", [(2, 31, "Play scene"), (202, 231, "Back")]),
     ]),
     ("StreamingAssets/ui/ui_jp", "bundle", [
         ("UL_q&a_key",              [(2, 31, "Select"), (124, 153, "Back")]),

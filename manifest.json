@@ -192,6 +192,18 @@
     "where": "repo"
   },
   {
+    "path": "romfs/Data/StreamingAssets/sprite/sprite02",
+    "bytes": 137210,
+    "md5": "28c64d4bc37194533330473628bbb140",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/texture/texture02",
+    "bytes": 65084,
+    "md5": "9dd52812fffc4e2abff3d80b91afd9a2",
+    "where": "repo"
+  },
+  {
     "path": "exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips",
     "bytes": 19,
     "md5": "16d9f956cab4fc6ff19f9df7df1ddb8e",
@@ -207,6 +219,12 @@
     "path": "aoc/010068501ff9b001/romfs/json/json_aoc01",
     "bytes": 1614,
     "md5": "f75491bc6ce9873c39a3ae65e34feb5b",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b001/romfs/sprite/sprite_jp_aoc01",
+    "bytes": 2521036,
+    "md5": "72a3031a2d34a099d126f2f9e75a43f5",
     "where": "repo"
   }
 ]

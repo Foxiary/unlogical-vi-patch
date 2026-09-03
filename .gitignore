@@ -23,3 +23,7 @@ __pycache__/
 # Third-party tooling and the game's own executable, extracted locally for the code patch.
 # main.flat is the decompressed NSO — game code, never redistribute it.
 tools/_ext/
+
+# Font trích từ ui_jp (fontcache.py) và ảnh xem trước của các tool vẽ chữ — dựng lại được
+_fonts/
+_preview/

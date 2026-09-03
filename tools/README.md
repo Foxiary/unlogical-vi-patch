@@ -4037,10 +4037,30 @@ Kết quả 03/09/2026: 399/399 câu, chỉ `ScenarioData` và `DLCData_01` đ�
 nguyên byte. Thư mục thử cho máy thật: `D:\Downloads\unlogical-vi-patch-dlc1-romfs\vn-translation\romfs`
 → chép vào `contents/010068501ff9b001/`.
 
-**Còn lại, chưa làm:** ảnh có chữ Nhật (`朝のひと時` trên 5 thumbnail, màn Caution, 5 cửa sổ
-CHAPTER và 2 dải phím trong bundle gốc — cần tiêu đề tiếng Việt và câu Caution; font
-`ULPixel`/`font_BASE` của `fix_key_prompts.py` nằm ở scratchpad đã mất, phải trích lại từ
-Font asset).
+**Ảnh có chữ Nhật — làm xong 03/09/2026** (`fix_dlc_art.py`, và một mục JOBS mới trong
+`fix_key_prompts.py`). Ba bundle, đều dựng từ bản gốc, ghi đúng sprite chủ đích, mesh dựng lại
+thành quad, render qua mesh == ô atlas:
+
+| bundle | sprite | chữ cũ → mới |
+|---|---|---|
+| AOC `sprite/sprite_jp_aoc01` | 5 `UL_dlc_c_win_02_*` | phụ đề `朝のひと時` (font điểm ảnh trắng cao 17 px trên dải màu) → **"Khoảnh khắc ban mai"** cùng font, cùng mép trái |
+| | `UL_dlc_a_headsup_01` | ba dòng Caution (gothic tròn xanh đậm (0,51,91), cao 29 px, canh giữa x 960) → "Nội dung này có tiết lộ diễn biến của phần chính." / "Khuyến nghị chơi sau khi đã hoàn thành phần chính." / "※Truyện của Miyabi là ngoại truyện sau 『END No.12 Hình hài của hạnh phúc』." — tên END lấy từ `SceneReplayData` đã dịch; font `FOT-DNPShueiMGoStd-B` cỡ 32 |
+| gốc `sprite/sprite02` (file ship MỚI) | 5 `UL_dlc_cd_win_01_*` | tên nhân vật điểm ảnh tím (136,81,170) cao 28 px → `Miyabi`, `Munakata Kai`, `Nagamori Ran`, `Yasaka Soichi`, `Yuri` (đúng `DLCData_01`), DotGothic cỡ 30 |
+| gốc `texture/texture02` (file ship MỚI) | `UL_dlc_b_key`, `UL_dlc_cd_key` | `Ⓐ決定 Ⓑ戻る` → `Select`/`Back`, `Ⓐシーン再生 Ⓑ戻る` → `Play scene`/`Back`, cùng bộ vẽ với mọi dải phím khác |
+
+Bốn bài học đo được trong lúc làm, ghi để khỏi lặp: (1) dải phụ đề mỗi nhân vật một màu và
+tranh phía dưới cũng sáng ~666, nên dò dải bằng **cụm hàng liên tục** có độ sáng gần tham chiếu
+(bỏ hàng mép đang chuyển màu), không dùng ngưỡng tuyệt đối; chữ trắng lấy bằng ngưỡng **tương
+đối** (sáng hơn dải ≥ 40) vì dải của Soichi đã sáng 682. (2) Icon và tên trong cửa sổ CHAPTER
+cùng màu tím và icon của Miyabi thò qua mốc x cố định — tìm mép chữ bằng khoảng trống ≥ 8 cột
+sau cụm icon. (3) Mặt nạ theo màu bỏ sót viền khử răng cưa: khung tên thì xoá mọi pixel không
+trắng trong khung, Caution thì nở mặt nạ tối 2 px và xoá thêm pixel xám trung tính (lum < 720 —
+740 sẽ ăn mất hoạ tiết hồng nhạt (255,240,242) nằm dưới dòng 1). (4) Font điểm ảnh phải vẽ
+**không khử răng cưa** (`fontmode="1"`), nếu không nét mảnh và mờ so với chấm vuông gốc; cỡ
+chọn bằng cách vẽ một chữ mẫu cho cao bằng chữ cũ, không làm tròn về bội của 12.
+
+Font: `fontcache.py` trích TTF từ `ui_jp` ra `_fonts/` (gitignore) — thay thư mục scratchpad đã
+mất mà `fix_key_prompts.py` từng trỏ vào; tool đó nay dùng `fontcache.ttf()`.
 
 **Chỗ đặt và đóng gói (chốt 03/09/2026):** hai bundle nằm ở `aoc/010068501ff9b001/romfs/…`
 trong repo, có mục trong `manifest.json` như mọi file khác. `make_release.py` đọc tiền tố
