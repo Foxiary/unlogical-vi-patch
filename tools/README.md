@@ -5175,3 +5175,51 @@ phụ thuộc file rời của game gốc.
 Nhớ đăng ký file mới ở ba chỗ: `manifest.json` (nay 43 mục), bảng "what each shipped binary
 holds" của `CLAUDE.md`, và cây thư mục trong `README.md`. `make_release.py` tự suy thư mục
 zip từ đường dẫn nên không phải sửa.
+
+## `Downloadable Content` thành `Downloadable content` (`fix_system_text_case.py`)
+
+Báo 04/09/2026 kèm ảnh `IMG_7250` (máy Switch thật): hộp thông báo tím sau khi game nhận ra
+DLC ghi `Downloadable Content has been downloaded.`, chủ sở hữu muốn `content` viết thường.
+
+Chuỗi nằm ở `SystemTextData` mục **id 7**, trong `resources.assets`. Ba mục 5/6/7 là ví dụ
+sạch của **luật ô JP**: bản gốc để tiếng Nhật ở ô JP, bản patch chép nguyên văn tiếng Anh
+chính thức của hãng sang JP vì engine chỉ đọc ô ấy — nên chữ trên màn hình là tiếng Anh, và
+sửa nó là sửa ô JP.
+
+    id 5  `Content has not been unlocked.`                  <- đầu câu, GIỮ hoa
+    id 6  `Full game version required to unlock content.`   <- vốn đã thường
+    id 7  `Downloadable Content ⏎ has been downloaded.`     <- sửa đúng mục này
+
+Sheet không với tới `resources.assets` (`apply_sheet_cells.py` chỉ ghi `scenario01` và bundle
+`json`, grep `resources.assets`: 0), và `SystemTextData` không có tab nào — nên sửa tay ở đây
+là vĩnh viễn, **không** cần chốt sau merge. Ngược hẳn với `fix_item_name_case.py`, chỗ cũng
+ngoài tầm sheet nhưng lại phải canh vì `ScenarioData` bên cạnh nó thì sheet ghi được.
+
+### Vá byte tại chỗ thay vì cho UnityPy đóng gói lại
+
+Chuỗi mới dài đúng bằng chuỗi cũ (chỉ đổi hoa/thường), nên không có lý do gì bắt UnityPy ghi
+lại cả `resources.assets` 13,4 MB — nó sẽ dồn mọi object về mốc 8 byte (stock là 16) và đổi
+hàng loạt offset không liên quan, đúng lớp thay đổi mà `level17`/`level22` từng dính. Tool
+sửa đúng **1 byte**: lấy chuỗi JSON thô qua UnityPy, khẳng định nó xuất hiện đúng 1 lần trong
+file, rồi ghi đè khoảng byte của ô JP. Đo lại: `cmp -l` cho đúng một dòng, offset 8.369.443,
+`103` → `143` (bát phân, tức `C` → `c`), kích thước file không đổi.
+
+Hai chỗ dễ sai, cả hai đều làm phép so byte trượt:
+
+- **Neo phải là `"JP": ` + chuỗi**, không phải chính chuỗi ấy: bản thân
+  `Downloadable Content …` có **2 lần** trong JSON — ô JP và ô EN — mà ô EN thì không được
+  đụng (luật ô JP: EN/CN giữ nguyên). Thêm tên khoá vào là khớp đúng 1.
+- **`str.index` đếm ký tự, file thì đếm byte**, và trước chỗ này là cả rừng chữ Nhật/Hoa nhiều
+  byte; phải quy đổi qua UTF-8. Cộng thẳng chỉ số ký tự thì lệch 248 byte.
+- **Trong file chuỗi ở dạng ĐÃ ESCAPE của JSON**: xuống dòng là hai ký tự `\` `n`, không phải
+  `0x0A`. So bằng chính chuỗi Python là hụt 1 byte mỗi dòng, nên phải so bằng
+  `json.dumps(s)[1:-1]`.
+
+Sau khi ghi, tool đọc lại bằng UnityPy và khẳng định 92 mục còn nguyên, đúng một ô JP đổi,
+mọi ô EN/CN không đụng — chốt này mới là thứ bắt được nếu ba điểm trên trượt.
+
+```powershell
+python tools\fix_system_text_case.py            # chạy thử
+python tools\fix_system_text_case.py --apply
+python tools\fix_system_text_case.py --check    # exit 1 nếu còn việc
+```
