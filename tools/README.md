@@ -4842,3 +4842,148 @@ Chạy lại vô hại: `fixed()` chuẩn hoá về đúng một dấu cách nê
 
 Đã chạy 02/09/2026, backup `_backup\json.preerrorspace` và `_backup\cg_end.endcard` (bản gốc
 1.0.2). `manifest.json` cập nhật cùng lượt cho cả `json` và `cg_end`.
+
+## Viết hoa đầu dòng sau chỗ ngắt kết câu (`fix_line_start_case.py`)
+
+Báo 03/09/2026 kèm ảnh `IMG_7248` (màn BACKLOG): dòng thứ hai của ô thoại mở đầu bằng chữ
+thường.
+
+Hai ô trong ảnh **khác hẳn nhau về bản chất**, và đó là điều phải xác minh trước khi viết
+tool:
+
+| ô | dữ liệu | sửa được? |
+|---|---|---|
+| Munakata Kai, `sID 92 text[143]` | `「...Có lẽ hắn ta cũng nghĩ rằng sẽ lừa phỉnh được anh như mọi khi thôi.」` — **không có `\n` nào** | không: `anh như mọi khi thôi.` là TMP tự wrap |
+| Suzuno Kanna, `sID 92 text[144]` | `「Mấy lời như lời nguyền đó...\ncứ bị rót vào tai…」` — `\n` cứng, mirror bản Nhật `……\n　ずっと…` | có |
+
+Nên luật phải gắn vào **chỗ ngắt cứng trong dữ liệu**, không phải vào "dòng nhìn thấy trên
+màn hình". Không có cách nào với tới dòng do TMP ngắt ra.
+
+### Quy ước sẵn có đã rất rõ, chỉ thiếu 427 chỗ
+
+Đo `ScenarioData.text[]`, bỏ script test sID 0–12, bỏ câu còn kana:
+
+| | |
+|---|---|
+| tổng chỗ ngắt cứng | 7.390 |
+| dòng sau đã viết HOA | **6.860 (93%)** |
+| dòng sau là chữ thường | 526 |
+
+526 chỗ chữ thường chia theo ký tự kết thúc của vế trái:
+
+| vế trái kết thúc bằng | số chỗ | xử lý |
+|---|---|---|
+| `...` / `…` | 426 | **viết hoa** |
+| dấu chấm thật | 1 | **viết hoa** |
+| dấu phẩy | 54 | để nguyên |
+| giữa cụm từ | 41 | để nguyên |
+| `―`, `;`, `"` | 5 | để nguyên |
+
+Ba nhóm cuối câu chưa dứt — viết hoa ở đó là lỗi chính tả chứ không phải lựa chọn phong
+cách; chúng là việc của `fix_midphrase_break.py` (tool đó báo 0 ở vùng ADV, 41 chỗ còn lại
+nằm trong vùng novel và tin chat mà nó miễn).
+
+### Chốt: luật phẳng, KHÔNG trừ liên từ
+
+Đã hỏi và đã chọn: 120 trong 426 dòng mở đầu bằng liên từ (`nhưng` 74, `và`, `thì`, `dù`…)
+**vẫn viết hoa**, chấp nhận dạng
+
+    (Dù biết là thế giới game...
+     Nhưng mình cũng chẳng có cảm giác chân thực gì cả.)
+
+Phương án "trừ liên từ ra" đã được đưa ra và bị loại. Đừng lặng lẽ thêm lại danh sách liên
+từ về sau: nó cũng **không sửa được đúng ô trong ảnh** — `cứ` nằm trong danh sách ấy.
+
+### Ký tự đầu dòng không phải lúc nào cũng là chữ cái
+
+Đây là chỗ dễ đếm sai nhất. Đếm thô mà bóc hết `[...]` thì **10 trong 11** chỗ "sau dấu
+chấm mà viết thường" là dương tính giả — dòng sau mở đầu bằng `[主人公]`, runtime thay bằng
+tên riêng nên đã hoa sẵn.
+
+- `「『（(“"` mở ngoặc, và `―` gạch thoại — bỏ qua, viết hoa chữ ngay sau
+- `[主人公]` — bỏ qua cả chỗ ngắt
+- `[dic no=N text=X]` — viết hoa **trong** `X`, `N` là khoá tra cứu, không đụng
+- `[gốc'ruby]` — viết hoa nửa **gốc**
+- tag khác (`[command …]`) — bỏ qua, không đoán
+- dòng mở đầu bằng `https://` — bỏ qua (2 chỗ, đều là tin chat)
+
+### Phạm vi
+
+`selText[]` được quét: **0 chỗ**. `resources.assets`, `scenario_aoc01`, `scenario_aoc02`:
+**0 chỗ**. Ngoài `scenario01` chỉ còn bong bóng chat trong `json` — **31 ô / 29 chuỗi phân
+biệt** ở `GenebarkChatMainData.content`, làm bằng `--json`.
+
+> ### Trong `json`, chỉ bảng chat mới ngắt dòng theo CÂU
+>
+> Bản đầu quét cả bundle và trúng ngay một ô **không được phép sửa**:
+>
+>     ChapterData.list[0].items[5].synopsis.jp
+>     -  ...⏎nhưng thứ nhân vật chính
+>     +  ...⏎Nhưng thứ nhân vật chính
+>
+> `\n` của tóm tắt chương là chỗ **gói cứng ở 18 ký tự** — luật nằm trong code game,
+> `check_chapterdata.py` canh nó — nên nó rơi sau `...` chỉ là trùng hợp về bề rộng, câu
+> vẫn đang chạy dở. Cùng lớp: `TerminalRuleData.rule_body` và `DictionaryData` phân trang
+> theo `\n` (`BuildNoteLines`) và được `fix_dictionary_wrap.py` gói theo 586 px.
+>
+> Nên nửa `json` chạy theo **danh sách trắng** `JSON_ALLOW = {"GenebarkChatMainData"}`, không
+> quét mù. Ba bảng `GenebarkChat*` còn lại chỉ là ánh xạ id/nhóm/người nói, không có nội dung.
+>
+> Cùng lúc đó lộ ra một lỗi thứ hai: cùng một chuỗi nằm ở **hai ô** (2 trong 31), mà
+> `str.replace` đổi hết trong một lần, nên lượt thứ hai không tìm thấy nó nữa và tool tưởng
+> file hỏng. Nửa `scenario01` không dính vì nó gom theo `dict` khoá bằng chuỗi cũ; nửa `json`
+> giờ khử trùng lặp y hệt.
+
+> ### `text[]` của `scenario01` thì ngược lại — nhưng vẫn phải soát hai vùng gói theo bề rộng
+>
+> Trong `scenario01` cũng có hai vùng mà `\n` là **bố cục**, không phải câu: caption giữa màn
+> `[textmode=5]` (`fix_center_caption_wrap.py`, gói ≤1764 px) và các khối liệt kê trong chế độ
+> novel (`fix_novel_list_wrap.py`, gói ≤1344 px kèm thụt treo). Đã đối chiếu 428 ô đã sửa với
+> cả hai:
+>
+> | vùng | số ô | giao với 428 ô đã sửa |
+> |---|---|---|
+> | caption `[textmode=5]` | 41 | **0** |
+> | vùng novel (toàn bộ) | 1.630 | 13 |
+>
+> 13 ô kia đều là **văn xuôi novel hai dòng**, ngắt sau `...` đúng ranh giới câu — không ô nào
+> là khối liệt kê (`fix_novel_list_wrap` dò khối bằng đầu dòng `①`/`1.`/`・` của script Nhật).
+> `fix_novel_list_wrap --check` và `fix_novel_prose_break --check` đều PASS sau khi ghi.
+
+```powershell
+python tools\fix_line_start_case.py            # chạy thử
+python tools\fix_line_start_case.py --apply
+python tools\fix_line_start_case.py --check    # chốt sau merge, lỗi -> exit 1
+python tools\fix_line_start_case.py --json     # gộp cả bong bóng chat
+```
+
+### Đo lại sau khi ghi
+
+Đã chạy 03/09/2026: **428 ô / 426 chuỗi phân biệt / 428 chỗ ngắt** (426 chuỗi vì hai chuỗi
+xuất hiện ở hai ô). Mirror sang `scriptText` 364 chỗ, 64 chỗ không khớp verbatim — đúng dự
+kiến, `scriptText` đã lệch sẵn 4.371 tin nhắn so với `text[]` trong build này.
+
+Nửa `json` chạy cùng ngày: **31 ô / 29 chuỗi** trong `GenebarkChatMainData.content`.
+
+Backup `_backup\scenario01.prelinecase` và `_backup\json.prelinecase`; `scenario01`
+8.724.790 → 8.724.566 byte, `json` 113.984 → 113.969 byte (UnityPy đóng gói lại ở mốc
+8 byte). `manifest.json` cập nhật cùng commit cho cả hai.
+
+- tool tự khẳng định trước khi ghi: mọi ô đổi **chỉ khác hoa/thường** (`a.lower() ==
+  b.lower()`), số `\n` không đổi, `loadLine` / `scriptText_Line` / `selLine` nguyên vẹn,
+  và chạy `fix()` lần hai trên kết quả không còn việc (idempotent)
+- `check_scripts` 143/143 lệnh + nhãn khớp bản gốc; `check_chapterdata` 8/8
+- `check_layout_breaks` so với `_backup\scenario01.prelinecase`: 222.501 → 222.501 ngắt
+  dòng, 17.444 → 17.444 dòng thụt; so với `_backup\json.prelinecase`: 2.633 → 2.633 ngắt,
+  202 → 202 dòng thụt
+- `fix_adv_wrap`, `fix_novel_list_wrap`, `fix_dictionary_wrap`, `fix_ellipsis_break`,
+  `fix_novel_prose_break`, `fix_midphrase_break`, `fix_item_name_case`, `fix_chat_wrap`,
+  `fix_terminal_term`, `fix_paren_balance` `--check` đều PASS — `fix_adv_wrap` và
+  `fix_chat_wrap` là hai chốt đáng chạy nhất ở đây vì **chữ hoa rộng hơn chữ thường**
+
+### Chạy lại sau mỗi vòng merge sheet
+
+Sheet lưu mỗi ô thành một dòng phẳng và `apply_sheet_cells.py` lấy **chữ từ sheet**, nên một
+vòng merge có thể trả chữ hoa về lại chữ thường. Tool idempotent và có `--check`, nên nó
+thuộc nhóm chốt sau merge cùng `fix_adv_wrap.py` / `fix_novel_list_wrap.py` /
+`fix_dictionary_wrap.py` / `fix_ellipsis_break.py`.
