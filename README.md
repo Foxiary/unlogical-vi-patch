@@ -60,7 +60,31 @@ Chỉ cần **một file duy nhất** — không cần tải cả repository.
 
 > **Phải có đủ cả `romfs` lẫn `exefs`.** File `.ips` chỉ nặng 19 byte nhưng nó tắt luật ngắt dòng cứng ở màn chọn chương. Nếu chỉ chép `romfs`, phần tóm tắt chương sẽ bị cắt dòng giữa từ, mỗi 18 ký tự một lần. Đây cũng là lý do bản v1.1 phát hành lần đầu bị thiếu và đã được thay thế.
 
-5. **Nếu có DLC**: mỗi DLC là một title riêng nên mod của game gốc không dịch được nó; trong zip còn hai thư mục `vn-translation-dlc1` (DLC 1, năm truyện ngắn "buổi sáng", title `010068501ff9b001`) và `vn-translation-dlc2` (DLC 2, năm truyện hẹn hò, title `010068501ff9b002`). Chép thư mục `romfs` bên trong mỗi thư mục sang `%APPDATA%\Ryujinx\mods\contents\<title>\vn-translation\romfs\`. Trên Switch chạy Atmosphère: `atmosphere/contents/<title>/romfs/`.
+5. **Nếu có DLC**: mỗi DLC là một title riêng nên mod của game gốc không dịch được nó. Trong zip còn hai thư mục nữa — `vn-translation-dlc1` (DLC 1, năm truyện ngắn "Khoảnh khắc ban mai", title `010068501ff9b001`) và `vn-translation-dlc2` (DLC 2, năm truyện hẹn hò, title `010068501ff9b002`). Chép thư mục `romfs` bên trong mỗi thư mục sang:
+
+   ```text
+   %APPDATA%\Ryujinx\mods\contents\010068501ff9b001\vn-translation\romfs\
+   %APPDATA%\Ryujinx\mods\contents\010068501ff9b002\vn-translation\romfs\
+   ```
+
+   DLC phải đã cài sẵn trên máy thì mod mới có gì để đè lên. Và vẫn phải cài mod của game gốc: màn Download Contents — tranh thumbnail, tên gói `DLC 1`/`DLC 2`, khung CHAPTER, danh sách nhân vật — nằm trong title gốc chứ không nằm trong DLC.
+
+### Trên máy Switch chạy Atmosphère
+
+Cùng ba thư mục ấy, nhưng đường dẫn khác — và **bỏ hẳn tầng `vn-translation`**:
+
+```text
+sd:/atmosphere/contents/010068501FF9A000/romfs/Data/...          <- game chính
+sd:/atmosphere/contents/010068501FF9B001/romfs/...               <- DLC 1
+sd:/atmosphere/contents/010068501FF9B002/romfs/...               <- DLC 2
+sd:/atmosphere/exefs_patches/unlogical/669EA2FE0282C2C0EFEA4DA183419FB7.ips
+```
+
+> **Tên `vn-translation` chỉ dành cho Ryujinx.** Ryujinx cho phép nhiều mod trên cùng một game nên cần một tầng mang tên mod; Atmosphère thì đọc thẳng `contents/<title>/romfs/`. Chép nguyên thư mục `vn-translation-dlc1` vào là mod nằm sai một tầng, và máy **lặng lẽ bỏ qua** — game vẫn tiếng Nhật, không báo lỗi gì.
+
+> **File `.ips` đi đường riêng.** Trên Atmosphère nó **không** vào `contents/` mà vào `exefs_patches/<tên thư mục bất kỳ>/`. Tên thư mục tuỳ ý, nhưng tên file thì không được đổi vì đó chính là build ID của game.
+
+Chép xong thì thoát hẳn game rồi mở lại; vẫn thấy tiếng Nhật thì khởi động lại máy. Atmosphère đời cũ (trước 0.10) dùng thư mục `titles/` thay cho `contents/`.
 
 File zip chỉ chứa dữ liệu game đã sửa đổi, không kèm README hay tài liệu.
 
@@ -111,6 +135,8 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     sprite/sprite_jp_aoc02
 
 ```
+
+> Cây trên là dạng của **Ryujinx**. Trên Atmosphère thì bỏ cả tầng `<mods>/` lẫn tầng `vn-translation/`, chỉ còn `atmosphere/contents/<title>/romfs/...` — xem mục "Trên máy Switch chạy Atmosphère" ở trên.
 
 ### 3. Bản vá code (19 byte, bắt buộc)
 
