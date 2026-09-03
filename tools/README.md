@@ -279,6 +279,16 @@ hiện bản Genebark nên sửa đó chưa lên màn hình; tool bỏ qua đún
 sang tab `GenebarkChatMainData` rồi export lại — không sửa tay ở build (xem bài học vòng `(89)`).
 Ở vòng `(89)` con số này là 231/231, nên hai ô này là mới của `(92)`/`(93)`.
 
+### Vòng `(94)`, ngay sau `(93)` cùng đêm — một đợt dấu câu
+
+Nền `(93)`, backup `_backup/scenario01.UNLOGICAL_v2(94)`; bundle `json` không đổi. **49 ô thoại,
+áp hết, không ô nào vướng chốt**, và gần như toàn bộ là một kiểu sửa: câu bỏ lửng kết bằng `,」`
+(dấu phẩy Nhật `、」` dịch nguyên) đổi thành `...」` (`「...Này,」` → `「...Này...」`, 40 ô) hoặc
+bỏ hẳn dấu phẩy khi là thán từ (`「......Phù,」` → `「......Phù」`, 7 ô); hai ô dài `104/txt/0407`,
+`120/txt/0207` cùng kiểu. Ba cặp ô tên nhân vật đi đôi đúng cả hai bản (`85/txt/0000–0001`,
+`91/txt/0005–0006`, `104/txt/0347–0348`: bản `Kanna` và bản `[主人公]`). Fixer bố cục đều no-op,
+gate PASS như vòng `(93)`; `--check-chat` vẫn đúng 2/231 của vòng trước, chưa sửa trên sheet.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
