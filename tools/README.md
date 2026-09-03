@@ -4094,6 +4094,68 @@ trong repo, có mục trong `manifest.json` như mọi file khác. `make_release
 `contents/010068501ff9b001/`. `sync_publish.py` map `aoc/<title>/romfs/…` sang bản làm việc
 `D:\Downloads\<title>\romfs\…`. `.gitattributes` đánh dấu `aoc/**` binary.
 
+### Phụ đề thumbnail quá mỏng — nét 1 px so với 2 px của bản Nhật (03/09/2026)
+
+Ảnh Ryujinx 18:21 ngày 03/09: "Khoảnh khắc ban mai" trên dải màu của thumbnail đọc rất khó, người
+dùng bảo *"weight text quá mỏng không dày như bản nhật"*. Đo trực tiếp trên ảnh gốc: chữ `朝のひと時`
+vẽ bằng font điểm ảnh có **nét ngang 2 px**; bản mod dùng cùng font (`FOT-DotGothic12Std-M`, cao
+17 px, `fontmode="1"`) nhưng ở cỡ đó DotGothic chỉ cho **nét 1 px** — đúng font, sai độ đậm.
+
+Chữa trong `fix_dlc_art.py`: `draw_text(..., bold=1)` vẽ chữ hai lần lệch nhau 1 px theo cả x và y
+(tô dày kiểu dilation) nên mọi nét thành 2 px như gốc; chỉ dùng cho `thumbnail()`, Caution và
+cửa sổ CHAPTER vốn đã là font tròn/đậm nên giữ nguyên. Kiểm sau khi vẽ: đếm chuỗi pixel mực theo
+hàng trên dải phụ đề DLC 1 ra 194/77 (dài/ngắn) ở đúng 2 px, `--check` PASS cho cả hai DLC;
+`manifest.json` cập nhật hai bundle `sprite_jp_aoc01/02`.
+
+### Hàng chọn nhân vật gãy dòng — marquee (`fix_dlc_list_marquee.py`)
+
+Cùng ảnh đó: cột trái của Download Contents là danh sách nhân vật, mỗi hàng là prefab
+`DLCButton` — nằm trong **`sharedassets24.assets` của game gốc** (bundle của `level24`), không
+phải trong AOC. Ô chữ 211 px (hàng 304 px, TMP `margin.x` 93), cỡ 32 và **wrap đang bật**; tên Nhật
+2–4 chữ nằm gọn, tên Latin thì không:
+
+| tên | rộng ở cỡ 32 (spacing 3,8) |
+|---|---|
+| Miyabi · Yuri | 122 · 77 px |
+| Munakata Kai · Nagamori Ran · Yasaka Soichi | 259 · 269 · 269 px |
+
+nên ba tên gãy thành hai dòng và đè lên hàng kề. Chữa như Ending List
+(`fix_recollection_marquee.py`): NoWrap, cha `TextMask` (`RectMask2D`) chèn giữa hàng và `Text`,
+`TitleScroll` + `AutoScrollText` treo dưới `On` nên chỉ hàng đang chọn chạy chữ. Prefab giống hệt
+`RecollectionButton` (Cur / On / Off / Text, `EventTriggerButton#45.textMeshPro → TMP#41`).
+
+**Mask dừng ở x 262, không tới 304.** Mũi tên cursor `On/RightParts` (44×44) chiếm x 264..308 và
+y −45..−1 của hàng: nửa trên của nó nằm ngay đáy dòng chữ, mà `Text` vẽ sau `On` nên chữ trôi qua
+đó sẽ đè lên mũi tên. Ba tên dài đều > 262 nên tập tên chạy chữ không đổi; giá phải trả là 42 px
+lúc đứng yên.
+
+**Chèn GameObject vào giữa là an toàn — đã quét disassembly** (`dump.cs` + capstone trên
+`main.flat`, `tools\_ext\`): `DLC.CreateDLCSelectButtons` chỉ gọi `Object.Instantiate<GameObject>`
+và `GameObject.GetComponent<EventTriggerButton>`, không có `Transform.Find`; chữ được gán ở lớp cha
+`MyUICompornentBase.InitializeButtons → EventTriggerButton.SetText`, đi qua PPtr serialize
+`textMeshPro`, không tra theo tên con.
+
+Tool dựng **từ dump gốc v1.0.2** (file này chưa từng được vá) nên chạy lại là idempotent; đích là
+`romfs/Data/sharedassets24.assets` trong repo — **file ship mới**, manifest lên 42 mục. Nó vẫn trỏ
+`sharedassets24.assets.resS` (atlas `DLC_Common` 2048² stream từ đó, không đụng) nên vào cùng nhóm
+"cần `.resS` của game gốc" như 11 file trước.
+
+```powershell
+python tools\fix_dlc_list_marquee.py            # chạy thử, bản nháp ở tools\_preview\
+python tools\fix_dlc_list_marquee.py --apply    # ghi romfs\Data\sharedassets24.assets
+```
+
+Kết quả 03/09/2026: 42 object gốc giữ nguyên byte, 4 sửa (#28 RT Text, #33 RT On, #34 RT hàng,
+#41 TMP đúng hai trường `m_TextWrappingMode` 1→0 và `m_margin.x` 93→0), 7 object mới (#47–#53);
+43 144 → 43 760 byte.
+
+Kiểm trên Ryujinx cùng ngày (chụp qua `e2e/lib/input.ps1`, ảnh `e2e/out/dlc-marquee-2026-09-03.png`):
+năm hàng đều một dòng, hàng đang chọn `Yasaka Soichi` trôi tới đuôi `ka Soichi` rồi dừng, ba
+hàng dài không được chọn cắt gọn tại x 262 (`Munakat`, `Nagamor`) và không đè lên hàng kề;
+mũi tên cursor không bị chữ chạy qua. Lưu ý cho harness: menu chính có **hai skin** — skin đen
+điểm ảnh mà `identify.py` nhận là `menu`, và skin pastel (sau khi bỏ qua OP) mà nó xếp vào
+`other`; nút `DLC Download Contents` chỉ thấy ở skin pastel, góc phải dưới.
+
 ## `scenarioID` 0–12 là script test, KHÔNG dịch
 
 `scenarioID` là **chỉ số vào `scenariolist.keys`** (TextAsset trong bundle `scenario01`,

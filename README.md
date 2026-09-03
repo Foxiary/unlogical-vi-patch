@@ -94,6 +94,7 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     sharedassets9.assets   sharedassets10.assets  sharedassets11.assets
     sharedassets13.assets  sharedassets16.assets  sharedassets17.assets
     sharedassets19.assets  sharedassets21.assets  sharedassets22.assets
+    sharedassets24.assets                 <- hàng chọn nhân vật ở Download Contents
 
 <mods>/contents/010068501ff9a000/vn-translation/exefs/
     669EA2FE0282C2C0EFEA4DA183419FB7.ips
@@ -141,7 +142,7 @@ Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn
 
 * 132/140 kịch bản scenario (toàn bộ hội thoại, lời dẫn và các lựa chọn)
 * 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
-* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "Khoảnh khắc ban mai" trên năm thumbnail, màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím
+* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "Khoảnh khắc ban mai" trên năm thumbnail, màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím. Ở danh sách nhân vật (dùng chung cho cả hai DLC, nằm trong mod của game gốc), tên dài hơn ô như "Munakata Kai" không còn gãy xuống dòng đè lên hàng dưới mà chạy chữ khi hàng được chọn
 * **DLC 2**: toàn bộ 568 câu và 15 phương án lựa chọn của năm truyện hẹn hò, tên nhân vật (mod riêng cho title `010068501ff9b002`); hình có chữ: tiêu đề "Hẹn hò" trên năm thumbnail và màn cảnh báo Caution
 
 Terminal (Thiết bị)

@@ -168,6 +168,12 @@
     "where": "repo"
   },
   {
+    "path": "romfs/Data/sharedassets24.assets",
+    "bytes": 43760,
+    "md5": "97d3061d374fd01137efb240cf7c9a9b",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/sharedassets5.assets",
     "bytes": 8565928,
     "md5": "cd09bf1cf0f81e254515a897208c2b25",
