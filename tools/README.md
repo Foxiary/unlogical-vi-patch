@@ -307,6 +307,20 @@ cũ; `gây ra bug`, `sửa bug`, `con bug`), và đổi xưng hô của Hidaka t
 địch, để người dịch quyết) và 3 câu gọi kèm họ / gọi chung (`cô Suzuno`, `cô cậu`).
 Fixer no-op, gate PASS; `--check-chat` vẫn 2/231 cũ.
 
+### Vòng `(97)`, cùng rạng sáng — 10 ô `lỗi` → `bug` còn sót
+
+Nền `(96)`, backup `_backup/scenario01.UNLOGICAL_v2(97)`; `json` không đổi. Đúng 10 ô mà phép
+đối chiếu bản Nhật (バグ trong `scriptText_Line`) chỉ ra sau vòng `(96)`: `72/txt/1014`,
+`85/txt/0122`, `86/txt/0599`, `87/txt/0038`, `87/txt/0065`, `95/txt/0895`, `106/txt/0846`,
+`117/txt/0603`, `122/txt/0093`, `141/txt/0110` — `106/txt/1420` (エラー) giữ `lỗi`, đúng. Không ô
+nào vướng chốt, fixer no-op, gate PASS, `--check-chat` vẫn 2/231 cũ. Sau merge: `không gian bug`
+17, `bug` 75 câu; còn `lỗi hệ thống` 32 câu xen với `bug hệ thống` 4 — cần đối chiếu バグ/エラー
+từng ô trước khi gọi là sót (xem báo cáo cùng vòng).
+
+Bẫy khi đọc bản Nhật qua `loadLine`: với câu **thoại**, `scriptText_Line[loadLine[j]]` là dòng
+bảng tên `【雅火】`, câu Nhật nằm ở dòng kế tiếp; chỉ câu dẫn truyện trỏ thẳng vào câu. Quét
+バグ mà không nhảy qua dòng bảng tên thì bỏ sót mọi câu thoại.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
