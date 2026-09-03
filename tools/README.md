@@ -321,6 +321,42 @@ Bẫy khi đọc bản Nhật qua `loadLine`: với câu **thoại**, `scriptTex
 bảng tên `【雅火】`, câu Nhật nằm ở dòng kế tiếp; chỉ câu dẫn truyện trỏ thẳng vào câu. Quét
 バグ mà không nhảy qua dòng bảng tên thì bỏ sót mọi câu thoại.
 
+### Vòng `(98)`, 04/09/2026 — nốt phần `バグ` còn lại, và lần đầu chốt viết hoa đụng merge
+
+Nền `(97)`, backup `_backup/scenario01.UNLOGICAL_v2(98)` và `_backup/scenario01.premerge98`;
+`json` không đổi. **81 ô** (77 + 1 lựa chọn ở lượt thường, 3 ô cưỡng bức, xem dưới), gần như
+toàn bộ là `lỗi hệ thống` / `lỗi game` → `bug`.
+
+Sau vòng này còn **13 ô** mang chữ `lỗi hệ thống`/`lỗi game`, và cả 13 đều **đúng**: bản Nhật
+của chúng là `エラー` hoặc `不具合`, **không ô nào là `バグ`**. Đợt thuật ngữ đã trọn.
+
+`fix_terminal_term --check` bắt **12 chỗ** (9 ô + 3 `scriptText`): sheet mang lại `terminal`
+viết thường ở những ô nó vừa sửa. `--apply` là xong — đúng lớp lỗi mà chốt ấy sinh ra để bắt.
+
+#### Chốt viết hoa đầu dòng làm merge báo "CẢ HAI BÊN ĐỔI" — và cách gỡ
+
+Lần đầu `fix_line_start_case.py` (vòng trước) gặp một vòng sheet sửa **đúng những ô nó đã viết
+hoa**. Ba ô báo xung đột, cả ba cùng một hình:
+
+    117/txt/0597   nền  '…vậy mà... em l…'   build '…vậy mà... Em l…'   sheet '…sửa bug…, em l…'
+     87/txt/0034   nền  '…nhiều lần…'         build '…Nếu thử…'          sheet '…xảy ra bug…'
+     96/txt/0796   nền  '…thật lòng…'         build '…Thật lòng…'        sheet '…đầy bug ra…'
+
+Tức build khác nền **đúng một chữ hoa**, còn sheet đổi từ vựng — luật ba chiều thấy hai bên
+cùng đổi nên bỏ qua, và nếu không để ý thì ba ô ấy lặng lẽ giữ `lỗi`.
+
+Cách gỡ đúng thứ tự, vì **chữ hoa dựng lại được bằng tool còn câu chữ thì không**:
+
+```powershell
+python toolspply_sheet_cells.py --new "…(98).xlsx" --base "…(97).xlsx" --apply
+python toolspply_sheet_cells.py --new "…(98).xlsx" --base "…(97).xlsx" ^
+       --take-sheet=117/txt/0597,87/txt/0034,96/txt/0796 --apply
+python toolsix_line_start_case.py --apply     # trả lại đúng 3 chữ hoa vừa mất
+```
+
+Đây là lý do `fix_line_start_case --check` phải nằm trong chốt sau merge: nó không chỉ bắt
+trường hợp sheet ghi đè, mà còn là bước **hoàn tác lại** sau khi ta cố ý lấy chữ từ sheet.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
