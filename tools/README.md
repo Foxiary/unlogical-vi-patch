@@ -4156,6 +4156,27 @@ mũi tên cursor không bị chữ chạy qua. Lưu ý cho harness: menu chính 
 điểm ảnh mà `identify.py` nhận là `menu`, và skin pastel (sau khi bỏ qua OP) mà nó xếp vào
 `other`; nút `DLC Download Contents` chỉ thấy ở skin pastel, góc phải dưới.
 
+### Vòng hai cùng ngày: VIẾT HOA, giãn chữ, marquee trôi sớm hơn
+
+Người dùng xem ảnh Ryujinx: *"Khoảnh khắc ban mai các chữ quá sát nhau nên khó nhìn, viết hoa hết
+các từ và cả name trong chapter panel nữa, giảm thời gian kích hoạt marquee xuống"*. Ba thay đổi:
+
+- **Phụ đề thumbnail** → `KHOẢNH KHẮC BAN MAI` / `HẸN HÒ`, và `draw_text()` có thêm `tracking`:
+  vẽ từng chữ, bước = advance + 2 px (làm tròn về pixel để font điểm ảnh không nhoè). Lý do 2 px:
+  `bold=1` đã ăn mất 1 px khe giữa hai chữ kề, cộng 1 px cho thoáng. Hộp mới x156..348, vẫn cách
+  xa tên Latin bên phải (ngưỡng 400). Canh dọc theo hộp mực của chữ mẫu `H` (`v_sample`) chứ
+  không theo cả cụm — chữ hoa có dấu (`Ả`, `Ắ`) cao hơn thân chữ, canh theo cả cụm sẽ kéo thân
+  chữ tụt xuống dưới tâm dải.
+- **Tên trong cửa sổ CHAPTER** → `.upper()` (`YASAKA SOICHI` rộng tới x373, `MUNAKATA KAI`
+  x380; ngưỡng 450), cùng neo `H`. Font điểm ảnh của bản vá (`FOT-DotGothic12Std-M` = ULPixel)
+  có đủ 2 032 glyph kể cả mọi chữ hoa có dấu — kiểm cmap trước khi vẽ, không thiếu chữ nào.
+- **Marquee**: `fix_dlc_list_marquee.py --delay` mặc định 1,5 → **0,5 s**; ba marquee khác
+  (MUSIC, Ending List, section) vẫn 1,5 s. `sharedassets24.assets` ghi lại, cùng cỡ 43 760 byte,
+  chỉ khác trường `startDelay` của AutoScrollText#53.
+
+Cả ba bundle `--check` PASS; manifest cập nhật `sprite_jp_aoc01/02`, `sprite02`,
+`sharedassets24.assets`.
+
 ## `scenarioID` 0–12 là script test, KHÔNG dịch
 
 `scenarioID` là **chỉ số vào `scenariolist.keys`** (TextAsset trong bundle `scenario01`,

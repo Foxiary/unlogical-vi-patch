@@ -142,8 +142,8 @@ Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn
 
 * 132/140 kịch bản scenario (toàn bộ hội thoại, lời dẫn và các lựa chọn)
 * 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
-* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "Khoảnh khắc ban mai" trên năm thumbnail, màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật và hai dải phím. Ở danh sách nhân vật (dùng chung cho cả hai DLC, nằm trong mod của game gốc), tên dài hơn ô như "Munakata Kai" không còn gãy xuống dòng đè lên hàng dưới mà chạy chữ khi hàng được chọn
-* **DLC 2**: toàn bộ 568 câu và 15 phương án lựa chọn của năm truyện hẹn hò, tên nhân vật (mod riêng cho title `010068501ff9b002`); hình có chữ: tiêu đề "Hẹn hò" trên năm thumbnail và màn cảnh báo Caution
+* **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "KHOẢNH KHẮC BAN MAI" trên năm thumbnail (viết hoa, nét đậm như bản Nhật), màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật viết hoa và hai dải phím. Ở danh sách nhân vật (dùng chung cho cả hai DLC, nằm trong mod của game gốc), tên dài hơn ô như "Munakata Kai" không còn gãy xuống dòng đè lên hàng dưới mà chạy chữ khi hàng được chọn
+* **DLC 2**: toàn bộ 568 câu và 15 phương án lựa chọn của năm truyện hẹn hò, tên nhân vật (mod riêng cho title `010068501ff9b002`); hình có chữ: tiêu đề "HẸN HÒ" trên năm thumbnail và màn cảnh báo Caution
 
 Terminal (Thiết bị)
 

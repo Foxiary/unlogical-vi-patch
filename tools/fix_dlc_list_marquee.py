@@ -38,7 +38,7 @@ nhiêu lần cũng cho cùng kết quả; đích là file trong repo. Kiểm tra
 so byte từng object — chỉ #28, #33, #34, #41 được khác (#41 đúng hai trường `m_TextWrappingMode`,
 `m_margin.x`).
 
-    python tools\\fix_dlc_list_marquee.py [--apply] [--mode restart|loop] [--delay 1.5] [--speed 60] [--pause 2]
+    python tools\\fix_dlc_list_marquee.py [--apply] [--mode restart|loop] [--delay 0.5] [--speed 60] [--pause 2]
 """
 import argparse
 import copy
@@ -78,7 +78,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--apply", action="store_true")
     ap.add_argument("--mode", choices=M.MODES, default="restart")
-    ap.add_argument("--delay", type=float, default=1.5)
+    # 0,5 s chứ không phải 1,5 s như Ending List: người dùng muốn tên trôi ngay khi vừa chọn
+    # hàng (03/09) — ở màn này mỗi lần chuyển hàng là một tên mới, chờ 1,5 s thấy như đứng im.
+    ap.add_argument("--delay", type=float, default=0.5)
     ap.add_argument("--speed", type=float, default=60.0)
     ap.add_argument("--pause", type=float, default=2.0)
     args = ap.parse_args()

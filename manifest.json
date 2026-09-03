@@ -170,7 +170,7 @@
   {
     "path": "romfs/Data/sharedassets24.assets",
     "bytes": 43760,
-    "md5": "97d3061d374fd01137efb240cf7c9a9b",
+    "md5": "d8a56ee4c047e1285e1f7964dbdec101",
     "where": "repo"
   },
   {
@@ -199,8 +199,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/sprite/sprite02",
-    "bytes": 137210,
-    "md5": "28c64d4bc37194533330473628bbb140",
+    "bytes": 137190,
+    "md5": "68cb4b483f3ac9246017024d14881a16",
     "where": "repo"
   },
   {
@@ -229,8 +229,8 @@
   },
   {
     "path": "aoc/010068501ff9b001/romfs/sprite/sprite_jp_aoc01",
-    "bytes": 2521262,
-    "md5": "013d01a386240a3fd3260887314e9456",
+    "bytes": 2521906,
+    "md5": "7114af2e0c3f7effc48481fc6c48430e",
     "where": "repo"
   },
   {
@@ -247,8 +247,8 @@
   },
   {
     "path": "aoc/010068501ff9b002/romfs/sprite/sprite_jp_aoc02",
-    "bytes": 2574974,
-    "md5": "42cde82db67dcaf74c492cd670ec7cb9",
+    "bytes": 2575057,
+    "md5": "2150b15728c4908a9d69b99131e6b972",
     "where": "repo"
   }
 ]

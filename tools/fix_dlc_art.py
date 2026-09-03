@@ -59,8 +59,12 @@ PREVIEW = os.path.join(ROOT, "_preview", "dlc_art")
 BACKUP = os.path.join(ROOT, "_backup")
 
 # ---- chữ -------------------------------------------------------------------------------
-TITLE = {1: "Khoảnh khắc ban mai",      # 朝のひと時 — tiêu đề chung của 5 truyện DLC 1
-         2: "Hẹn hò"}[DLC]              # デート — DLC 2
+# VIẾT HOA cả cụm (yêu cầu 03/09 sau ảnh Ryujinx 18:21: chữ thường ở cỡ 17 px "quá sát nhau
+# nên khó nhìn"); tên trong cửa sổ CHAPTER cũng viết hoa cho cùng giọng với `KAI MUNAKATA`
+# mà thanh CHAPTER của thumbnail vốn in hoa.
+TITLE = {1: "KHOẢNH KHẮC BAN MAI",      # 朝のひと時 — tiêu đề chung của 5 truyện DLC 1
+         2: "HẸN HÒ"}[DLC]              # デート — DLC 2
+TITLE_TRACK = 2                         # giãn 2 px giữa các chữ: bold=1 đã ăn 1 px khe, thêm 1 px cho thoáng
 CAUTION = {
     1: [
         "Nội dung này có tiết lộ diễn biến của phần chính.",           # 当コンテンツには、本編のネタバレが含まれています。
@@ -116,30 +120,47 @@ def grow(mask, r):
     return out
 
 
-def draw_text(img, text, font, color, x=None, cx=None, mid_y=None, top_y=None, right=None, crisp=False, bold=0):
+def draw_text(img, text, font, color, x=None, cx=None, mid_y=None, top_y=None, right=None, crisp=False, bold=0,
+              tracking=0, v_sample=None):
     """Vẽ `text`; canh ngang theo x (trái) / cx (giữa) / right (phải), dọc theo hộp mực.
     `crisp`: không khử răng cưa — cho font điểm ảnh, nét gốc là chấm vuông đặc.
     `bold=1`: vẽ chồng lệch 1 px sang phải và xuống dưới (4 lượt) — nét 1 px thành 2 px.
     Phụ đề `朝のひと時` gốc đo nét 2 px cả ngang lẫn dọc (96/70 nét), DotGothic cỡ 17 vẽ
-    đơn chỉ ra 1 px (243/133 nét) — trên máy đọc không nổi (ảnh Ryujinx 03/09 18:21)."""
+    đơn chỉ ra 1 px (243/133 nét) — trên máy đọc không nổi (ảnh Ryujinx 03/09 18:21).
+    `tracking`: giãn thêm bấy nhiêu px giữa hai chữ kề (vẽ từng chữ, bước = advance + tracking,
+    làm tròn về pixel để font điểm ảnh không nhoè).
+    `v_sample`: canh dọc theo hộp mực của chữ mẫu này thay vì của cả `text` — dùng "H" cho chữ
+    HOA có dấu, để dấu treo lên trên chứ không kéo thân chữ tụt xuống."""
     d = ImageDraw.Draw(img)
     if crisp:
         d.fontmode = "1"
     l, t, r, b = d.textbbox((0, 0), text, font=font, anchor="ls")
-    w, h = r - l, b - t
+    if tracking:
+        adv = [font.getlength(ch) for ch in text]
+        r = l + int(round(sum(adv))) + tracking * (len(text) - 1)
+    w = r - l
     if cx is not None:
         x0 = cx - w / 2 - l
     elif right is not None:
         x0 = right - w - l
     else:
         x0 = x - l
+    vt, vb = (t, b) if v_sample is None else d.textbbox((0, 0), v_sample, font=font, anchor="ls")[1::2]
     if mid_y is not None:
-        y0 = mid_y - (t + b) / 2
+        y0 = mid_y - (vt + vb) / 2
     else:
-        y0 = top_y - t
+        y0 = top_y - vt
+    if crisp:
+        x0, y0 = int(round(x0)), int(round(y0))
     for dx in range(bold + 1):
         for dy in range(bold + 1):
-            d.text((x0 + dx, y0 + dy), text, font=font, fill=color, anchor="ls")
+            if tracking:
+                xc = x0
+                for ch, a in zip(text, adv):
+                    d.text((xc + dx, y0 + dy), ch, font=font, fill=color, anchor="ls")
+                    xc += int(round(a)) + tracking
+            else:
+                d.text((x0 + dx, y0 + dy), text, font=font, fill=color, anchor="ls")
     return (int(x0 + l), int(y0 + t), int(x0 + r) + bold, int(y0 + b) + bold)
 
 
@@ -206,7 +227,8 @@ def thumbnail(img, name, report):
     # `朝のひと時` cao 17 px trên cả năm thumbnail; dải sáng của Soichi làm mặt nạ hụt một
     # hàng nên không dùng số đo từng ảnh — cỡ chung cho cả năm.
     size, font = match_size(PIXEL, "朝", TITLE_H)
-    box = draw_text(out, TITLE, font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True, bold=1)
+    box = draw_text(out, TITLE, font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True, bold=1,
+                    tracking=TITLE_TRACK, v_sample="H")
     report.append("%-26s phụ đề JP x%d..%d y%d..%d (cao %d) -> %r cỡ %d, hộp mới x%d..%d" % (
         name, x0, x1, y0, y1, y1 - y0, TITLE, size, box[0], box[2]))
     if box[2] > 400:
@@ -292,9 +314,10 @@ def chapter_window(img, name, report):
     # cỡ cho cả năm để năm tên đứng cạnh nhau không so le.
     font = ImageFont.truetype(ttf(PIXEL), NAME_SIZE)
     size = NAME_SIZE
-    box = draw_text(out, NAMES[key], font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True)
+    label = NAMES[key].upper()
+    box = draw_text(out, label, font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True, v_sample="H")
     report.append("%-26s tên JP x%d..%d y%d..%d (cao %d) -> %r cỡ %d, hộp mới x%d..%d" % (
-        name, x0, x1, y0, y1, y1 - y0, NAMES[key], size, box[0], box[2]))
+        name, x0, x1, y0, y1, y1 - y0, label, size, box[0], box[2]))
     if box[2] > img.width - 30:
         raise SystemExit("%s: tên mới rộng tới x=%d, vượt ô" % (name, box[2]))
     return out
