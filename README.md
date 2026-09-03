@@ -87,6 +87,7 @@ Sắp xếp các file sao cho đúng chuẩn cấu trúc sau:
     StreamingAssets/scene/scene_jp
     StreamingAssets/sprite/sprite02       <- vỏ DLC trong game gốc
     StreamingAssets/texture/texture02     <- vỏ DLC trong game gốc
+    StreamingAssets/ui/ui01                <- hai tấm biển DLC 1 / DLC 2 ở Download Contents
     StreamingAssets/ui/ui_jp
     level10  level17  level19  level20  level22
     resources.assets
@@ -144,6 +145,7 @@ Nếu chưa chắc chắn, bạn hãy nhấp chuột phải vào game → chọn
 * 8 kịch bản chưa dịch còn lại là tài liệu thử nghiệm của nhà phát triển, không bao giờ xuất hiện trong game
 * **DLC 1**: toàn bộ 399 câu của năm truyện ngắn và tên nhân vật ở danh sách Download Contents (mod riêng cho title `010068501ff9b001`, xem phần cài đặt); hình có chữ: tiêu đề "KHOẢNH KHẮC BAN MAI" trên năm thumbnail (viết hoa, nét đậm như bản Nhật), màn cảnh báo Caution, năm cửa sổ CHAPTER ghi tên nhân vật viết hoa và hai dải phím. Ở danh sách nhân vật (dùng chung cho cả hai DLC, nằm trong mod của game gốc), tên dài hơn ô như "Munakata Kai" không còn gãy xuống dòng đè lên hàng dưới mà chạy chữ khi hàng được chọn
 * **DLC 2**: toàn bộ 568 câu và 15 phương án lựa chọn của năm truyện hẹn hò, tên nhân vật (mod riêng cho title `010068501ff9b002`); hình có chữ: tiêu đề "HẸN HÒ" trên năm thumbnail và màn cảnh báo Caution
+* **Màn chọn gói DLC** (Download Contents, nằm trong mod của game gốc): hai tấm biển `ＤＬＣ 第１弾` / `ＤＬＣ 第２弾` nay là `DLC 1` / `DLC 2`, canh giữa lại; cửa sổ báo "DLC 1 có thể tải về miễn phí…" cũng đã dịch
 
 Terminal (Thiết bị)
 

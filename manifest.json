@@ -72,6 +72,12 @@
     "where": "repo"
   },
   {
+    "path": "romfs/Data/StreamingAssets/ui/ui01",
+    "bytes": 1324708,
+    "md5": "775010081011c3c097387d165bfd6894",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/StreamingAssets/ui/ui_jp",
     "bytes": 51927685,
     "md5": "c2d32f6952832472f2bfeef5c022b4c7",

@@ -5053,3 +5053,89 @@ Sheet lưu mỗi ô thành một dòng phẳng và `apply_sheet_cells.py` lấy 
 vòng merge có thể trả chữ hoa về lại chữ thường. Tool idempotent và có `--check`, nên nó
 thuộc nhóm chốt sau merge cùng `fix_adv_wrap.py` / `fix_novel_list_wrap.py` /
 `fix_dictionary_wrap.py` / `fix_ellipsis_break.py`.
+
+## Hai tấm biển `ＤＬＣ 第Ｎ弾` ở màn Download Contents (`fix_dlc_top_menu.py`)
+
+Báo 04/09/2026 kèm ảnh `IMG_7249`, chụp **máy Switch thật**: màn chọn gói DLC vẫn tiếng Nhật.
+
+Việc đầu tiên là loại trừ lỗi cài đặt, và chính tấm ảnh trả lời: dải phím dưới đã là
+`Select`/`Back` (`texture02`, `fix_key_prompts.py`) và bảng phải đã ghi tên romanise — tức
+mod của title gốc đang chạy đúng. Vậy thì **thiếu file**, không phải thiếu LayeredFS.
+
+### Tìm chỗ chữ nằm: không có chuỗi nào tên `第1弾`
+
+Quét byte thô cả bản dump 1.0.2 rồi giải nén mọi TextAsset: `第1弾` chỉ xuất hiện ở
+`SystemTextData` id 24 — hộp thoại "chưa mua", **đã dịch từ trước** (lấy nguyên văn tiếng
+Anh chính thức, theo luật ô JP). Không bảng nào chứa tên gói. Nên nó là **tranh**.
+
+Quét tiếp mọi asset có tên chứa `dlc` trong toàn bộ romfs mới ra chỗ đúng:
+
+| bundle | vai trò |
+|---|---|
+| `ui/ui01` — atlas `DLC_TOP` | **màn `b`**: hai tấm biển chọn gói ← chưa từng ship |
+| `texture02` — `UL_dlc_b_*` | nền + dải phím của cùng màn đó (đã có) |
+| `sprite02` — `UL_dlc_cd_win_01_*` | màn `c`/`d`: cửa sổ CHAPTER tên nhân vật (đã có) |
+| `sharedassets24` — `DLCButton` | hàng danh sách nhân vật (đã có) |
+| AOC `sprite_jp_aoc0N` | thumbnail + Caution của từng DLC (đã có) |
+
+Quy ước tên sprite của màn này đọc được: `a` = Caution, `b` = chọn gói, `c`/`d` = DLC 1/2,
+`cd` = dùng chung, `bcd` = cả ba. Bốn nhóm sau đã dịch từ các đợt trước, riêng `b` thì lọt —
+vì `ui01` không nằm trong danh sách file ship và **không đợt nào mở nó ra**.
+
+### Xáo chữ có sẵn thay vì vẽ lại bằng font
+
+Chủ sở hữu chốt `ＤＬＣ 第Ｎ弾` -> **`DLC N`**, canh giữa lại.
+
+Chuỗi mới là **tập con của chuỗi cũ**: bỏ `第` với `弾`, còn `ＤＬＣ` và chữ số vẫn nguyên. Nên
+tool cắt cụm mực có sẵn ra rồi dán lại chỗ mới, **không dựng chữ bằng font** — khỏi lo lệch
+cỡ, lệch nét, lệch màu, ba thứ tốn nhiều lần đo nhất ở `fix_dlc_art.py`.
+
+Đo trên bản gốc, cả 4 sprite trùng khít:
+
+    Ｄ 161..182   Ｌ 197..213   Ｃ 229..249   第 276..305   １ 319..329 / ２ 315..333   弾 344..372
+
+Bố cục mới = `ＤＬＣ` + khe + chữ số, canh đúng tâm cũ 266,5; khe lấy đúng khe `Ｃ`→`第` của
+bản gốc (27 px) vì đó chính là dấu cách. Kết quả: `ＤＬＣ` dịch phải 43 px (`1st`) / 39 px
+(`2nd`), **chữ số nằm nguyên chỗ cũ** — bố cục gốc canh giữa và hai kanji bỏ đi nằm hai bên
+chữ số nên nó tự rơi đúng chỗ. Tool assert lại chứ không tin.
+
+### Hai cái bẫy của bước xoá
+
+**Kẻ lưới cách chân chữ đúng 3 px.** Hai bản `on` có lưới phối cảnh; hộp xoá nới 4 px ăn
+trúng hàng lưới ở `y=145` của `1st_on` (227 pixel liền một hàng). Nới 2 px thì thoát. Chốt
+trong tool không đếm **tổng** pixel sáng hơn nền mà đếm **số pixel sáng nhiều nhất trên một
+hàng hoặc một cột**: kẻ lưới thì liền một dải, còn đốm do giải mã ASTC thì rải rác (bản
+`2nd_on` có 9 đốm lẻ, vô hại). Ngưỡng 12.
+
+**Dấu tiếng Việt trèo cao hơn chữ Nhật.** Cửa sổ `notyet` phải vẽ bằng font (ba dòng chữ
+Nhật, không xáo được). Chữ hoa có dấu (`Ấ`, `ể`, `ữ`) vượt lên trên đỉnh chữ hoa ~6 px, mà
+hộp xoá bó theo hộp mực **Nhật** thì không có chỗ ấy — chữ mới thò ra ngoài vùng đã xoá, và
+lần chạy đầu tool tự chặn đúng chỗ đó. Nới hộp 12 px dọc; nền quanh đây là mảng trắng
+x 6..646 / y 10..203 nên thoải mái.
+
+Cỡ chữ canh theo **chữ hoa La-tinh của chính bản gốc**: dòng 1 vốn mở đầu bằng `DLC`, chữ `D`
+cao 20 px (kanji thì 24) → ULPixel cỡ 31, nét ngang 2 px, đúng bằng bản Nhật. Canh dọc theo
+**chân chữ** chứ không theo đỉnh hộp mực, vì đỉnh hộp của dòng có dấu là đỉnh dấu. Canh ngang
+thì vẽ thử ở x=0, đo mực thật rồi vẽ lại — `textbbox` báo lề trái lệch 2 px khi tắt khử răng
+cưa, đủ để dòng lệch so với bản Nhật.
+
+### Ghi ra và đo lại
+
+```powershell
+python tools\fix_dlc_top_menu.py            # chạy thử, xem trước ở _preview\dlc_top
+python tools\fix_dlc_top_menu.py --apply
+python tools\fix_dlc_top_menu.py --check    # mesh quad + render khớp ô atlas
+```
+
+`ui01` 1.259.560 → **1.324.708 byte**, chỉ +65 KB: UnityPy **giữ nguyên ASTC 4x4** cho atlas
+`DLC_TOP` chứ không bung ra RGBA như `sprite_jp_aoc01` từng bị. Cái giá là một vòng nén lại
+có mất mát — đo lại bằng cách so ảnh trong file đã ghi với ảnh xem trước: lệch tối đa 13/255
+trên đúng 3 pixel, trung bình 1,2, số pixel mực đổi 3/5.808. Không nhìn ra được.
+
+`DLC_TOP` được **inline** (`m_StreamData.path` rỗng) đúng như luật ở `CLAUDE.md`; 5 texture
+còn lại vẫn stream từ `.resS` **bên trong bundle** — resS ấy nằm trong chính file nên không
+phụ thuộc file rời của game gốc.
+
+Nhớ đăng ký file mới ở ba chỗ: `manifest.json` (nay 43 mục), bảng "what each shipped binary
+holds" của `CLAUDE.md`, và cây thư mục trong `README.md`. `make_release.py` tự suy thư mục
+zip từ đường dẫn nên không phải sửa.
