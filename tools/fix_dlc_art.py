@@ -116,9 +116,12 @@ def grow(mask, r):
     return out
 
 
-def draw_text(img, text, font, color, x=None, cx=None, mid_y=None, top_y=None, right=None, crisp=False):
+def draw_text(img, text, font, color, x=None, cx=None, mid_y=None, top_y=None, right=None, crisp=False, bold=0):
     """Vẽ `text`; canh ngang theo x (trái) / cx (giữa) / right (phải), dọc theo hộp mực.
-    `crisp`: không khử răng cưa — cho font điểm ảnh, nét gốc là chấm vuông đặc."""
+    `crisp`: không khử răng cưa — cho font điểm ảnh, nét gốc là chấm vuông đặc.
+    `bold=1`: vẽ chồng lệch 1 px sang phải và xuống dưới (4 lượt) — nét 1 px thành 2 px.
+    Phụ đề `朝のひと時` gốc đo nét 2 px cả ngang lẫn dọc (96/70 nét), DotGothic cỡ 17 vẽ
+    đơn chỉ ra 1 px (243/133 nét) — trên máy đọc không nổi (ảnh Ryujinx 03/09 18:21)."""
     d = ImageDraw.Draw(img)
     if crisp:
         d.fontmode = "1"
@@ -134,8 +137,10 @@ def draw_text(img, text, font, color, x=None, cx=None, mid_y=None, top_y=None, r
         y0 = mid_y - (t + b) / 2
     else:
         y0 = top_y - t
-    d.text((x0, y0), text, font=font, fill=color, anchor="ls")
-    return (int(x0 + l), int(y0 + t), int(x0 + r), int(y0 + b))
+    for dx in range(bold + 1):
+        for dy in range(bold + 1):
+            d.text((x0 + dx, y0 + dy), text, font=font, fill=color, anchor="ls")
+    return (int(x0 + l), int(y0 + t), int(x0 + r) + bold, int(y0 + b) + bold)
 
 
 def match_size(font_name, sample, target_h, lo=8, hi=72):
@@ -201,7 +206,7 @@ def thumbnail(img, name, report):
     # `朝のひと時` cao 17 px trên cả năm thumbnail; dải sáng của Soichi làm mặt nạ hụt một
     # hàng nên không dùng số đo từng ảnh — cỡ chung cho cả năm.
     size, font = match_size(PIXEL, "朝", TITLE_H)
-    box = draw_text(out, TITLE, font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True)
+    box = draw_text(out, TITLE, font, color, x=x0, mid_y=(y0 + y1) / 2, crisp=True, bold=1)
     report.append("%-26s phụ đề JP x%d..%d y%d..%d (cao %d) -> %r cỡ %d, hộp mới x%d..%d" % (
         name, x0, x1, y0, y1, y1 - y0, TITLE, size, box[0], box[2]))
     if box[2] > 400:

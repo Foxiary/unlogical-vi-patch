@@ -223,8 +223,8 @@
   },
   {
     "path": "aoc/010068501ff9b001/romfs/sprite/sprite_jp_aoc01",
-    "bytes": 2521036,
-    "md5": "72a3031a2d34a099d126f2f9e75a43f5",
+    "bytes": 2521262,
+    "md5": "013d01a386240a3fd3260887314e9456",
     "where": "repo"
   },
   {
@@ -241,8 +241,8 @@
   },
   {
     "path": "aoc/010068501ff9b002/romfs/sprite/sprite_jp_aoc02",
-    "bytes": 2574966,
-    "md5": "42c20fec1c9aa521e0864b30272b9f06",
+    "bytes": 2574974,
+    "md5": "42cde82db67dcaf74c492cd670ec7cb9",
     "where": "repo"
   }
 ]
