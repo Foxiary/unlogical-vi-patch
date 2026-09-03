@@ -289,6 +289,13 @@ bỏ hẳn dấu phẩy khi là thán từ (`「......Phù,」` → `「......Ph
 `91/txt/0005–0006`, `104/txt/0347–0348`: bản `Kanna` và bản `[主人公]`). Fixer bố cục đều no-op,
 gate PASS như vòng `(93)`; `--check-chat` vẫn đúng 2/231 của vòng trước, chưa sửa trên sheet.
 
+### Vòng `(95)`, cùng đêm — 2 ô, nối đợt đổi xưng hô với Hidaka
+
+Nền `(94)`, backup `_backup/scenario01.UNLOGICAL_v2(95)`; `json` không đổi. `92/txt/0391`
+(`Em muốn hỏi ta` → `Cháu muốn hỏi ta`) và `92/txt/0407` (`「...Ông...」` → `「...Chú...」`) —
+phần còn lại của đợt `(93)` đổi cách Hidaka (火高) và người chơi xưng với nhau (`ông/em` →
+`chú/cháu`). Không ô nào vướng chốt, fixer no-op, gate PASS; `--check-chat` vẫn 2/231 cũ.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
