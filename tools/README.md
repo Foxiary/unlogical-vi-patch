@@ -3994,6 +3994,54 @@ Không sửa được qua sheet: **9 scenario không có tab `sd_*` nào** — 0
 là script test của nhà phát triển, không vào được trong game** — xem mục dưới. Không
 phải lỗ hổng dịch.
 
+## DLC là một title khác — `010068501FF9B001` (`extract_dlc_romfs.py`, `apply_dlc_sheet.py`)
+
+Ảnh máy thật IMG_7247 (03/09/2026): màn Download Contents còn nguyên tiếng Nhật, và người
+dùng báo "toàn bộ nội dung DLC vẫn tiếng Nhật". Không phải merge sót: **nội dung DLC không
+nằm trong romfs của game gốc.** DLC 1 là AOC `UNLOGICAL [010068501FF9B001][v0][DLC 1].nsp`
+(2,25 MB, đăng ký trong `%APPDATA%\Ryujinx\games\010068501ff9a000\dlc.json`); LayeredFS áp
+theo title nên mod `contents/010068501ff9a000` không đổi được gì ở đó. Bóc bằng
+`extract_dlc_romfs.py` (mượn crypto của `extract_exefs.py`, thêm phần đọc IVFC/RomFS) ra
+`D:\Downloads\UNLOGICAL_DLC1\romfs`, đóng vai dump gốc của AOC:
+
+| file | nội dung |
+|---|---|
+| `scenario/scenario_aoc01` | `ScenarioData` riêng: 5 scenario 1005–1009, script `09_01`…`09_05` ("朝のひと時", mỗi nhân vật một truyện ngắn), **399 câu**, 0 lựa chọn, 0 tag hiển thị; `scenariolist`, `ChapterAlready` |
+| `json/json_aoc01` | `DLCData_01`: 5 `charaName.jp` (chữ hiện ở danh sách nhân vật) + tên sprite (khoá, giữ) |
+| `sprite/sprite_jp_aoc01` | 16 ảnh: 5 bảng tên `UL_dlc_c_name_*` (đã Latin "Miyabi After"…), 5 thumbnail `UL_dlc_c_win_02_*` (góc trên còn `朝のひと時`), 5 bảng tiêu đề `UL_dlc_c_win_03_*` (chữ trang trí Latin), `UL_dlc_a_headsup_01` (màn Caution, tiếng Nhật) |
+| `texture/texture_aoc01` | nền |
+
+Các script `09_01_01`…`09_05_10` trong `scenario01` gốc là chương thường, không liên quan.
+Game gốc chỉ giữ phần vỏ: `SceneLabelList` có 25 label `*…-DLC-02-…`, `SystemContentFileNameData`
+trỏ tới `UL_dlc_*`, và ba ảnh hub nằm trong bundle gốc **chưa ship**: `sprite/sprite02`
+(5 cửa sổ CHAPTER `UL_dlc_cd_win_01_*` 480×152, tên Nhật bằng font pixel — chính là cửa sổ
+`永守 藍` trong ảnh), `texture/texture02` (`UL_dlc_b_key` `Ⓐ決定 Ⓑ戻る`, `UL_dlc_cd_key`
+`Ⓐシーン再生 Ⓑ戻る`, `UL_dlc_b_bg_base`), `ui/ui01` (trang trí).
+
+**Sheet gốc `UNLOGICAL_v2` không có tab DLC** — soát cả snapshot 90 và 91. Bản dịch nằm trong
+workbook riêng `D:\Downloads\UNLOGICAL_DLC1.xlsx`, tab `sd_1005`…`sd_1009`, cùng khuôn 4 cột,
+id `1005/txt/0000`; JP khớp 399/399 ô của AOC, VN đủ 399. (`UNLOGICAL_DLC2.xlsx`, id
+2005–2009, là DLC 2 — AOC đó **chưa có trên máy**, cần NSP để bóc.)
+
+`apply_dlc_sheet.py` ghi từ bundle GỐC của AOC (không ba chiều, chạy lại là idempotent) ra bản
+làm việc `D:\Downloads\010068501ff9b001\romfs`, junction vào
+`%APPDATA%\Ryujinx\mods\contents\010068501ff9b001\vn-translation\romfs`. Chốt như
+`apply_sheet_cells.py`: JP khớp build, multiset tag, `[主人公]` hai bên (`TOKEN_DROP_OK` cho
+`1006/txt/0004` — bản dịch thay tên bằng "em", ô không có bản đôi), ô `isDefaultNameAdjust`
+phải mang `Kanna`. Hai bẫy đã dính: mảng JSON của asset viết **không có khoảng trắng** sau dấu
+phẩy (json.dumps mặc định không khớp), và câu một dòng xuất hiện y hệt ở `text[]` lẫn
+`scriptText_Line[]` nên thay theo từng chuỗi là mơ hồ — phải thay **nguyên mảng** `text[]` /
+`talkName[]`. Nameplate không có trên sheet, đổi theo dạng bản gốc `【khoá Nhật/tên La-tinh】`
+(`【雅火/Miyabi】` 1936 lần trong build…): 119 nameplate. `DLCData_01.charaName` → tên La-tinh.
+Kết quả 03/09/2026: 399/399 câu, chỉ `ScenarioData` và `DLCData_01` đổi, 7 asset còn lại
+nguyên byte. Thư mục thử cho máy thật: `D:\Downloads\unlogical-vi-patch-dlc1-romfs\vn-translation\romfs`
+→ chép vào `contents/010068501ff9b001/`.
+
+**Còn lại, chưa làm:** ảnh có chữ Nhật (`朝のひと時` trên 5 thumbnail, màn Caution, 5 cửa sổ
+CHAPTER và 2 dải phím trong bundle gốc — cần tiêu đề tiếng Việt và câu Caution; font
+`ULPixel`/`font_BASE` của `fix_key_prompts.py` nằm ở scratchpad đã mất, phải trích lại từ
+Font asset), và chỗ đặt trong repo / cách đóng gói phát hành cho title thứ hai.
+
 ## `scenarioID` 0–12 là script test, KHÔNG dịch
 
 `scenarioID` là **chỉ số vào `scenariolist.keys`** (TextAsset trong bundle `scenario01`,
