@@ -255,6 +255,30 @@ phía; `nv`/`bv`/`flat_cur` bên dưới giữ nguyên cho `carry_breaks` và c�
 `　 ` — đúng dự kiến, `fix_novel_list_wrap.py --apply` ngay sau dựng lại cả tiền tố lẫn chỗ
 ngắt (ô này thành `…Munakata Kai` / `　 sẽ cùng nhau loại bỏ các Player tại sân khấu ẩn.`).
 
+### Vòng `(93)`, đêm 03/09/2026 — nền là `(91)`, không phải `(92)`
+
+`(92)` và `(93)` được tải về cách nhau hai phút và `(92)` chưa từng merge, nên nền ba chiều phải
+là snapshot **đã merge gần nhất** `(91)` — để mặc định `newest_two()` chọn `(93)/(92)` là bỏ rơi
+mọi ô đổi giữa `(91)` và `(92)`. Backup `_backup\scenario01.UNLOGICAL_v2(93)`, `json.UNLOGICAL_v2(93)`.
+
+**66 ô, áp hết, không ô nào vướng chốt**: 62 ô thoại (`70/txt/0614–0679` đợt lớn nhất, `92/txt/*`,
+`102–104`), 2 phương án `92/sel/0246`, 1 alert, và tiêu đề từ điển `DictionaryData/dic_title/id152`
+`Tiền điện tử` → `Tiền ảo` — khớp luật đếm: thoại đã dùng `tiền ảo` ở 2 chỗ, `tiền điện tử` 0.
+Hai đổi thuật ngữ đáng ghi: `Mã hủy diệt` → `Termination Code` ở đúng 3 ô còn lại (`92/txt/0296`,
+`0300`, `0365`; sau merge 0 / 12, thống nhất với 9 ô sID 79/91 đã dùng dạng Anh), và `92/txt/*`
+đổi cách xưng với Hidaka từ `ông` sang `chú` (10 ô). Sau merge mọi fixer bố cục đều no-op
+(`chat_use_genebark` 231/231 đã giống, `adv_wrap`/`novel_list`/`dictionary_wrap`/`ellipsis`/
+`caption`/`novel_prose`/`line_start_case` cả hai nửa: 0 chỗ); gate PASS: `check_scripts`,
+`check_chapterdata`, `check_layout_breaks` (+ `--json`), `fix_adv_wrap`/`chat_wrap`/`midphrase`/
+`item_name_case`/`terminal_term`/`paren_balance` `--check`; chạy lại merge ra 0 ô.
+
+**`--check-chat` FAIL 2/231 — việc của sheet, không của build.** `115/txt/0309` và `124/txt/0168`
+là ô `sd_*` phản chiếu tin nhắn Genebark (`g70c奏壱_942`, `g83c戒_1107`); snapshot này bỏ dấu cách
+sau `...` ở ô `sd_*` (`... Nói dối` → `...Nói dối`) nhưng ô Genebark sở hữu vẫn có dấu cách. Game
+hiện bản Genebark nên sửa đó chưa lên màn hình; tool bỏ qua đúng như thiết kế. Cách lành: chép
+sang tab `GenebarkChatMainData` rồi export lại — không sửa tay ở build (xem bài học vòng `(89)`).
+Ở vòng `(89)` con số này là 231/231, nên hai ô này là mới của `(92)`/`(93)`.
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
