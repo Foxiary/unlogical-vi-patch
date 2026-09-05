@@ -49,8 +49,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/json/json",
-    "bytes": 113962,
-    "md5": "a943a368aae8e0d646c51e23fa2ca519",
+    "bytes": 113953,
+    "md5": "7d26468b65256dcd48db9881c2a244e5",
     "where": "repo"
   },
   {
@@ -61,8 +61,8 @@
   },
   {
     "path": "romfs/Data/StreamingAssets/scenario/scenario01",
-    "bytes": 8724291,
-    "md5": "5f08af9bcf66de9580470606570539fb",
+    "bytes": 8724936,
+    "md5": "63ee2c9f81a553910d48a8eb99e93570",
     "where": "repo"
   },
   {
@@ -223,8 +223,8 @@
   },
   {
     "path": "aoc/010068501ff9b001/romfs/scenario/scenario_aoc01",
-    "bytes": 76610,
-    "md5": "35e3960004495e8f4b836ad6f9354b48",
+    "bytes": 76614,
+    "md5": "976cff21d07dd52ed40186a7a6f0e80b",
     "where": "repo"
   },
   {
@@ -241,8 +241,8 @@
   },
   {
     "path": "aoc/010068501ff9b002/romfs/scenario/scenario_aoc02",
-    "bytes": 116826,
-    "md5": "5ad39387594073cf0dac595f0e898893",
+    "bytes": 116762,
+    "md5": "fb9858de7151ec6df666d727e720e4e8",
     "where": "repo"
   },
   {

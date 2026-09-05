@@ -1,5 +1,24 @@
 # -*- coding: utf-8 -*-
-"""Chốt một cách gọi duy nhất cho ターミナル: **Terminal**.
+"""Chốt một cách gọi duy nhất cho ターミナル: **terminal**, hoa chỉ khi đầu câu.
+
+> ### Chiều viết hoa/thường đã LẬT ngày 06/09/2026
+>
+> Từ vòng (32) tới 05/09 luật là "`terminal` đứng riêng -> `Terminal`". Hai vòng
+> sheet liên tiếp ngày 06/09 đi ngược lại: vòng `041443` thay `thiết bị` bằng
+> `terminal` chữ thường ở 20 ô mới, vòng `042820` hạ tiếp 69 ô đang hoa. Đếm trên
+> chính sheet: `Terminal`/`terminal` từ **121/47** thành **51/117**. Chạy tool theo
+> luật cũ ở thời điểm đó là **hoàn tác đúng phần sheet vừa sửa** — nên dừng lại hỏi,
+> và chủ dự án chốt chữ thường.
+>
+> 51 chỗ sheet còn để hoa là quét dở chứ không phải phân biệt danh từ riêng: chúng
+> nằm giữa câu y như 117 chỗ đã hạ (`thao tác trên Terminal` cạnh `mở terminal của
+> mình`). Nên tool hạ tất, rồi **dựng lại chữ hoa ở 4 chỗ mở đầu câu** — chỗ đó hoa
+> vì chính tả, không vì thuật ngữ.
+>
+> Bài học chung: `--check` của một fixer thuật ngữ là **ý kiến**, không phải sự thật.
+> Khi sheet đổi chiều thì thứ sai là luật trong tool, và chạy `--apply` theo phản xạ
+> sẽ xoá công việc của người dịch mà mọi cổng vẫn xanh.
+
 
 Vòng sheet (32) đã đổi 118 ô `text[]` từ "thiết bị đầu cuối" sang "Terminal" nhưng
 không với tới ba chỗ, vì tab `sd_*` của sheet không mang chúng:
@@ -12,8 +31,9 @@ không với tới ba chỗ, vì tab `sd_*` của sheet không mang chúng:
 
 Ba luật, chỉ chạy trên chữ HIỂN THỊ:
 
-1. `thiết bị đầu cuối` / `Thiết bị đầu cuối` -> `Terminal`
-2. `terminal` đứng riêng (không phải một phần của từ Latin dài hơn) -> `Terminal`
+1. `thiết bị đầu cuối` / `Thiết bị đầu cuối` -> `terminal`
+2. `Terminal` / `terminal` đứng riêng (không phải một phần của từ Latin dài hơn)
+   -> `terminal`, trừ khi đứng đầu câu thì `Terminal`
 3. bảng `PLAN` — mấy chỗ một lần, gọi là "thiết bị" mà bản Nhật là ターミナル
 
 **Không** quét `thiết bị` đứng một mình: 85 chỗ trong `text[]` và hơn nửa là thiết bị
@@ -52,14 +72,14 @@ CHECK = "--check" in sys.argv
 REPORT = "--report" in sys.argv
 
 PHRASE = re.compile(r"[Tt]hiết bị đầu cuối")
-LOWER = re.compile(r"(?<![0-9A-Za-zÀ-ỹ])terminal(?![0-9A-Za-zÀ-ỹ])")
+WORD = re.compile(r"(?<![0-9A-Za-zÀ-ỹ])[Tt]erminal(?![0-9A-Za-zÀ-ỹ])")
 
 # Chỗ gọi là "thiết bị" mà bản Nhật là ターミナル — sửa từng chỗ, không quét.
 # (asset, id, trang, chuỗi cũ, chuỗi mới)
 PLAN = [
     ("TerminalRuleData", 46, 1,
      '　Có thể tiến hành "Bỏ phiếu tìm hung thủ" qua thiết bị.',
-     '　Có thể tiến hành "Bỏ phiếu tìm hung thủ" qua Terminal.'),
+     '　Có thể tiến hành "Bỏ phiếu tìm hung thủ" qua terminal.'),
 ]
 
 # Câu chứa `thiết bị` mà KHÔNG phải Terminal — để --report khỏi kêu oan.
@@ -67,9 +87,38 @@ NOT_TERMINAL = re.compile(
     r"thiết bị (y tế|điện tử|mạng|VR|GPS|định vị|nghe lén|phát tín hiệu|giải trí|mới|gì)"
 )
 
+# Dấu mở ngoặc/nháy và dấu kết câu, để biết một chữ có đang đứng ĐẦU CÂU hay không.
+OPENERS = "「『\"'(（[［"
+ENDERS = ".!?…"
+
+
+def at_sentence_start(s, i):
+    """Vị trí `i` có phải đầu câu không: lùi qua khoảng trắng và mọi dấu mở, rồi xem
+    thứ đứng trước là đầu chuỗi / xuống dòng / dấu kết câu / gạch dài dẫn thoại."""
+    j = i - 1
+    while j >= 0 and (s[j] in OPENERS or s[j] in " 　"):
+        j -= 1
+    if j < 0 or s[j] == "\n" or s[j] in ENDERS:
+        return True
+    return s[j] in "-―" and j >= 1 and s[j - 1] in "-―"
+
 
 def norm(s):
-    return LOWER.sub("Terminal", PHRASE.sub("Terminal", s))
+    """Một cách gọi duy nhất cho ターミナル: **terminal**, viết hoa chỉ khi đầu câu.
+
+    Chiều viết hoa/thường lật ngày 06/09/2026 theo quyết định của chủ dự án; xem
+    docstring đầu file. Hai bước, nên chạy lại là no-op theo cả hai chiều: hạ hết
+    xuống chữ thường trước, rồi dựng lại chữ hoa ở đúng những chỗ mở đầu một câu
+    (4 chỗ trong `text[]` lúc lật, `「Terminal của tôi chẳng thấy thông báo gì cả...」`).
+    """
+    out = WORD.sub("terminal", PHRASE.sub("terminal", s))
+    res, last = [], 0
+    for m in WORD.finditer(out):
+        res.append(out[last:m.start()])
+        res.append("Terminal" if at_sentence_start(out, m.start()) else "terminal")
+        last = m.end()
+    res.append(out[last:])
+    return "".join(res)
 
 
 def load(path, name):
@@ -188,7 +237,7 @@ def main():
         if bad:
             print("\n%d chỗ chưa chuẩn — chạy `python tools\\fix_terminal_term.py --apply`" % bad)
             raise SystemExit(1)
-        print("PASS mọi chỗ hiển thị đều gọi là 'Terminal'")
+        print("PASS mọi chỗ hiển thị đều gọi là 'terminal' (hoa khi đầu câu)")
         return
 
     if not (hits or mirrors or rule_hits):
@@ -240,7 +289,8 @@ def main():
                 assert ta[field][i] == s, "%s[%d] target[%d] đổi ngoài dự kiến" % (field, i, ti)
     for ti, sid, field, i, old, new in hits:
         assert after["target"][ti][field][i] == new
-        assert PHRASE.search(new) is None and LOWER.search(new) is None
+        # `norm` là điểm bất động: chạy lại trên kết quả phải ra đúng nó.
+        assert PHRASE.search(new) is None and norm(new) == new
     print("kiểm tra: chỉ %d ô đổi, loadLine/selLine/scriptText_Line nguyên vẹn" % len(hits))
 
     # ---- dựng TerminalRuleData mới

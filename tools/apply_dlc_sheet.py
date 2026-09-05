@@ -60,7 +60,13 @@ DLC = int(sys.argv[sys.argv.index("--dlc") + 1]) if "--dlc" in sys.argv else 1
 TITLE_ID = "010068501ff9b00%d" % DLC
 STOCK_AOC = r"D:\Downloads\UNLOGICAL_DLC%d\romfs" % DLC     # dump gốc của AOC (extract_dlc_romfs.py)
 WORK_AOC = r"D:\Downloads\%s\romfs" % TITLE_ID              # bản làm việc = mod cho title AOC
-SHEET = r"D:\Downloads\UNLOGICAL_DLC%d.xlsx" % DLC
+# `--sheet <đường dẫn>` — trình duyệt tải bản mới thành `UNLOGICAL_DLC1 (1).xlsx` chứ không
+# đè lên tên cũ, nên tên cứng ở đây trỏ vào bản CŨ mà không báo gì. Không có ba chiều ở tool
+# này (luôn dựng lại từ `STOCK_AOC`) nên chỉ cần chỉ đúng workbook là đủ.
+SHEET = next((sys.argv[i + 1] for i, a in enumerate(sys.argv)
+              if a == "--sheet" and i + 1 < len(sys.argv)),
+             next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--sheet=")),
+                  r"D:\Downloads\UNLOGICAL_DLC%d.xlsx" % DLC))
 SCEN = os.path.join("scenario", "scenario_aoc0%d" % DLC)
 JSONB = os.path.join("json", "json_aoc0%d" % DLC)
 DLCDATA = "DLCData_0%d" % DLC
@@ -173,6 +179,8 @@ def main():
     env, d, raw = load_text_asset(os.path.join(STOCK_AOC, SCEN), "ScenarioData")
     bom = "\ufeff" if raw.startswith("\ufeff") else ""
     data = json.loads(raw.lstrip("\ufeff"))
+    # In hẳn đường dẫn: tên workbook giờ chọn được nên "chạy nhầm bản cũ" là ca có thật.
+    print("sheet: %s" % SHEET)
     print("sheet: %d ô | AOC: %d scenario, %d câu" % (
         len(cells), len(data["target"]), sum(len(t["text"]) for t in data["target"])))
 

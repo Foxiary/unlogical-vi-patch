@@ -357,6 +357,49 @@ python toolsix_line_start_case.py --apply     # trả lại đúng 3 chữ hoa 
 Đây là lý do `fix_line_start_case --check` phải nằm trong chốt sau merge: nó không chỉ bắt
 trường hợp sheet ghi đè, mà còn là bước **hoàn tác lại** sau khi ta cố ý lấy chữ từ sheet.
 
+### Vòng `(99)` + `(100)` + cả hai DLC, 06/09/2026 — đợt lớn nhất từ trước tới nay
+
+Nền `(98)`, backup `_backup/scenario01.premerge99` / `json.premerge99` (và
+`scenario01.UNLOGICAL_v2(99)` do tool tự đặt). **1 428 ô `ScenarioData` + 5 lựa chọn +
+1 thông báo + 1 ô chat Genebark + 9 ô bundle `json`** — gấp gần 20 lần vòng `(98)`.
+Chia theo nội dung: **1 153 ô chỉ thêm dấu chấm cuối câu**, 298 ô đổi câu chữ thật. Hai
+đợt thuật ngữ nằm trong đó: `độ thiện cảm` → `độ hảo cảm` (77 → 0 / 5 → 82, kể cả nhãn
+`[dic no=451 text=…]` và tiêu đề mục 451) và `Kính giới` → `Recollection` (24 → 1 / 2 → 25
+— chỗ còn lại là câu chú giải `Recollection (Kính giới)`, cố ý). Thêm một đợt đổi xưng hô
+`ta/ngươi` → `tôi/cô`.
+
+**21 ô "CẢ HAI BÊN ĐỔI", tất cả cùng một hình** — đúng cái bẫy vòng `(98)` mô tả, lần này
+gấp bảy lần: build khác nền **đúng một chữ hoa** do `fix_line_start_case` đặt sau dấu `...`,
+còn sheet đổi từ vựng. Gỡ y như cũ: `--take-sheet` cả 21 id rồi `fix_line_start_case --apply`
+dựng lại (đúng 21 ô, khớp một-một). **20/21 chạy được; ô `105/txt/0161` bị từ chối** với
+"không đặt lại được 1 ngắt dòng" — sheet đảo vế (`Tôi nhớ là khoảng 30 phút sau… / Khi tôi
+kết thúc cuộc gọi với em` → `Hình như là sau khi gọi điện thoại cho em… / khoảng 30 phút thì
+phải.`) nên difflib không có mốc để đặt lại chỗ ngắt. Đặt tay, giữ ngắt ở sau dấu `...` như
+bản cũ, sửa cả bản sao `scriptText`. **Đây là ca `carry_breaks` không tự lo được: khi sheet
+đảo trật tự hai vế thì không có mốc nào để bám** — cứ để tool từ chối rồi đặt tay, đừng nới
+chốt.
+
+Vòng `(100)` tải về ngay sau đó, nền `(99)`: 1 ô + 1 phương án lựa chọn (`Chẳng lẽ anh` →
+`Chẳng lẽ họ`, và một chỗ lặp `thì thì`). Mọi fixer bố cục no-op sau vòng này.
+
+Sau merge: `fix_chat_use_genebark --apply` (231/231 đã giống ở vòng `(100)`; vòng `(99)` đổi
+1 ô), `fix_dictionary_wrap` ngắt lại 1 mục, `fix_line_start_case` 21 ô; `adv_wrap` /
+`novel_list` / `ellipsis` / `caption` / `novel_prose` đều 0 chỗ. Gate PASS hết:
+`check_scripts`, `check_chapterdata`, `check_layout_breaks` (+ `--json`, ngắt dòng
+222 501 → 222 501, thụt lề 17 444 → 17 444), `fix_adv_wrap` / `chat_wrap` / `midphrase` /
+`terminal_term` / `item_name_case` / `paren_balance` / `nameplate_wrap` `--check`. Chạy lại
+merge `(100)/(99)` ra 0 ô. `--check-chat` vẫn FAIL 2/231 cũ (`115/txt/0309`, `124/txt/0168`)
+— việc của sheet, không của build.
+
+**DLC: `UNLOGICAL_DLC1 (1).xlsx` / `UNLOGICAL_DLC2 (1).xlsx`, và một cái bẫy tên file.**
+`apply_dlc_sheet.py` ghim cứng `D:\Downloads\UNLOGICAL_DLC{N}.xlsx`, mà trình duyệt tải bản
+mới thành `… (1).xlsx` chứ không đè lên tên cũ — chạy thẳng là merge lại **bản cũ** mà không
+một dòng cảnh báo. Thêm `--sheet <đường dẫn>` (dạng `--sheet=` cũng ăn) và **in hẳn đường dẫn
+workbook ra đầu output**, vì tool này không có ba chiều nên không có gì khác để tố cáo chạy
+nhầm bản. DLC 1: 399/399 câu, 119 nameplate, đổi thật **28 chuỗi**. DLC 2: 568/568 câu,
+15 phương án, 230 nameplate, đổi thật **37 chuỗi**; `DLCData_01/02` không đổi. `--check` PASS
+cả hai (0 ô kana, nameplate đúng dạng).
+
 ### Snapshot bị tải đè lên cùng tên — vòng `(32)` lần hai, 18/08/2026
 
 `(32).xlsx` được **export lại tại chỗ** lúc 14:11 ngày 18/08, sau khi vòng `(32)` lần đầu đã
