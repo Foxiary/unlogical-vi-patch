@@ -173,7 +173,10 @@ def main():
                 continue
         elif not ALL and worst <= THRESHOLD:
             continue
-        joined = " ".join(lines)
+        # Cắt rìa từng dòng trước khi ghép: no=550 kết thúc bằng một dấu cách thừa,
+        # ghép thẳng thì `split(" ")` sinh một từ rỗng và phép kiểm nội dung báo sai.
+        # Dấu cách ở rìa dòng không vẽ ra gì nên bỏ đi là an toàn.
+        joined = " ".join(l.strip() for l in lines)
         new = "\n".join(wrap(joined))
         assert new.replace("\n", " ") == joined, "nội dung đổi ở no=%s" % e["no"]
         if new == old:
@@ -218,7 +221,9 @@ def main():
     print("\nsố trường thay đổi: %d (mục sửa: %d)" % (len(diffs), len(changed)))
     assert len(diffs) == len(changed), "có trường ngoài dự kiến bị đổi"
     for k in diffs:
-        assert k.endswith("/text/jp") and b[k].replace("\n", " ") == a[k].replace("\n", " ")
+        # so nội dung sau khi gộp mọi khoảng trắng — chỗ ngắt dòng được phép đổi,
+        # và dấu cách rìa dòng (no=550) bị cắt ở trên cũng không tính là đổi chữ.
+        assert k.endswith("/text/jp") and b[k].split() == a[k].split()
 
     if not APPLY:
         print("\nCHẠY THỬ — thêm --apply để ghi")
