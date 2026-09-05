@@ -8,9 +8,9 @@ surname plus the player-entered given name. Dialogue also uses an inline
 ## The two defaults are IL2CPP string literals
 
 Both live in `Managed/Metadata/global-metadata.dat` and each appears exactly once.
-They are two of the **twenty** literals this patch edits — see
+They are two of the **twenty-one** literals this patch edits — see
 [the full list](#every-metadata-literal-this-patch-edits) below, because reverting
-the file reverts all twenty.
+the file reverts all twenty-one.
 
 | literal idx | was | now | bytes written | offset (v1.0.2) |
 |---|---|---|---|---|
@@ -20,20 +20,31 @@ the file reverts all twenty.
 ## Every metadata literal this patch edits
 
 Verified by diffing the shipped file against a stock v1.0.2 dump (re-derived
-2026-09-03): **20 literals** carry new text; 11 entries have a shorter `length`,
-6 have a moved `dataIndex`, and 3 are *longer* than stock. A 21st entry, `・EXTRA`
-(14954), keeps its text but moved with the season block around it:
+2026-09-05): **21 literals** carry new text; 9 entries have a shorter `length`,
+6 have a moved `dataIndex`, and 3 are *longer* than stock. A 22nd entry, `・EXTRA`
+(14954), keeps its text but moved with the season block around it. (The count of
+shortened entries read 11 before this re-derivation; the table below always said 8,
+and 9 is what a literal-table diff measures.)
 
 | idx | was | now | slot | table entry | data offset |
 |---|---|---|---|---|---|
 | 14668 | `。` | ` ` | 3 → **1** B | 117600 | 491803 |
+| 14775 | `アクセス権がありません` | `Không có quyền truy cập` | 33 → **29** B | 118456 | 492556 |
 | 14856 | `ターミナルを開いてください` | `Vui lòng mở Terminal` | 39 → **23** B | 119104 | 494190 |
 | 14912 | `マップ` | `Map` | 9 → **3** B | 119552 | 494986 |
 | 14936 | `ユーリ・` | `Yuri・` | 12 → **7** B | 119744 | 495362 |
-| 14954 | `・EXTRA⏎` | `・EXTRA⏎` (unchanged text, moved) | 10 → 10 B | 119888 | 495531 → **495528** |
-| 14955 | `・夏⏎` | `・Hè⏎` | 8 → 8 B | 119896 | 495541 → **495538** |
-| 14956 | `・春⏎` | `・Xuân⏎` | 8 → **10** B | 119904 | 495549 → **495546** |
-| 14957 | `・秋⏎` | `・Thu⏎` | 8 → 8 B | 119912 | 495557 → **495556** |
+| 14954 | `・EXTRA⏎
+` | `・EXTRA⏎
+` (unchanged text, moved) | 10 → 10 B | 119888 | 495531 → **495528** |
+| 14955 | `・夏⏎
+` | `・Hè⏎
+` | 8 → 8 B | 119896 | 495541 → **495538** |
+| 14956 | `・春⏎
+` | `・Xuân⏎
+` | 8 → **10** B | 119904 | 495549 → **495546** |
+| 14957 | `・秋⏎
+` | `・Thu⏎
+` | 8 → 8 B | 119912 | 495557 → **495556** |
 | 14991 | `共通・` | `Chung - ` | 9 → **8** B | 120184 | 496109 |
 | 15016 | `奏壱・` | `Soichi・` | 9 → 9 B | 120384 | 496565 |
 | 15028 | `恭介` | `Kyosuke` | 6 → **7** B | 120480 | 496663 → **494213** |
@@ -44,18 +55,35 @@ Verified by diffing the shipped file against a stock v1.0.2 dump (re-derived
 | 15063 | `環無` | `Kanna` | 6 → **5** B | 120760 | 497033 |
 | 15074 | `藍・` | `Ran・` | 6 → 6 B | 120848 | 497133 |
 | 15084 | `選択肢` | `Choice` | 9 → **6** B | 120928 | 497446 |
-| 15085 | `選択肢スキップ⏎現在の設定：強制` | `Bỏ qua lựa chọn⏎Cài đặt: Bắt buộc` | 47 → **48** B | 120936 | 497455 → **497452** |
-| 15086 | `選択肢スキップ⏎現在の設定：既読` | `Bỏ qua lựa chọn⏎Cài đặt: Đã đọc` | 47 → 47 B | 120944 | 497502 |
+| 15085 | `選択肢スキップ
+⏎現在の設定：強制` | `Bỏ qua lựa chọn
+⏎Cài đặt: Bắt buộc` | 47 → **48** B | 120936 | 497455 → **497452** |
+| 15086 | `選択肢スキップ
+⏎現在の設定：既読` | `Bỏ qua lựa chọn
+⏎Cài đặt: Đã đọc` | 47 → 47 B | 120944 | 497502 |
 | 15090 | `雅火・` | `Miyabi・` | 9 → 9 B | 120976 | 497644 |
 
 Literal 14668 is the sentence period the engine appends to every spoken line —
 see [02 — Text rendering](02-text-rendering.md), "The engine appends 。 to spoken
 lines".
 
+**Literal 14775 is a string the data also holds, and only the literal is drawn.**
+`アクセス権がありません` is the popup on the SS LIST screen when a locked `???` short
+story is chosen (IMG_7260). The very same sentence is `SystemTextData` id 5 in
+`resources.assets`, whose JP slot has carried the official English
+`Content has not been unlocked.` since long before that screenshot — so the popup
+proved the screen reads the hardcoded literal, not the table. A sentence appearing
+in both places is not a duplicate to tidy up: patch the data and the screen can
+still be Japanese, with every text audit clean. The wording follows the prose,
+where `アクセス権` is `quyền truy cập` in all three places it occurs, and the password
+card `UL_pass_c_frame_acce2` already paints the same sentence as
+`BẠN KHÔNG CÓ QUYỀN TRUY CẬP`; the sibling literal 15047 `権限がありません` stays
+`Không có quyền hạn`, which keeps the two Japanese words apart on screen.
+
 **A replacement does not have to fit the original slot exactly.** Bytes are
 written in place at the literal's existing data offset, and if the new string is
 shorter the **length field** in the string-literal table is decremented — which is
-what happened to the 11 shortened entries (14668, 14991, 15063, …). Every other
+what happened to the 9 shortened entries (14668, 14775, 14991, 15063, …). Every other
 literal's offset stays untouched, so no rebuild is needed.
 
 **A longer replacement needs room, and room can be borrowed from a shortened

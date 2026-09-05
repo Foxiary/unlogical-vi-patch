@@ -1411,6 +1411,72 @@ không co lại. Đo ở fontSize 32 / charSpacing 2,2 với chính file font tr
 > codes = set().union(*(t.cmap for t in TTFont(blob).\_\_getitem\_\_("cmap").tables))
 > ```
 
+### Popup `アクセス権がありません` ở màn SS LIST — literal, không phải bảng
+
+Vá 05/09/2026 — literal **14775** `アクセス権がありません` (33 byte, `dataIdx` 370508, file
+offset 492556, trống sau = 0) → **"Không có quyền truy cập"** (29 byte). Backup
+`_backup\global-metadata.dat.prelitterm11`. Ảnh báo: IMG_7260 — chọn một truyện ngắn
+còn khoá (`???`) ở SS LIST thì hiện cửa sổ tím, đúng kiểu băng-rôn của
+`ターミナルを開いてください` (có `UN:LOGICAL` dọc mép và dãy vạch thước) — và cũng như lần đó,
+**nó không phải tranh**.
+
+**Cùng một câu nằm ở hai nơi, và chỉ một nơi được vẽ.** `SystemTextData` id 5 trong
+`resources.assets` giữ đúng câu này, khe JP đã là `Content has not been unlocked.`
+(bản Anh chính thức) từ lâu trước tấm ảnh. Màn hình vẫn tiếng Nhật ⇒ nó đọc hằng chuỗi
+trong code chứ không đọc bảng. Nên "chuỗi này đã dịch rồi" không kết luận được gì:
+quét văn bản vẫn sạch trong khi màn hình vẫn Nhật. Ngược lại, sau vòng này thì id 5
+(tiếng Anh) và literal (tiếng Việt) lệch nhau — không sao, id 5 không có màn nào vẽ.
+
+Hai chỗ còn lại là **chú thích cho hoạ sĩ**, đừng dịch: `00_01` và `01_test_01` có
+`;//演出：サブグラ『アクセス権限がありません』とウィンドウで表示される`. Không có lệnh `subgra` nào
+cạnh nó — engine dựng cùng cái cửa sổ đó lúc chạy, y như literal 14856, nên vá literal
+là xong cả cảnh truyện lẫn menu.
+
+**Chữ chọn theo lời thoại, và ngân sách byte chốt luôn.** `アクセス権` trong prose dịch
+`quyền truy cập` ở cả 3 chỗ, và thẻ mật khẩu `UL_pass_c_frame_acce2` đã vẽ đúng câu này
+thành `BẠN KHÔNG CÓ QUYỀN TRUY CẬP`. Nhưng 33 byte không chứa nổi bản có chủ ngữ
+("Bạn không có quyền truy cập" 35 byte) lẫn bản dịch theo câu Anh chính thức
+("Nội dung chưa được mở khoá" 36 byte) — chỉ "Không có quyền truy cập" (29) vừa. Literal
+anh em **15047** `権限がありません` vẫn là `Không có quyền hạn`, để hai từ Nhật khác nhau
+vẫn khác nhau trên màn hình.
+
+### Thẻ `[terinfo]` sót lại vì viết KHÔNG NGOẶC KÉP (`fix_terinfo_unquoted.py`)
+
+Vá 05/09/2026, ra từ một vòng quét "còn chỗ nào tiếng Nhật" trên toàn dump. Trong
+`00_03` có 10 thẻ `terinfo`; 9 thẻ đã dịch, sót đúng một:
+
+```
+dòng  744  [terinfo text="Xác nhận người thua cuộc:\nKozumi Shota, Kasuya Yuzuha, …"]
+dòng 1111  [terinfo text=敗北者が確定しました\n小住祥太　粕谷柚葉　永守藍　柾衣沙　芳谷尚紀]
+```
+
+**Cùng một thông báo, cùng năm cái tên** — khác đúng một chỗ: dòng 1111 viết `text=`
+không ngoặc kép. Đó là lý do nó sót, và lý do đó đã nằm sẵn trong chính file này
+(mục *Đã mở đường ghi cho `cmd`*): bên xuất sheet **chỉ ăn dạng `text="…"`**, bản gốc
+có đúng một lệnh không ngoặc (`sID 71` @12609) và sheet không có hàng cho nó. Nghĩa là
+`apply_sheet_cells.py` không bao giờ với tới ô này — cùng lớp "sheet không với tới" với
+`fix_item_name_case.py` (`ScriptDialogData`) và `fix_system_text_case.py`
+(`resources.assets`). `--check` vẫn nên nằm trong cổng sau merge vì merge có thể chép
+đè `scriptText`.
+
+Ba nơi phải sửa cùng lúc: script chương `00_03` (nguyên văn), `ScenarioData.scriptText`
+và `ScenarioData.scriptText_Line` (dạng JSON-escape, `\` → `\\`). Thay trên **văn bản
+thô**, không parse-rồi-dump: dump lại là viết lại cả 17 MB JSON.
+
+> **Chốt "không đụng chỗ khác" không dùng được `str.replace` ngược.** Chuỗi mới **đã có
+> sẵn** trong file (chính dòng 744), nên đổi ngược bằng replace sẽ biến luôn chỗ vốn
+> đã đúng thành tiếng Nhật và báo sai. Script ghi lại **vị trí** từng chỗ thay rồi dựng
+> ngược theo vị trí — đây là lần đầu chốt kiểu này trong repo, các `fix_*` trước đều
+> thay chuỗi chưa từng tồn tại nên replace ngược còn đúng.
+
+Sau khi ghi: `check_scripts` PASS (143/143 chuỗi lệnh y bản gốc), `check_chapterdata`
+PASS, và `loadLine` / `selLine` / `text[]` / `selText` / `talkName` nguyên vẹn từng ô.
+
+> **Còn treo, cần đo:** bề rộng khung `terinfo` là **580 px, cỡ chữ 32, không wrap**
+> (số đo trong `e2e/checks/find_terinfo.py`). Dòng tên 5 người dài ~68 ký tự, gấp đôi
+> khung. Dòng 744 đã ship như vậy từ trước nên vá này **không làm xấu thêm**, nhưng cả
+> hai dòng đều cần đo lại — đúng cái việc mục `cmd` ghi là "chưa ai đo widget đó".
+
 ## Trường `ruby` của từ điển
 
 `python tools\fix_dictionary_ruby.py [--apply]` — 30/80 mục từ điển có trường
