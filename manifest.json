@@ -1,5 +1,41 @@
 [
   {
+    "path": "aoc/010068501ff9b001/romfs/json/json_aoc01",
+    "bytes": 1614,
+    "md5": "f75491bc6ce9873c39a3ae65e34feb5b",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b001/romfs/scenario/scenario_aoc01",
+    "bytes": 76614,
+    "md5": "976cff21d07dd52ed40186a7a6f0e80b",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b001/romfs/sprite/sprite_jp_aoc01",
+    "bytes": 2521906,
+    "md5": "7114af2e0c3f7effc48481fc6c48430e",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/json/json_aoc02",
+    "bytes": 1619,
+    "md5": "9b68b7c59356720bf07a754b8304b603",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/scenario/scenario_aoc02",
+    "bytes": 116762,
+    "md5": "fb9858de7151ec6df666d727e720e4e8",
+    "where": "repo"
+  },
+  {
+    "path": "aoc/010068501ff9b002/romfs/sprite/sprite_jp_aoc02",
+    "bytes": 2575057,
+    "md5": "2150b15728c4908a9d69b99131e6b972",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/Managed/Metadata/global-metadata.dat",
     "bytes": 9259608,
     "md5": "f490c9dfa477bcd42daa3b08254695c0",
@@ -72,6 +108,18 @@
     "where": "repo"
   },
   {
+    "path": "romfs/Data/StreamingAssets/sprite/sprite02",
+    "bytes": 137190,
+    "md5": "68cb4b483f3ac9246017024d14881a16",
+    "where": "repo"
+  },
+  {
+    "path": "romfs/Data/StreamingAssets/texture/texture02",
+    "bytes": 65084,
+    "md5": "9dd52812fffc4e2abff3d80b91afd9a2",
+    "where": "repo"
+  },
+  {
     "path": "romfs/Data/StreamingAssets/ui/ui01",
     "bytes": 1324708,
     "md5": "775010081011c3c097387d165bfd6894",
@@ -85,8 +133,8 @@
   },
   {
     "path": "romfs/Data/level10",
-    "bytes": 160480,
-    "md5": "298849ce83c72ca4191b122065f0d57c",
+    "bytes": 160904,
+    "md5": "76f38db2a3e2623fbba5c8dbb52af05a",
     "where": "repo"
   },
   {
@@ -115,8 +163,8 @@
   },
   {
     "path": "romfs/Data/level22",
-    "bytes": 76360,
-    "md5": "2a5a8afcc42dcaf73197e3f56f6c8b29",
+    "bytes": 76728,
+    "md5": "57af03c60009290547c241a172d6358f",
     "where": "repo"
   },
   {
@@ -204,57 +252,9 @@
     "where": "repo"
   },
   {
-    "path": "romfs/Data/StreamingAssets/sprite/sprite02",
-    "bytes": 137190,
-    "md5": "68cb4b483f3ac9246017024d14881a16",
-    "where": "repo"
-  },
-  {
-    "path": "romfs/Data/StreamingAssets/texture/texture02",
-    "bytes": 65084,
-    "md5": "9dd52812fffc4e2abff3d80b91afd9a2",
-    "where": "repo"
-  },
-  {
     "path": "exefs/669EA2FE0282C2C0EFEA4DA183419FB7.ips",
     "bytes": 19,
     "md5": "16d9f956cab4fc6ff19f9df7df1ddb8e",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b001/romfs/scenario/scenario_aoc01",
-    "bytes": 76614,
-    "md5": "976cff21d07dd52ed40186a7a6f0e80b",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b001/romfs/json/json_aoc01",
-    "bytes": 1614,
-    "md5": "f75491bc6ce9873c39a3ae65e34feb5b",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b001/romfs/sprite/sprite_jp_aoc01",
-    "bytes": 2521906,
-    "md5": "7114af2e0c3f7effc48481fc6c48430e",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b002/romfs/scenario/scenario_aoc02",
-    "bytes": 116762,
-    "md5": "fb9858de7151ec6df666d727e720e4e8",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b002/romfs/json/json_aoc02",
-    "bytes": 1619,
-    "md5": "9b68b7c59356720bf07a754b8304b603",
-    "where": "repo"
-  },
-  {
-    "path": "aoc/010068501ff9b002/romfs/sprite/sprite_jp_aoc02",
-    "bytes": 2575057,
-    "md5": "2150b15728c4908a9d69b99131e6b972",
     "where": "repo"
   }
 ]

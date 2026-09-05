@@ -5332,3 +5332,67 @@ python tools\fix_system_text_case.py            # chạy thử
 python tools\fix_system_text_case.py --apply
 python tools\fix_system_text_case.py --check    # exit 1 nếu còn việc
 ```
+
+## Tiêu đề từ điển chạy chữ (`fix_dictionary_title_marquee.py`)
+
+Báo 05/09/2026 kèm ảnh `IMG_7262` (máy Switch thật): hộp từ điển bật lên giữa lúc đọc truyện,
+tiêu đề `Hội chứng nhân vật chính` mất non nửa chữ `H` đầu và chữ `h` cuối. Tiêu đề căn GIỮA
+trong `RectMask2D`, NoWrap, auto-size TẮT — tràn bao nhiêu thì cắt đều hai bên bấy nhiêu, nên
+lỗi trông như "chữ bị xén hai đầu" chứ không như "chữ tràn ra ngoài khung".
+
+**Có hai màn từ điển, cùng một chuỗi `DictionaryData.title`, hai bộ số đo.** Ảnh báo là hộp
+ADV (`level10`); màn DICTIONARY mở từ terminal (`level22`) hẹp hơn về px nhưng chữ cũng nhỏ
+hơn, nên nó lại tràn ít hơn:
+
+    level10  Mask_Title 588x64  Title (TMP)#897  cỡ 40, charSpacing 5    -> 7/80 mục tràn
+    level22  Mask_Title 500x40  Title (TMP)#330  cỡ 32, charSpacing 3.5  -> 2/80 mục tràn
+
+Đo bằng đúng mô hình của `fix_dictionary_wrap.py` (`Σadvance × fontSize/pointSize +
+(n−1) × charSpacing × fontSize/100` — advance và charSpacing **không** chung hệ số). Bảy mục
+tràn ô ADV: `357` 735,6 · `351` 658,6 · `213` 637,1 · `209` 622,8 (mục trong ảnh) · `350`
+621,1 · `214` 615,7 · `504` 602,1 px. Ước lượng cắt mỗi bên của `no=209` là (622,8 − 588)/2 =
+17,4 px, khớp với ảnh: chữ `H` cỡ 40 rộng ~27 px và trong ảnh mất hơn nửa.
+
+Cách chữa như bốn hộp trước: `AutoScrollText` của chính game (xem mục MUSIC ở trên cho hành vi
+đọc từ disassembly). Điểm mới đáng nhớ:
+
+**Chỗ này không phải dựng GameObject nào.** Ba bản vá trước phải chèn `TextMask`/`TitleScroll`
+vào giữa cây vì chỗ đó chưa có mask để `AutoScrollText` đo `mask.rect.width`. Từ điển thì
+game đã có sẵn `Mask_Title` mang đúng `RectMask2D` bao đúng vùng chữ (TMP `m_margin` = 0 cả
+bốn phía, nên mask *là* vùng chữ), và `Title (TMP)` là con duy nhất của nó. Bản vá vì thế chỉ
+thêm ba component, không dời một object nào:
+
+    Mask_Title   + AutoScrollText     -> targetText = Title (TMP)
+    Title (TMP)  + ContentSizeFitter  (ngang = PreferredSize)
+                 + LayoutElement      (minWidth = bề rộng mask, priority 1)
+
+Trước khi vá nên tìm mask sẵn có; cây UI của game này chỗ nào cũng có `Mask_*` thì phần khó
+nhất của marquee đã xong sẵn.
+
+`ContentSizeFitter` + `LayoutElement.minWidth` vẫn là cách duy nhất giữ "ngắn thì căn giữa,
+dài thì bắt đầu từ mép trái", vì `StartScroll` ép `anchoredPosition.x = 0`; để rect cố định
+bằng mask thì chữ dài căn giữa đã thò hai bên ngay lúc đứng yên. `level10` may là RT#788 đã
+neo + pivot mép trái, đúng 588x64 = mask, nên không đụng tới; `level22` RT#199 đang stretch
+4 góc `sizeDelta` 0x0 (pivot x = 0 nên CSF vẫn nở sang phải, về hình học là tương đương) —
+script vẫn đổi sang dạng neo trái 500x40 cho cả sáu marquee dùng chung một cấu hình.
+
+Không có script nào của game đụng vào rect của tiêu đề: quét mọi MonoBehaviour trong hai file
+xem PPtr nào trỏ tới `{GO, RT, TMP}` của tiêu đề thì chỉ thấy `Dictionary_ADV#1178` và
+`Dictionary#367`, cả hai chỉ giữ PPtr tới **TMP** (để gán `.text`). Đổi text lại kích
+`TEXT_CHANGED` nên marquee tự nạp lại mỗi lần chuyển mục — `level10` còn được `ViewRoot`
+SetActive mỗi lần mở hộp, tức thêm một lần `OnEnable → StartScroll`.
+
+Type entry mới lấy qua `marquee_lib.add_script_type` (file không nhúng type tree, chỉ cần hai
+hash); `ContentSizeFitter` `level22` có sẵn (Word/Buttons đang dùng), `level10` thì chưa.
+Chốt trước khi ghi vẫn là nạp lại blob và so byte từng object: `level10` chỉ #258 và #301
+đổi (đúng phần `m_Component`), `level22` thêm #199; `Title (TMP)` và `RectMask2D` giữ nguyên
+từng byte. `level10` 160.480 → 160.904 byte, `level22` 76.360 → 76.728.
+
+```powershell
+python tools\fix_dictionary_title_marquee.py                    # chạy thử cả hai màn
+python tools\fix_dictionary_title_marquee.py --apply
+python tools\fix_dictionary_title_marquee.py --only adv --apply
+```
+
+Đổi riêng `startDelay` thì dùng `tools\set_marquee_delay.py` — nay quét sáu file (thêm
+`level10`, `level22`), tất cả đang `restart`, delay 0,5 s, tốc độ 60 px/s, nghỉ 2 s.

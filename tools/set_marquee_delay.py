@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Đổi `startDelay` của mọi `AutoScrollText` đang ship — bốn marquee, một trường float mỗi cái.
+"""Đổi `startDelay` của mọi `AutoScrollText` đang ship — sáu marquee, một trường float mỗi cái.
 
-Bốn hộp chạy chữ (MUSIC `level13`, Ending List `sharedassets21.assets`, tên section `ui_jp`,
-danh sách DLC `sharedassets24.assets`) được dựng bởi bốn tool `fix_*_marquee.py`, mỗi tool từ
-chối chạy lại trên file đã vá. Khi chỉ cần đổi độ trễ (03/09/2026: 1,5 s → 0,5 s cho cả bốn,
+Sáu hộp chạy chữ (MUSIC `level13`, Ending List `sharedassets21.assets`, tên section `ui_jp`,
+danh sách DLC `sharedassets24.assets`, tiêu đề từ điển ở `level10` + `level22`) được dựng bởi
+năm tool `fix_*_marquee.py`, mỗi tool từ chối chạy lại trên file đã vá. Khi chỉ cần đổi độ trễ (03/09/2026: 1,5 s → 0,5 s cho cả bốn,
 sau khi người dùng thấy 0,5 s ở màn DLC là vừa), dựng lại từ backup là quá tay và có thể kéo
 mất sửa đổi nào đó đã ghi lên cùng file sau lượt marquee. Ở đây vá đúng 4 byte:
 
@@ -40,6 +40,8 @@ TARGETS = [
     ("MUSIC track title", os.path.join(DATA, "level13")),
     ("Ending List rows", os.path.join(DATA, "sharedassets21.assets")),
     ("DLC character list", os.path.join(DATA, "sharedassets24.assets")),
+    ("tiêu đề từ điển ADV", os.path.join(DATA, "level10")),
+    ("tiêu đề từ điển terminal", os.path.join(DATA, "level22")),
     ("section title", os.path.join(DATA, "StreamingAssets", "ui", "ui_jp")),
 ]
 

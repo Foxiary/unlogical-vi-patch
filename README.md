@@ -182,6 +182,7 @@ Terminal (Thiết bị)
 **Từ điển / Lưu trữ**
 
 * Toàn bộ 80 mục từ điển
+* Tiêu đề mục dài hơn khung (7 mục ở hộp từ điển bật lên khi đang đọc, 2 mục ở màn DICTIONARY của terminal) không còn bị xén cụt hai đầu mà chạy chữ như tên bài hát ở phòng MUSIC
 * Các nhãn phân loại Lưu trữ (hình ảnh vẽ sẵn)
 
 **Hình ảnh có chèn văn bản**
