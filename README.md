@@ -1,6 +1,3 @@
-# UNLOGICAL — Bản Patch Việt Hóa
-
-Bản patch dịch thuật do fan thực hiện dành cho tựa game visual novel **UNLOGICAL** trên Nintendo Switch (Title ID: `010068501ff9a000`).
 
 * **Cốt truyện, hội thoại và lựa chọn** — Tiếng Việt
 * **UI, menu và văn bản hệ thống** — Tiếng Anh
